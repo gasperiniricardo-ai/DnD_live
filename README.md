@@ -102,3 +102,7 @@ hagas `git push` a `main`, GitHub Actions se conecta por SSH a tu EC2 y ejecuta
 - **Multi-instancia**: si en el futuro quisieras más de un EC2 detrás de un
   load balancer, SQLite dejaría de valer y habría que migrar a RDS Postgres;
   avísame si llegas a ese punto.
+
+## Estado del despliegue
+
+CI/CD verificado funcionando en `13.60.18.160` (Amazon Linux 2023).
