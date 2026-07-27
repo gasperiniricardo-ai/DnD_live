@@ -959,7 +959,7 @@ function defaultCharacter(id, seedAster){
         {es:{name:'Dote de Origen — Experto (Skilled)', desc:'Competencia en 3 habilidades adicionales: Investigación, Intimidación y Acrobacias.'},
          en:{name:'Origin Feat — Skilled', desc:'Proficiency in 3 additional skills: Investigation, Intimidation, and Acrobatics.'}},
       ],
-      proficiencyNotes:[],
+      proficiencyNotes:[], bonusPreparedSlots:0,
     };
   }
   return {
@@ -973,7 +973,7 @@ function defaultCharacter(id, seedAster){
     hp:{current:10, max:10},
     weapons:[], equipment:[],
     preparedSpellIds:[], spellSlotsUsed:{}, smiteUsed:false, divineSenseUsed:0, layOnHandsCurrent:5,
-    traits:[], proficiencyNotes:[],
+    traits:[], proficiencyNotes:[], bonusPreparedSlots:0,
   };
 }
 
@@ -1152,6 +1152,7 @@ async function joinSessionWith(code, existingId, createNew){
     if(!character.spellSlotsUsed) character.spellSlotsUsed = {};
     if(!character.traits) character.traits = [];
     if(!character.proficiencyNotes) character.proficiencyNotes = [];
+    if(character.bonusPreparedSlots===undefined) character.bonusPreparedSlots = 0;
     migrateIdentity(character);
   }
   await storageSet('last_opened_id', character.id);
@@ -1561,8 +1562,12 @@ function renderLevelOptions(){
 }
 levelSelect.addEventListener('change', ()=>{
   character.level = parseInt(levelSelect.value,10);
-  const limit = preparedLimitForLevel(character.level);
-  while(character.preparedSpellIds.length > limit) character.preparedSpellIds.pop();
+  const limit = preparedLimitForLevel(character.level) + (character.bonusPreparedSlots||0);
+  while(character.preparedSpellIds.filter(countsAgainstPrepLimit).length > limit){
+    const idx = character.preparedSpellIds.map(countsAgainstPrepLimit).lastIndexOf(true);
+    if(idx<0) break;
+    character.preparedSpellIds.splice(idx,1);
+  }
   scheduleSave();
   renderAll();
   renderSpellResults(document.getElementById('spell-search').value);
@@ -1822,7 +1827,7 @@ function renderPreparedList(){
   const wrap = document.getElementById('prepared-list');
   const empty = document.getElementById('prepared-empty');
   const counter = document.getElementById('prep-counter');
-  const limit = preparedLimitForLevel(character.level);
+  const limit = preparedLimitForLevel(character.level) + (character.bonusPreparedSlots||0);
   const countedPrepared = character.preparedSpellIds.filter(countsAgainstPrepLimit).length;
   counter.textContent = `(${countedPrepared}/${limit})`;
   wrap.innerHTML = '';
@@ -1856,7 +1861,7 @@ function renderSpellResults(filter=''){
     results.innerHTML = `<div class="spell-no-results">${t('no_results')}</div>`;
     return;
   }
-  const limit = preparedLimitForLevel(character.level);
+  const limit = preparedLimitForLevel(character.level) + (character.bonusPreparedSlots||0);
   filtered.forEach(s=>{
     const data = s[currentLang];
     const school = SCHOOL_I18N[s.school][currentLang];
@@ -1906,7 +1911,84 @@ document.getElementById('spell-search').addEventListener('input', (e)=>{ renderS
 /* ============================================================
    PRESET PARTY CHARACTERS
    ============================================================ */
-const PRESET_CHARACTERS = [];
+const PRESET_CHARACTERS = [
+  { id:'char_roderick', build: ()=>({
+    id:'char_roderick',
+    identity:{ name:'Roderick Thorn "El Clérigo de la Moneda"', klass:'cleric', race:'human', background:'soldier', alignment:'', deity:'tymora',
+      klassCustom:'', raceCustom:'', backgroundCustom:'', alignmentCustom:'', deityCustom:'' },
+    level:1,
+    abilities:{FUE:18, DES:13, CON:18, INT:13, SAB:18, CAR:13},
+    saveProf:{FUE:false, DES:false, CON:false, INT:false, SAB:true, CAR:true},
+    skillProf:{athletics:true, intimidation:true, religion:true, insight:true, perception:true},
+    hp:{current:12, max:12},
+    weapons:[], equipment:[],
+    preparedSpellIds:['guidance','thaumaturgy','sacred_flame','spare_the_dying','bless','healing_word','divine_favor','shield_of_faith'],
+    spellSlotsUsed:{}, smiteUsed:false, divineSenseUsed:0, layOnHandsCurrent:5, bonusPreparedSlots:2,
+    traits:[
+      {es:{name:'Orden Divina — Taumaturgia (Divine Order: Thaumaturgy)', desc:'Conoces un cantrip adicional y sumas tu modificador de Sabiduría a las pruebas de Arcanos o Religión.'},
+       en:{name:'Divine Order — Thaumaturgy', desc:'You know one extra cantrip, and you add your Wisdom modifier to Arcana or Religion checks.'}},
+      {es:{name:'Dominio de la Guerra (War Domain)', desc:'Competencia con armadura pesada y armas marciales.'},
+       en:{name:'War Domain', desc:'Proficiency with heavy armor and martial weapons.'}},
+      {es:{name:'Sacerdote de Guerra (War Priest)', desc:'Cuando atacas, puedes atacar de nuevo como acción adicional. Usos = modificador de Sabiduría (mínimo 1) por descanso largo.'},
+       en:{name:'War Priest', desc:'When you attack, you can make another attack as a bonus action. Uses = Wisdom modifier (minimum 1) per long rest.'}},
+      {es:{name:'Atacante Salvaje (Savage Attacker — trasfondo Soldado)', desc:'Una vez por turno, tira el daño de un ataque cuerpo a cuerpo dos veces y elige el resultado que prefieras.'},
+       en:{name:'Savage Attacker (Soldier background)', desc:'Once per turn, roll melee weapon damage twice and choose either result.'}},
+      {es:{name:'Conjurador de Guerra (War Caster — Humano Variante)', desc:'Ventaja en salvaciones de Constitución para mantener la concentración. Puedes lanzar un conjuro en vez de hacer un ataque de oportunidad.'},
+       en:{name:'War Caster (Human Variant)', desc:'Advantage on Constitution saves to maintain concentration. You can cast a spell instead of making an opportunity attack.'}},
+    ],
+    proficiencyNotes:[
+      {es:'Armadura pesada (Dominio de la Guerra)', en:'Heavy armor (War Domain)'},
+      {es:'Armas marciales (Dominio de la Guerra)', en:'Martial weapons (War Domain)'},
+      {es:'Idiomas: Común, Celestial', en:'Languages: Common, Celestial'},
+    ],
+  })},
+  { id:'char_walter', build: ()=>({
+    id:'char_walter',
+    identity:{ name:'Walter Alzate', klass:'warlock', race:'human', background:'other', alignment:'', deity:'none',
+      klassCustom:'', raceCustom:'', backgroundCustom:'Haunted One', alignmentCustom:'', deityCustom:'' },
+    level:1,
+    abilities:{FUE:11, DES:17, CON:16, INT:14, SAB:14, CAR:17},
+    saveProf:{FUE:false, DES:false, CON:false, INT:false, SAB:true, CAR:true},
+    skillProf:{survival:true, investigation:true, arcana:true, history:true},
+    hp:{current:11, max:11},
+    weapons:[], equipment:[],
+    preparedSpellIds:['eldritch_blast','minor_illusion','dissonant_whispers','mage_armor'],
+    spellSlotsUsed:{}, smiteUsed:false, divineSenseUsed:0, layOnHandsCurrent:5, bonusPreparedSlots:0,
+    traits:[
+      {es:{name:'Patrón: El Viejo Ente (The Great Old One)', desc:'Tu patrón es una entidad cósmica incomprensible de otro mundo, no una deidad de culto.'},
+       en:{name:'Patron: The Great Old One', desc:'Your patron is an incomprehensible cosmic entity from beyond, not a worshipped deity.'}},
+      {es:{name:'Invocación Eldritch: Armadura de las Sombras', desc:'Puedes lanzar Armadura de Mago sobre ti mismo a voluntad, sin gastar hueco de conjuro.'},
+       en:{name:'Eldritch Invocation: Armor of Shadows', desc:'You can cast Mage Armor on yourself at will, without expending a spell slot.'}},
+      {es:{name:'Mente Despierta (Awakened Mind)', desc:'Puedes hablar telepáticamente con cualquier criatura que veas a 30 pies. No necesita compartir idioma contigo, pero debe entender al menos uno.'},
+       en:{name:'Awakened Mind', desc:'You can speak telepathically to any creature you can see within 30 feet. It needs no shared language with you, but must understand at least one language.'}},
+      {es:{name:'Alerta (trasfondo Haunted One)', desc:'Sumas tu bonificador de competencia a la iniciativa. Puedes intercambiar tu iniciativa con la de un aliado dispuesto.'},
+       en:{name:'Alert (Haunted One background)', desc:'You add your proficiency bonus to initiative. You can trade your initiative with a willing ally.'}},
+    ],
+    proficiencyNotes:[],
+  })},
+  { id:'char_kael', build: ()=>({
+    id:'char_kael',
+    identity:{ name:'Kael Zareth', klass:'sorcerer', race:'tiefling', background:'', alignment:'', deity:'other',
+      klassCustom:'', raceCustom:'', backgroundCustom:'', alignmentCustom:'', deityCustom:'Entidad demoníaca' },
+    level:1,
+    abilities:{FUE:10, DES:18, CON:12, INT:18, SAB:14, CAR:18},
+    saveProf:{FUE:false, DES:false, CON:true, INT:false, SAB:false, CAR:true},
+    skillProf:{persuasion:true, animal:true, deception:true},
+    hp:{current:7, max:7},
+    weapons:[], equipment:[],
+    preparedSpellIds:['thaumaturgy','fire_bolt','sorcerous_burst','mage_hand','elementalism','magic_missile','expeditious_retreat'],
+    spellSlotsUsed:{}, smiteUsed:false, divineSenseUsed:0, layOnHandsCurrent:5, bonusPreparedSlots:0,
+    traits:[
+      {es:{name:'Puntos de Suerte (Luck Points)', desc:'Tienes puntos de suerte iguales a tu bonificador de competencia. Gasta 1 para darte Ventaja en una prueba d20, o para imponer Desventaja a un ataque en tu contra. Se recuperan al terminar un descanso largo.'},
+       en:{name:'Luck Points', desc:'You have Luck Points equal to your Proficiency Bonus. Spend 1 to gain Advantage on a d20 Test, or to impose Disadvantage on an attack roll against you. Regain them on a Long Rest.'}},
+      {es:{name:'Hechicería Innata (Innate Sorcery)', desc:'Como acción adicional (2 veces por descanso largo), durante 1 minuto: tu CD de conjuros de Hechicero aumenta en 1 y tienes Ventaja en las tiradas de ataque de tus conjuros de Hechicero.'},
+       en:{name:'Innate Sorcery', desc:'As a Bonus Action (twice per long rest), for 1 minute: your Sorcerer spell save DC increases by 1 and you have Advantage on attack rolls of Sorcerer spells you cast.'}},
+    ],
+    proficiencyNotes:[
+      {es:'Idiomas: Común', en:'Languages: Common'},
+    ],
+  })},
+];
 async function ensurePresetCharacters(){
   for(const preset of PRESET_CHARACTERS){
     if(charIndex.some(c=>c.id===preset.id)) continue;
