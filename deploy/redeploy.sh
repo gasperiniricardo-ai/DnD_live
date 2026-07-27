@@ -2,7 +2,7 @@
 # Run on the EC2 instance by the GitHub Actions workflow on every push to main.
 set -euo pipefail
 
-APP_DIR="/home/ubuntu/aster-app"
+APP_DIR="/home/ec2-user/aster-app"
 cd "$APP_DIR"
 
 echo "==> Pulling latest changes"
