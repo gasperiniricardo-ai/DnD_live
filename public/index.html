@@ -377,6 +377,10 @@ table.eqp tr:last-child td{border-bottom:none;}
         <select class="level-select" id="level-select"></select>
       </div>
       <div class="control-group">
+        <label class="control-label" data-i18n="xp_label">Experiencia (PX)</label>
+        <input class="level-select" id="xp-input" type="number" min="0" step="1" style="width:88px;text-align:center;">
+      </div>
+      <div class="control-group">
         <div class="lang-toggle">
           <button class="lang-btn active" id="lang-es" data-lang="es">ES</button>
           <button class="lang-btn" id="lang-en" data-lang="en">EN</button>
@@ -565,7 +569,7 @@ const I18N = {
     h_spell_search:'Buscador de Hechizos', search_placeholder:'Buscar por nombre, nivel o escuela...',
     no_results:'No se encontraron hechizos con ese criterio.', duration_label:'Duración:',
     prep_limit_toast:'Ya tienes {n} conjuros preparados', prep_limit_detail:'quita uno antes de añadir otro',
-    check_label:'Prueba', save_label:'Salvación', level_label:'Nivel de Personaje', level_option:'Nivel',
+    check_label:'Prueba', save_label:'Salvación', level_label:'Nivel de Personaje', level_option:'Nivel', xp_label:'Experiencia (PX)',
     h_loh:'Imposición de Manos (Lay on Hands)', p_loh:'Reserva de 5 PV al día. Acción bonus para curar; gasta 5 PV para curar enfermedad o eliminar Envenenado.',
     lbl_loh_available:'Reserva disponible:', unit_slash:'/ 5 PV', btn_loh_reset:'Descanso largo (restaurar reserva)',
     h_divine_sense:'Sentido Divino (Divine Sense)', p_divine_sense:'Detecta celestiales, fiendes o no-muertos a 60 ft. 3 usos/día (= Mod. Carisma).',
@@ -604,7 +608,7 @@ const I18N = {
     h_spell_search:'Spell Search', search_placeholder:'Search by name, level, or school...',
     no_results:'No spells found matching that search.', duration_label:'Duration:',
     prep_limit_toast:'You already have {n} spells prepared', prep_limit_detail:'remove one before adding another',
-    check_label:'Check', save_label:'Save', level_label:'Character Level', level_option:'Level',
+    check_label:'Check', save_label:'Save', level_label:'Character Level', level_option:'Level', xp_label:'Experience (XP)',
     h_loh:'Lay on Hands', p_loh:'5 HP pool per day. Bonus action to heal; spend 5 HP to cure a disease or remove the Poisoned condition.',
     lbl_loh_available:'Available pool:', unit_slash:'/ 5 HP', btn_loh_reset:'Long rest (restore pool)',
     h_divine_sense:'Divine Sense', p_divine_sense:'Detects celestials, fiends, or undead within 60 ft. 3 uses/day (= Charisma modifier).',
@@ -959,14 +963,14 @@ function defaultCharacter(id, seedAster){
         {es:{name:'Dote de Origen — Experto (Skilled)', desc:'Competencia en 3 habilidades adicionales: Investigación, Intimidación y Acrobacias.'},
          en:{name:'Origin Feat — Skilled', desc:'Proficiency in 3 additional skills: Investigation, Intimidation, and Acrobatics.'}},
       ],
-      proficiencyNotes:[], bonusPreparedSlots:0,
+      proficiencyNotes:[], bonusPreparedSlots:0, xp:0,
     };
   }
   return {
     id,
     identity:{ name:t('default_char_name'), klass:'', race:'', background:'', alignment:'', deity:'',
       klassCustom:'', raceCustom:'', backgroundCustom:'', alignmentCustom:'', deityCustom:'' },
-    level:1,
+    level:1, xp:0,
     abilities:{FUE:10, DES:10, CON:10, INT:10, SAB:10, CAR:10},
     saveProf:{FUE:false, DES:false, CON:false, INT:false, SAB:false, CAR:false},
     skillProf:{},
@@ -1153,6 +1157,7 @@ async function joinSessionWith(code, existingId, createNew){
     if(!character.traits) character.traits = [];
     if(!character.proficiencyNotes) character.proficiencyNotes = [];
     if(character.bonusPreparedSlots===undefined) character.bonusPreparedSlots = 0;
+    if(character.xp===undefined) character.xp = 0;
     migrateIdentity(character);
   }
   await storageSet('last_opened_id', character.id);
@@ -1576,6 +1581,16 @@ levelSelect.addEventListener('change', ()=>{
   renderPreparedList();
 });
 
+// ---------- XP ----------
+const xpInput = document.getElementById('xp-input');
+xpInput.addEventListener('change', ()=>{
+  let v = parseInt(xpInput.value,10);
+  if(isNaN(v) || v<0) v = 0;
+  character.xp = v;
+  xpInput.value = v;
+  scheduleSave();
+});
+
 // ---------- STATIC TEXT ----------
 function applyStaticText(){
   document.documentElement.lang = currentLang;
@@ -1600,6 +1615,7 @@ function applyStaticText(){
 
 function renderAll(){
   charNameInput.value = character.identity.name || '';
+  document.getElementById('xp-input').value = character.xp || 0;
   renderIdentityRow();
   renderLevelOptions();
   renderAbilities();
