@@ -1358,6 +1358,8 @@ function showSheet(){
   document.getElementById('lang-en').classList.toggle('active', currentLang==='en');
   applyStaticText();
   renderAll();
+  renderSpellResults('');
+  renderPreparedList();
 }
 
 function roll(mod, label){
