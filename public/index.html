@@ -1038,20 +1038,34 @@ function showSaveStatus(text){
   window._saveStatusTimer = setTimeout(()=>el.classList.remove('show'), 1600);
 }
 
+async function performSave(c, role, code){
+  if(!c) return;
+  upsertIndexEntry(c);
+  await storageSet('char_data_'+c.id, c);
+  await persistIndex();
+  await storageSet('last_opened_id', c.id);
+  if(role==='player' && code){
+    await sharedSet(sessionCharKey(code, c.id), c);
+  }
+  showSaveStatus(t('saved_status'));
+}
+let pendingSave = null; // {c, role, code} awaiting its debounce — flushed immediately if the user switches sheets first
 function scheduleSave(){
   showSaveStatus(t('saving_status'));
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(async ()=>{
-    if(!character) return;
-    upsertIndexEntry(character);
-    await storageSet('char_data_'+character.id, character);
-    await persistIndex();
-    await storageSet('last_opened_id', character.id);
-    if(sessionRole==='player' && sessionCode){
-      await sharedSet(sessionCharKey(sessionCode, character.id), character);
-    }
-    showSaveStatus(t('saved_status'));
+  pendingSave = { c: character, role: sessionRole, code: sessionCode };
+  saveTimer = setTimeout(()=>{
+    const p = pendingSave;
+    pendingSave = null;
+    performSave(p.c, p.role, p.code);
   }, 500);
+}
+async function flushPendingSave(){
+  if(!pendingSave) return;
+  clearTimeout(saveTimer);
+  const p = pendingSave;
+  pendingSave = null;
+  await performSave(p.c, p.role, p.code);
 }
 
 /* ============================================================
@@ -1139,6 +1153,7 @@ async function startJoinFlow(code){
 }
 
 async function joinSessionWith(code, existingId, createNew){
+  await flushPendingSave();
   if(createNew){
     const id = 'char_'+Date.now()+'_'+Math.floor(Math.random()*1000);
     character = defaultCharacter(id, false);
@@ -1320,6 +1335,7 @@ function renderSelector(){
 }
 
 async function createNewCharacter(){
+  await flushPendingSave();
   const id = 'char_'+Date.now()+'_'+Math.floor(Math.random()*1000);
   const c = defaultCharacter(id, false);
   character = c;
@@ -1331,6 +1347,7 @@ async function createNewCharacter(){
 }
 
 async function openCharacter(id){
+  await flushPendingSave();
   const data = await storageGet('char_data_'+id);
   if(!data) return;
   character = data;
