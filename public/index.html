@@ -406,11 +406,6 @@ table.eqp tr:last-child td{border-bottom:none;}
       </div>
       <div id="gm-dice-result" style="margin-top:12px;font-family:'JetBrains Mono',monospace;color:var(--gold-bright);font-size:.95rem;"></div>
     </div>
-    <div class="card">
-      <h2 data-i18n="gm_spell_search_title">Buscador de Hechizos</h2>
-      <input type="text" id="gm-spell-search" data-i18n-ph="search_placeholder" placeholder="Buscar por nombre, nivel o escuela...">
-      <div id="gm-spell-results"></div>
-    </div>
     <div class="gm-grid" id="gm-char-grid"></div>
     <div class="card">
       <h2 data-i18n="gm_initiative_title">Iniciativa</h2>
@@ -433,6 +428,11 @@ table.eqp tr:last-child td{border-bottom:none;}
     <div class="card">
       <h2 data-i18n="gm_feed_title">Tiradas en vivo</h2>
       <div class="gm-feed" id="gm-roll-feed"><p class="gm-empty-hint" data-i18n="gm_feed_empty">Aún no se han hecho tiradas.</p></div>
+    </div>
+    <div class="card">
+      <h2 data-i18n="gm_spell_search_title">Buscador de Hechizos</h2>
+      <input type="text" id="gm-spell-search" data-i18n-ph="search_placeholder" placeholder="Buscar por nombre, nivel o escuela...">
+      <div id="gm-spell-results"></div>
     </div>
     <div class="gm-footer-actions">
       <button class="ghost-btn" id="gm-back" data-i18n="btn_back_home">← Volver</button>
@@ -829,6 +829,7 @@ const I18N = {
     p_prepared_empty:'Aún no has elegido conjuros preparados. Búscalos abajo y toca la estrella para prepararlos.',
     h_spell_search:'Buscador de Hechizos', search_placeholder:'Buscar por nombre, nivel o escuela...',
     no_results:'No se encontraron hechizos con ese criterio.', duration_label:'Duración:',
+    gm_spell_more_hint:'Mostrando {shown} de {total}. Sigue escribiendo para afinar la búsqueda.',
     conc_badge:'Concentración', btn_concentrate:'Concentrarme', concentrate_toast:'Ahora estás concentrado',
     prep_limit_toast:'Ya tienes {n} conjuros preparados', prep_limit_detail:'quita uno antes de añadir otro',
     check_label:'Prueba', save_label:'Salvación', level_label:'Nivel de Personaje', level_option:'Nivel', xp_label:'Experiencia (PX)',
@@ -893,6 +894,7 @@ const I18N = {
     p_prepared_empty:'You have not chosen any prepared spells yet. Search below and tap the star to prepare them.',
     h_spell_search:'Spell Search', search_placeholder:'Search by name, level, or school...',
     no_results:'No spells found matching that search.', duration_label:'Duration:',
+    gm_spell_more_hint:'Showing {shown} of {total}. Keep typing to narrow the search.',
     conc_badge:'Concentration', btn_concentrate:'Concentrate', concentrate_toast:'You are now concentrating',
     prep_limit_toast:'You already have {n} spells prepared', prep_limit_detail:'remove one before adding another',
     check_label:'Check', save_label:'Save', level_label:'Character Level', level_option:'Level', xp_label:'Experience (XP)',
@@ -2947,7 +2949,9 @@ function renderGmSpellResults(filter=''){
     results.innerHTML = `<div class="spell-no-results">${t('no_results')}</div>`;
     return;
   }
-  filtered.forEach(s=>{
+  const GM_SPELL_LIMIT = 10;
+  const shown = filtered.slice(0, GM_SPELL_LIMIT);
+  shown.forEach(s=>{
     const data = s[currentLang];
     const school = SCHOOL_I18N[s.school][currentLang];
     const time = s.time[currentLang];
@@ -2966,6 +2970,12 @@ function renderGmSpellResults(filter=''){
     item.querySelector('.spell-head').addEventListener('click', ()=> item.classList.toggle('open'));
     results.appendChild(item);
   });
+  if(filtered.length > GM_SPELL_LIMIT){
+    const hint = document.createElement('div');
+    hint.className = 'spell-no-results';
+    hint.textContent = t('gm_spell_more_hint').replace('{shown}', shown.length).replace('{total}', filtered.length);
+    results.appendChild(hint);
+  }
 }
 document.getElementById('gm-spell-search').addEventListener('input', (e)=>{ renderGmSpellResults(e.target.value); });
 
