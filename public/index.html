@@ -292,6 +292,8 @@ table.eqp tr:last-child td{border-bottom:none;}
 .gm-hp-bar-bg{height:8px;border-radius:5px;background:var(--void);overflow:hidden;border:1px solid var(--steel);margin-bottom:10px;}
 .gm-hp-bar-fill{height:100%;background:linear-gradient(90deg,var(--crimson),var(--gold));transition:width .3s;}
 .gm-sub-label{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--parch-dim);margin:8px 0 4px;}
+.gm-passives-row{display:flex;gap:6px;flex-wrap:wrap;}
+.gm-passive-chip{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--parch);background:var(--void);border:1px solid var(--steel);border-radius:6px;padding:2px 8px;}
 .gm-spell-chip{ display:inline-block;background:var(--panel-2);border:1px solid var(--steel);border-radius:50px;font-size:.72rem;padding:3px 10px;margin:0 4px 4px 0;color:var(--parch); }
 .gm-empty-hint{color:var(--parch-dim);font-size:.85rem;}
 .gm-feed{max-height:360px;overflow-y:auto;}
@@ -776,13 +778,8 @@ const SCHOOL_I18N = {
   transmutation:{es:'Transmutación',en:'Transmutation'}, conjuration:{es:'Conjuración',en:'Conjuration'},
   illusion:{es:'Ilusión',en:'Illusion'}, necromancy:{es:'Nigromancia',en:'Necromancy'}
 };
-const TIME_I18N = { action:{es:'Acción',en:'Action'}, bonus_action:{es:'Acción Bonus',en:'Bonus Action'}, ten_minutes:{es:'10 minutos',en:'10 minutes'} };
-const RANGE_I18N = { touch:{es:'Toque',en:'Touch'}, self:{es:'Personal',en:'Self'}, ft10:{es:'10 pies',en:'10 feet'}, ft30:{es:'30 pies',en:'30 feet'}, ft60:{es:'60 pies',en:'60 feet'}, ft120:{es:'120 pies',en:'120 feet'} };
-const DURATION_I18N = {
-  instantaneous:{es:'Instantáneo',en:'Instantaneous'}, conc_1min:{es:'Concentración, 1 minuto',en:'Concentration, 1 minute'},
-  conc_10min:{es:'Concentración, 10 minutos',en:'Concentration, 10 minutes'}, ten_minutes:{es:'10 minutos',en:'10 minutes'},
-  one_minute:{es:'1 minuto',en:'1 minute'}, one_round:{es:'1 asalto',en:'1 round'}, eight_hours:{es:'8 horas',en:'8 hours'}, one_hour:{es:'1 hora',en:'1 hour'}
-};
+/* time / range / duration are now stored inline per-spell as {es,en} strings (see spellDB) —
+   this scales to hundreds of spells without an ever-growing shared enum table. */
 const ABILITY_LABEL = { es:{FUE:'FUE',DES:'DES',CON:'CON',INT:'INT',SAB:'SAB',CAR:'CAR'}, en:{FUE:'STR',DES:'DEX',CON:'CON',INT:'INT',SAB:'WIS',CAR:'CHA'} };
 
 const I18N = {
@@ -798,7 +795,7 @@ const I18N = {
     join_title:'Unirse a la sesión', join_error:'Esta sesión no existe o ya ha finalizado.',
     join_pick_existing:'Continúa con uno de tus personajes:', join_or:'o', join_new:'Crear personaje nuevo',
     gm_title:'Mesa del Game Master', gm_feed_title:'Tiradas en vivo', gm_feed_empty:'Aún no se han hecho tiradas.',
-    gm_no_players:'Esperando a que se unan jugadores…', gm_prepared_label:'Hechizos preparados', gm_no_prepared:'Ninguno preparado',
+    gm_no_players:'Esperando a que se unan jugadores…', gm_prepared_label:'Hechizos preparados', gm_no_prepared:'Ninguno preparado', gm_passives_label:'Pasivas (Percepción / Investigación / Perspicacia)',
     gm_initiative_title:'Iniciativa', gm_initiative_empty:'Nadie en la iniciativa todavía.',
     gm_init_name_ph:'Nombre', gm_init_value_ph:'Iniciativa', gm_init_type_enemy:'Enemigo', gm_init_type_player:'Jugador',
     gm_init_next:'Siguiente turno →', gm_init_clear:'Limpiar iniciativa', gm_code_label:'CÓDIGO',
@@ -861,7 +858,7 @@ const I18N = {
     join_title:'Join session', join_error:'This session does not exist or has already ended.',
     join_pick_existing:'Continue with one of your characters:', join_or:'or', join_new:'Create new character',
     gm_title:'Game Master Table', gm_feed_title:'Live rolls', gm_feed_empty:'No rolls yet.',
-    gm_no_players:'Waiting for players to join…', gm_prepared_label:'Prepared spells', gm_no_prepared:'None prepared',
+    gm_no_players:'Waiting for players to join…', gm_prepared_label:'Prepared spells', gm_no_prepared:'None prepared', gm_passives_label:'Passives (Perception / Investigation / Insight)',
     gm_initiative_title:'Initiative', gm_initiative_empty:'No one on the initiative order yet.',
     gm_init_name_ph:'Name', gm_init_value_ph:'Initiative', gm_init_type_enemy:'Enemy', gm_init_type_player:'Player',
     gm_init_next:'Next turn →', gm_init_clear:'Clear initiative', gm_code_label:'CODE',
@@ -1215,126 +1212,126 @@ function countsAgainstPrepLimit(spellId){
   return !!sp && sp.level>0;
 }
 function modOf(score){ return Math.floor((score-10)/2); }
-function isConcentration(sp){ return sp.duration.indexOf('conc_')===0; }
+function isConcentration(sp){ return !!sp.concentration; }
 function fmt(n){return n>=0?`+${n}`:`${n}`;}
 
 const spellDB = [
-  {id:'cure_wounds', level:1, classes:['bard','cleric','druid','paladin','ranger'], school:'evocation', time:'action', range:'touch', duration:'instantaneous',
+  {id:'cure_wounds', level:1, classes:['bard','cleric','druid','paladin','ranger'], school:'evocation', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Curar Heridas', desc:'Al tocar a una criatura, restaura una cantidad de puntos de golpe igual a 1d8 más tu modificador de característica de conjuros. No afecta a no-muertos ni constructos.'},
     en:{name:'Cure Wounds', desc:'By touching a creature, you restore hit points equal to 1d8 plus your spellcasting ability modifier. Does not affect undead or constructs.'}},
-  {id:'bless', level:1, classes:['cleric','paladin'], school:'enchantment', time:'action', range:'ft30', duration:'conc_1min',
+  {id:'bless', level:1, classes:['cleric','paladin'], school:'enchantment', time:{es:'Acción',en:'Action'}, range:{es:'30 pies',en:'30 feet'}, duration:{es:'Concentración, 1 minuto',en:'Concentration, 1 minute'}, concentration:true,
     es:{name:'Bendición', desc:'Hasta tres criaturas de tu elección suman 1d4 a sus tiradas de ataque y a sus salvaciones mientras dure el efecto.'},
     en:{name:'Bless', desc:'Up to three creatures of your choice add 1d4 to their attack rolls and saving throws for the duration.'}},
-  {id:'shield_of_faith', level:1, classes:['cleric','paladin'], school:'abjuration', time:'bonus_action', range:'ft60', duration:'conc_10min',
+  {id:'shield_of_faith', level:1, classes:['cleric','paladin'], school:'abjuration', time:{es:'Acción Bonus',en:'Bonus Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'Concentración, 10 minutos',en:'Concentration, 10 minutes'}, concentration:true,
     es:{name:'Escudo de Fe', desc:'Un aura protectora rodea a una criatura, otorgándole +2 a la Clase de Armadura durante la duración.'},
     en:{name:'Shield of Faith', desc:'A protective aura surrounds a creature, granting it +2 to Armor Class for the duration.'}},
-  {id:'heroism', level:1, classes:['bard','paladin'], school:'enchantment', time:'action', range:'touch', duration:'conc_1min',
+  {id:'heroism', level:1, classes:['bard','paladin'], school:'enchantment', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'Concentración, 1 minuto',en:'Concentration, 1 minute'}, concentration:true,
     es:{name:'Heroísmo', desc:'La criatura tocada queda inmune al miedo y gana puntos de golpe temporales iguales a tu modificador de característica de conjuros al inicio de cada uno de sus turnos.'},
     en:{name:'Heroism', desc:'The touched creature becomes immune to fear and gains temporary hit points equal to your spellcasting ability modifier at the start of each of its turns.'}},
-  {id:'divine_favor', level:1, classes:['paladin','cleric'], school:'evocation', time:'bonus_action', range:'self', duration:'conc_1min',
+  {id:'divine_favor', level:1, classes:['paladin','cleric'], school:'evocation', time:{es:'Acción Bonus',en:'Bonus Action'}, range:{es:'Personal',en:'Self'}, duration:{es:'Concentración, 1 minuto',en:'Concentration, 1 minute'}, concentration:true,
     es:{name:'Favor Divino', desc:'Tu arma se envuelve en energía radiante; tus ataques con arma cuerpo a cuerpo suman 1d4 de daño radiante.'},
     en:{name:'Divine Favor', desc:'Your weapon is wreathed in radiant energy; your melee weapon attacks add 1d4 radiant damage.'}},
-  {id:'compelled_duel', level:1, classes:['paladin'], school:'abjuration', time:'bonus_action', range:'ft30', duration:'conc_1min',
+  {id:'compelled_duel', level:1, classes:['paladin'], school:'abjuration', time:{es:'Acción Bonus',en:'Bonus Action'}, range:{es:'30 pies',en:'30 feet'}, duration:{es:'Concentración, 1 minuto',en:'Concentration, 1 minute'}, concentration:true,
     es:{name:'Duelo Forzado', desc:'Obligas a una criatura a hacer una salvación de Sabiduría o quedar compelida a atacarte solo a ti mientras dure el efecto.'},
     en:{name:'Compelled Duel', desc:'You force a creature to make a Wisdom save or be compelled to attack only you for the duration.'}},
-  {id:'detect_good_evil', level:1, classes:['cleric','paladin'], school:'divination', time:'action', range:'self', duration:'conc_10min',
+  {id:'detect_good_evil', level:1, classes:['cleric','paladin'], school:'divination', time:{es:'Acción',en:'Action'}, range:{es:'Personal',en:'Self'}, duration:{es:'Concentración, 10 minutos',en:'Concentration, 10 minutes'}, concentration:true,
     es:{name:'Detectar el Bien y el Mal', desc:'Sabes la ubicación de celestiales, fiendes y no-muertos, así como de lugares u objetos consagrados o profanados, a 30 pies.'},
     en:{name:'Detect Good and Evil', desc:'You know the location of celestials, fiends, and undead, as well as consecrated or desecrated places or objects, within 30 feet.'}},
-  {id:'protection_good_evil', level:1, classes:['cleric','paladin','wizard'], school:'abjuration', time:'action', range:'touch', duration:'conc_10min',
+  {id:'protection_good_evil', level:1, classes:['cleric','paladin','wizard'], school:'abjuration', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'Concentración, 10 minutos',en:'Concentration, 10 minutes'}, concentration:true,
     es:{name:'Protección contra el Bien y el Mal', desc:'La criatura tocada queda protegida contra ciertos tipos de criaturas: desventaja para atacarla, y no puede ser encantada, asustada ni poseída por ellas.'},
     en:{name:'Protection from Good and Evil', desc:'The touched creature is protected against certain creature types: disadvantage to attack it, and it cannot be charmed, frightened, or possessed by them.'}},
-  {id:'sanctuary', level:1, classes:['cleric'], school:'abjuration', time:'bonus_action', range:'ft30', duration:'one_minute',
+  {id:'sanctuary', level:1, classes:['cleric'], school:'abjuration', time:{es:'Acción Bonus',en:'Bonus Action'}, range:{es:'30 pies',en:'30 feet'}, duration:{es:'1 minuto',en:'1 minute'}, concentration:false,
     es:{name:'Santuario', desc:'Cualquier criatura que ataque al objetivo protegido debe superar una salvación de Sabiduría o elegir otro objetivo.'},
     en:{name:'Sanctuary', desc:'Any creature that attacks the protected target must succeed on a Wisdom save or choose a different target.'}},
-  {id:'command', level:1, classes:['cleric','paladin'], school:'enchantment', time:'action', range:'ft60', duration:'one_round',
+  {id:'command', level:1, classes:['cleric','paladin'], school:'enchantment', time:{es:'Acción',en:'Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'1 asalto',en:'1 round'}, concentration:false,
     es:{name:'Orden', desc:'Das una orden de una palabra (huir, caer, soltar, quieto, rendirse) a una criatura que falle su salvación de Sabiduría.'},
     en:{name:'Command', desc:'You give a one-word order (flee, drop, fall, halt, surrender) to a creature that fails its Wisdom save.'}},
-  {id:'bane', level:1, classes:['bard','cleric'], school:'enchantment', time:'action', range:'ft30', duration:'conc_1min',
+  {id:'bane', level:1, classes:['bard','cleric'], school:'enchantment', time:{es:'Acción',en:'Action'}, range:{es:'30 pies',en:'30 feet'}, duration:{es:'Concentración, 1 minuto',en:'Concentration, 1 minute'}, concentration:true,
     es:{name:'Maldición', desc:'Hasta tres criaturas restan 1d4 a sus tiradas de ataque y salvaciones mientras dure el efecto.'},
     en:{name:'Bane', desc:'Up to three creatures subtract 1d4 from their attack rolls and saving throws for the duration.'}},
-  {id:'guiding_bolt', level:1, classes:['cleric'], school:'evocation', time:'action', range:'ft120', duration:'instantaneous',
+  {id:'guiding_bolt', level:1, classes:['cleric'], school:'evocation', time:{es:'Acción',en:'Action'}, range:{es:'120 pies',en:'120 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Destello Guiador', desc:'Un destello de luz golpea a una criatura causando daño radiante, y el siguiente ataque contra ella antes de tu próximo turno tiene ventaja.'},
     en:{name:'Guiding Bolt', desc:'A flash of light strikes a creature for radiant damage, and the next attack against it before your next turn has advantage.'}},
-  {id:'healing_word', level:1, classes:['bard','cleric','druid'], school:'evocation', time:'bonus_action', range:'ft60', duration:'instantaneous',
+  {id:'healing_word', level:1, classes:['bard','cleric','druid'], school:'evocation', time:{es:'Acción Bonus',en:'Bonus Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Palabra de Curación', desc:'Una criatura que puedas ver a distancia recupera 1d4 más tu modificador de característica de conjuros en puntos de golpe.'},
     en:{name:'Healing Word', desc:'A creature you can see at a distance regains 1d4 plus your spellcasting ability modifier in hit points.'}},
-  {id:'aid', level:2, classes:['cleric','paladin'], school:'abjuration', time:'action', range:'touch', duration:'eight_hours',
+  {id:'aid', level:2, classes:['cleric','paladin'], school:'abjuration', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'8 horas',en:'8 hours'}, concentration:false,
     es:{name:'Ayuda', desc:'Hasta tres criaturas aumentan su máximo de puntos de golpe y sus puntos de golpe actuales en 5 durante la duración.'},
     en:{name:'Aid', desc:'Up to three creatures increase their hit point maximum and current hit points by 5 for the duration.'}},
-  {id:'lesser_restoration', level:2, classes:['bard','cleric','druid','paladin','ranger'], school:'abjuration', time:'action', range:'touch', duration:'instantaneous',
+  {id:'lesser_restoration', level:2, classes:['bard','cleric','druid','paladin','ranger'], school:'abjuration', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Restablecimiento Menor', desc:'Termina con una enfermedad o con una de las siguientes condiciones que afecte a la criatura tocada: cegado, ensordecido, paralizado o envenenado.'},
     en:{name:'Lesser Restoration', desc:'Ends a disease or one of the following conditions affecting the touched creature: blinded, deafened, paralyzed, or poisoned.'}},
-  {id:'zone_of_truth', level:2, classes:['bard','cleric'], school:'enchantment', time:'action', range:'ft60', duration:'ten_minutes',
+  {id:'zone_of_truth', level:2, classes:['bard','cleric'], school:'enchantment', time:{es:'Acción',en:'Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'10 minutos',en:'10 minutes'}, concentration:false,
     es:{name:'Zona de Verdad', desc:'Crea un área mágica; las criaturas dentro que fallen su salvación no pueden decir mentiras deliberadas mientras permanezcan en la zona.'},
     en:{name:'Zone of Truth', desc:'You create a magical area; creatures inside that fail their save cannot speak deliberate lies while remaining in the zone.'}},
-  {id:'magic_weapon', level:2, classes:['wizard'], school:'transmutation', time:'bonus_action', range:'touch', duration:'one_hour',
+  {id:'magic_weapon', level:2, classes:['wizard'], school:'transmutation', time:{es:'Acción Bonus',en:'Bonus Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'1 hora',en:'1 hour'}, concentration:false,
     es:{name:'Arma Mágica', desc:'Un arma no mágica tocada se vuelve mágica, ganando +1 a las tiradas de ataque y de daño.'},
     en:{name:'Magic Weapon', desc:'A touched nonmagical weapon becomes magical, gaining +1 to attack and damage rolls.'}},
-  {id:'find_steed', level:2, classes:['paladin'], school:'conjuration', time:'ten_minutes', range:'ft30', duration:'instantaneous',
+  {id:'find_steed', level:2, classes:['paladin'], school:'conjuration', time:{es:'10 minutos',en:'10 minutes'}, range:{es:'30 pies',en:'30 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Buscar Corcel', desc:'Invocas a un espíritu que toma la forma de una montura leal e inteligente para servirte como compañera.'},
     en:{name:'Find Steed', desc:'You summon a spirit that takes the form of a loyal, intelligent mount to serve you.'}},
-  {id:'warding_bond', level:2, classes:['cleric'], school:'abjuration', time:'action', range:'touch', duration:'one_hour',
+  {id:'warding_bond', level:2, classes:['cleric'], school:'abjuration', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'1 hora',en:'1 hour'}, concentration:false,
     es:{name:'Vínculo Protector', desc:'Vinculas a dos criaturas dispuestas; cuando una recibe daño, parte de ese daño se transfiere a la otra.'},
     en:{name:'Warding Bond', desc:'You link two willing creatures; when one takes damage, some of that damage is transferred to the other.'}},
-  {id:'wrathful_smite', level:1, classes:['paladin'], school:'evocation', time:'bonus_action', range:'self', duration:'conc_1min',
+  {id:'wrathful_smite', level:1, classes:['paladin'], school:'evocation', time:{es:'Acción Bonus',en:'Bonus Action'}, range:{es:'Personal',en:'Self'}, duration:{es:'Concentración, 1 minuto',en:'Concentration, 1 minute'}, concentration:true,
     es:{name:'Castigo Iracundo', desc:'Tu próximo golpe con arma añade daño psíquico extra y puede aterrorizar al objetivo si falla su salvación de Sabiduría.'},
     en:{name:'Wrathful Smite', desc:'Your next weapon hit adds extra psychic damage and may frighten the target if it fails its Wisdom save.'}},
-  {id:'searing_smite', level:1, classes:['paladin'], school:'evocation', time:'bonus_action', range:'self', duration:'conc_1min',
+  {id:'searing_smite', level:1, classes:['paladin'], school:'evocation', time:{es:'Acción Bonus',en:'Bonus Action'}, range:{es:'Personal',en:'Self'}, duration:{es:'Concentración, 1 minuto',en:'Concentration, 1 minute'}, concentration:true,
     es:{name:'Castigo Abrasador', desc:'Tu próximo golpe con arma añade daño de fuego extra y puede prenderle fuego al objetivo, causando daño adicional al inicio de sus turnos.'},
     en:{name:'Searing Smite', desc:'Your next weapon hit adds extra fire damage and may set the target ablaze, causing further damage at the start of its turns.'}},
-  {id:'thunderous_smite', level:1, classes:['paladin'], school:'evocation', time:'bonus_action', range:'self', duration:'conc_1min',
+  {id:'thunderous_smite', level:1, classes:['paladin'], school:'evocation', time:{es:'Acción Bonus',en:'Bonus Action'}, range:{es:'Personal',en:'Self'}, duration:{es:'Concentración, 1 minuto',en:'Concentration, 1 minute'}, concentration:true,
     es:{name:'Castigo Atronador', desc:'Tu próximo golpe con arma añade daño de trueno extra y puede empujar al objetivo, además de derribarlo si falla su salvación de Fuerza.'},
     en:{name:'Thunderous Smite', desc:'Your next weapon hit adds extra thunder damage and may push the target back, knocking it prone if it fails its Strength save.'}},
-  {id:'branding_smite', level:2, classes:['paladin'], school:'evocation', time:'bonus_action', range:'self', duration:'conc_1min',
+  {id:'branding_smite', level:2, classes:['paladin'], school:'evocation', time:{es:'Acción Bonus',en:'Bonus Action'}, range:{es:'Personal',en:'Self'}, duration:{es:'Concentración, 1 minuto',en:'Concentration, 1 minute'}, concentration:true,
     es:{name:'Marca Flamígera', desc:'Tu próximo golpe con arma añade daño de fuego extra y marca al objetivo, dándote ventaja en los siguientes ataques que le hagas.'},
     en:{name:'Branding Smite', desc:'Your next weapon hit adds extra radiant damage and marks the target, giving you advantage on further attacks against it.'}},
 
   /* ---------- Cantrips (level 0) ---------- */
-  {id:'guidance', level:0, classes:['cleric','druid'], school:'divination', time:'action', range:'touch', duration:'conc_1min',
+  {id:'guidance', level:0, classes:['cleric','druid'], school:'divination', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'Concentración, 1 minuto',en:'Concentration, 1 minute'}, concentration:true,
     es:{name:'Guía', desc:'Toca a una criatura dispuesta; una vez antes de que el conjuro termine, esa criatura puede sumar 1d4 a una prueba de característica de su elección.'},
     en:{name:'Guidance', desc:'You touch a willing creature; once before the spell ends, that creature can add 1d4 to one ability check of its choice.'}},
-  {id:'thaumaturgy', level:0, classes:['cleric'], school:'transmutation', time:'action', range:'self', duration:'one_minute',
+  {id:'thaumaturgy', level:0, classes:['cleric'], school:'transmutation', time:{es:'Acción',en:'Action'}, range:{es:'Personal',en:'Self'}, duration:{es:'1 minuto',en:'1 minute'}, concentration:false,
     es:{name:'Taumaturgia', desc:'Manifiestas un efecto menor y prodigioso a 30 pies: tu voz retumba, llamas parpadean, puertas se abren o cierran de golpe, etc.'},
     en:{name:'Thaumaturgy', desc:'You manifest a minor wonder within 30 feet: your voice booms, flames flicker, doors slam open or shut, and similar effects.'}},
-  {id:'sacred_flame', level:0, classes:['cleric'], school:'evocation', time:'action', range:'ft60', duration:'instantaneous',
+  {id:'sacred_flame', level:0, classes:['cleric'], school:'evocation', time:{es:'Acción',en:'Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Llama Sagrada', desc:'Fuego radiante desciende sobre una criatura que veas a distancia. Debe superar una salvación de Destreza o sufrir daño radiante.'},
     en:{name:'Sacred Flame', desc:'Radiant flame descends on a creature you can see within range. It must succeed on a Dexterity save or take radiant damage.'}},
-  {id:'spare_the_dying', level:0, classes:['cleric'], school:'necromancy', time:'action', range:'touch', duration:'instantaneous',
+  {id:'spare_the_dying', level:0, classes:['cleric'], school:'necromancy', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Aliviar Agonía', desc:'Tocas a una criatura con 0 puntos de golpe; queda estable. Cualquier criatura inmune al daño necrótico es inmune a este conjuro.'},
     en:{name:'Spare the Dying', desc:'You touch a creature with 0 hit points and it becomes stable. Any creature immune to necrotic damage is immune to this spell.'}},
-  {id:'eldritch_blast', level:0, classes:['warlock'], school:'evocation', time:'action', range:'ft120', duration:'instantaneous',
+  {id:'eldritch_blast', level:0, classes:['warlock'], school:'evocation', time:{es:'Acción',en:'Action'}, range:{es:'120 pies',en:'120 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Descarga Eldritch', desc:'Un haz crepitante de energía se dispara hacia una criatura. Realiza un ataque de conjuro cuerpo a distancia; si impacta, la criatura sufre 1d10 de daño de fuerza.'},
     en:{name:'Eldritch Blast', desc:'A beam of crackling energy streaks toward a creature. Make a ranged spell attack; on a hit, the target takes 1d10 force damage.'}},
-  {id:'minor_illusion', level:0, classes:['bard','sorcerer','warlock','wizard'], school:'illusion', time:'action', range:'ft30', duration:'one_minute',
+  {id:'minor_illusion', level:0, classes:['bard','sorcerer','warlock','wizard'], school:'illusion', time:{es:'Acción',en:'Action'}, range:{es:'30 pies',en:'30 feet'}, duration:{es:'1 minuto',en:'1 minute'}, concentration:false,
     es:{name:'Ilusión Menor', desc:'Creas un sonido o una imagen visual silenciosa de un objeto dentro del alcance, que dura mientras se mantenga el conjuro.'},
     en:{name:'Minor Illusion', desc:'You create a sound or a silent visual image of an object within range that lasts for the duration.'}},
-  {id:'fire_bolt', level:0, classes:['sorcerer','wizard'], school:'evocation', time:'action', range:'ft120', duration:'instantaneous',
+  {id:'fire_bolt', level:0, classes:['sorcerer','wizard'], school:'evocation', time:{es:'Acción',en:'Action'}, range:{es:'120 pies',en:'120 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Vela de Fuego', desc:'Lanzas un dardo de fuego contra una criatura u objeto. Con un ataque de conjuro a distancia, causa 1d10 de daño de fuego; puede prender fuego a objetos inflamables.'},
     en:{name:'Fire Bolt', desc:'You hurl a mote of fire at a creature or object. With a ranged spell attack, it deals 1d10 fire damage and may ignite flammable objects.'}},
-  {id:'sorcerous_burst', level:0, classes:['sorcerer'], school:'evocation', time:'action', range:'ft60', duration:'instantaneous',
+  {id:'sorcerous_burst', level:0, classes:['sorcerer'], school:'evocation', time:{es:'Acción',en:'Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Estallido Hechiceril', desc:'Un proyectil de energía mágica de tu elección (ácido, frío, fuego, rayo, veneno o trueno) golpea a un objetivo con un ataque de conjuro, causando 1d8 de daño.'},
     en:{name:'Sorcerous Burst', desc:'A bolt of energy of your choice (acid, cold, fire, lightning, poison, or thunder) strikes a target with a spell attack, dealing 1d8 damage.'}},
-  {id:'mage_hand', level:0, classes:['bard','sorcerer','warlock','wizard'], school:'conjuration', time:'action', range:'ft30', duration:'one_minute',
+  {id:'mage_hand', level:0, classes:['bard','sorcerer','warlock','wizard'], school:'conjuration', time:{es:'Acción',en:'Action'}, range:{es:'30 pies',en:'30 feet'}, duration:{es:'1 minuto',en:'1 minute'}, concentration:false,
     es:{name:'Mano de Mago', desc:'Una mano espectral flotante aparece y puede manipular objetos, abrir puertas o guardar/sacar objetos de contenedores a distancia.'},
     en:{name:'Mage Hand', desc:'A spectral floating hand appears; it can manipulate objects, open containers, or stow/retrieve items at range.'}},
-  {id:'elementalism', level:0, classes:['bard','sorcerer','wizard'], school:'transmutation', time:'action', range:'ft10', duration:'instantaneous',
+  {id:'elementalism', level:0, classes:['bard','sorcerer','wizard'], school:'transmutation', time:{es:'Acción',en:'Action'}, range:{es:'10 pies',en:'10 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Elementalismo', desc:'Creas un efecto elemental menor y momentáneo: una brisa, chispas, niebla, un tintineo de piedras, etc., útil para trucos ambientales.'},
     en:{name:'Elementalism', desc:'You create a minor, momentary elemental effect: a breeze, sparks, mist, a jingle of stones, and similar environmental flourishes.'}},
 
   /* ---------- Level 1 spells ---------- */
-  {id:'dissonant_whispers', level:1, classes:['bard','warlock'], school:'enchantment', time:'action', range:'ft60', duration:'instantaneous',
+  {id:'dissonant_whispers', level:1, classes:['bard','warlock'], school:'enchantment', time:{es:'Acción',en:'Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Susurros Disonantes', desc:'Susurras una melodía discordante que solo una criatura puede oír. Falla una salvación de Sabiduría o sufre daño psíquico y debe usar su reacción para huir de ti.'},
     en:{name:'Dissonant Whispers', desc:'You whisper a discordant melody only one creature can hear. It fails a Wisdom save or takes psychic damage and must use its reaction to flee from you.'}},
-  {id:'mage_armor', level:1, classes:['sorcerer','warlock','wizard'], school:'abjuration', time:'action', range:'touch', duration:'eight_hours',
+  {id:'mage_armor', level:1, classes:['sorcerer','warlock','wizard'], school:'abjuration', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'8 horas',en:'8 hours'}, concentration:false,
     es:{name:'Armadura de Mago', desc:'Tocas a una criatura dispuesta sin armadura; queda envuelta en fuerza mágica, con una CA base de 13 + modificador de Destreza mientras dure.'},
     en:{name:'Mage Armor', desc:'You touch a willing unarmored creature; it is protected by a magical force, giving a base AC of 13 + Dexterity modifier for the duration.'}},
-  {id:'magic_missile', level:1, classes:['sorcerer','wizard'], school:'evocation', time:'action', range:'ft120', duration:'instantaneous',
+  {id:'magic_missile', level:1, classes:['sorcerer','wizard'], school:'evocation', time:{es:'Acción',en:'Action'}, range:{es:'120 pies',en:'120 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Proyectil Mágico', desc:'Creas tres dardos de energía mágica. Cada uno impacta automáticamente a una criatura a tu elección, causando 1d4+1 de daño de fuerza.'},
     en:{name:'Magic Missile', desc:'You create three darts of magical force. Each dart automatically hits a creature of your choice, dealing 1d4+1 force damage.'}},
-  {id:'expeditious_retreat', level:1, classes:['sorcerer','warlock','wizard'], school:'transmutation', time:'bonus_action', range:'self', duration:'conc_10min',
+  {id:'expeditious_retreat', level:1, classes:['sorcerer','warlock','wizard'], school:'transmutation', time:{es:'Acción Bonus',en:'Bonus Action'}, range:{es:'Personal',en:'Self'}, duration:{es:'Concentración, 10 minutos',en:'Concentration, 10 minutes'}, concentration:true,
     es:{name:'Retirada Expedita', desc:'Tu velocidad aumenta y puedes usar la acción Correr como acción adicional en cada uno de tus turnos mientras dure el conjuro.'},
     en:{name:'Expeditious Retreat', desc:'Your speed increases and you can take the Dash action as a bonus action on each of your turns for the duration.'}},
-  {id:'ray_of_frost', level:0, classes:['sorcerer','wizard'], school:'evocation', time:'action', range:'ft60', duration:'instantaneous',
+  {id:'ray_of_frost', level:0, classes:['sorcerer','wizard'], school:'evocation', time:{es:'Acción',en:'Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Chispa de Escarcha', desc:'Un rayo de luz azul-blanco golpea a una criatura. Con un ataque de conjuro a distancia, causa 1d8 de daño de frío y reduce su velocidad en 10 pies hasta el inicio de tu siguiente turno.'},
     en:{name:'Ray of Frost', desc:'A beam of blue-white light streaks toward a creature. With a ranged spell attack, it deals 1d8 cold damage and reduces its speed by 10 feet until the start of your next turn.'}},
 ];
@@ -1730,6 +1727,7 @@ async function renderGmDashboard(code){
   const gridSnapshot = JSON.stringify(charsData.map(c=>({
     id:c.id, name:c.identity.name, klass:c.identity.klass, klassCustom:c.identity.klassCustom,
     level:c.level, hp:c.hp, prepared:c.preparedSpellIds,
+    abilities:c.abilities, skillProf:c.skillProf, skillExpertise:c.skillExpertise,
   })));
   if(gridSnapshot !== gmLastGridSnapshot){
     gmLastGridSnapshot = gridSnapshot;
@@ -1751,11 +1749,20 @@ async function renderGmDashboard(code){
             return `<span class="gm-spell-chip">${sp[currentLang].name}</span>`;
           }).join('');
         }
+        const passivePerception = computePassiveScore(c, 'perception');
+        const passiveInvestigation = computePassiveScore(c, 'investigation');
+        const passiveInsight = computePassiveScore(c, 'insight');
         card.innerHTML = `
           <div class="gcc-name">${c.identity.name || t('default_char_name')}</div>
           <div class="gcc-meta">${klassLabel ? klassLabel+' · ' : ''}${t('level_option')} ${c.level}</div>
           <div class="gm-hp-row"><span class="cur">${c.hp.current}</span><span class="max">/ ${c.hp.max} HP</span></div>
           <div class="gm-hp-bar-bg"><div class="gm-hp-bar-fill" style="width:${pct}%"></div></div>
+          <div class="gm-sub-label">${t('gm_passives_label')}</div>
+          <div class="gm-passives-row">
+            <span class="gm-passive-chip" title="${t('lab_passive_perception')}">👁 ${passivePerception}</span>
+            <span class="gm-passive-chip" title="${t('lab_passive_investigation')}">🔍 ${passiveInvestigation}</span>
+            <span class="gm-passive-chip" title="${t('lab_passive_insight')}">🧠 ${passiveInsight}</span>
+          </div>
           <div class="gm-sub-label">${t('gm_prepared_label')}</div>
           <div>${preparedHtml}</div>
         `;
@@ -2507,17 +2514,17 @@ function renderInspiration(){
 }
 
 // ---------- PASSIVE SCORES ----------
+function computePassiveScore(c, skillId){
+  const PB = pbForLevel(c.level);
+  const s = skillDefs.find(x=>x.id===skillId);
+  const prof = !!c.skillProf[skillId];
+  const expertise = !!(c.skillExpertise && c.skillExpertise[skillId]);
+  return 10 + modOf(c.abilities[s.key]) + (prof?PB:0) + (expertise?PB:0);
+}
 function renderPassives(){
-  const PB = pbForLevel(character.level);
-  function passive(skillId){
-    const s = skillDefs.find(x=>x.id===skillId);
-    const prof = !!character.skillProf[skillId];
-    const expertise = !!(character.skillExpertise && character.skillExpertise[skillId]);
-    return 10 + modOf(character.abilities[s.key]) + (prof?PB:0) + (expertise?PB:0);
-  }
-  document.getElementById('passive-perception').textContent = passive('perception');
-  document.getElementById('passive-investigation').textContent = passive('investigation');
-  document.getElementById('passive-insight').textContent = passive('insight');
+  document.getElementById('passive-perception').textContent = computePassiveScore(character, 'perception');
+  document.getElementById('passive-investigation').textContent = computePassiveScore(character, 'investigation');
+  document.getElementById('passive-insight').textContent = computePassiveScore(character, 'insight');
 }
 
 // ---------- CLASS RESOURCE POOL (e.g. Sorcery Points) ----------
@@ -2999,9 +3006,9 @@ function renderPreparedList(){
     if(!sp) return;
     const data = sp[currentLang];
     const school = SCHOOL_I18N[sp.school][currentLang];
-    const time = TIME_I18N[sp.time][currentLang];
-    const range = RANGE_I18N[sp.range][currentLang];
-    const duration = DURATION_I18N[sp.duration][currentLang];
+    const time = sp.time[currentLang];
+    const range = sp.range[currentLang];
+    const duration = sp.duration[currentLang];
     const concBadge = isConcentration(sp) ? `<span class="conc-badge">${t('conc_badge')}</span>` : '';
     const div = document.createElement('div');
     div.className='feat';
@@ -3047,9 +3054,9 @@ function renderSpellResults(filter=''){
   filtered.forEach(s=>{
     const data = s[currentLang];
     const school = SCHOOL_I18N[s.school][currentLang];
-    const time = TIME_I18N[s.time][currentLang];
-    const range = RANGE_I18N[s.range][currentLang];
-    const duration = DURATION_I18N[s.duration][currentLang];
+    const time = s.time[currentLang];
+    const range = s.range[currentLang];
+    const duration = s.duration[currentLang];
     const item = document.createElement('div');
     item.className='spell-item';
     const isPrepared = character.preparedSpellIds.includes(s.id);
