@@ -236,7 +236,7 @@ table.eqp tr:last-child td{border-bottom:none;}
 @media(max-width:420px){ table.eqp{ font-size:.78rem; } }
 
 /* ---------- SESSION: entry buttons on selector ---------- */
-.session-entry{ max-width:920px;margin:0 auto 26px;padding:0 4px;display:flex;justify-content:center; }
+.session-entry{ max-width:920px;margin:16px auto 26px;padding:0 4px;display:flex;justify-content:center; }
 .session-cta{ font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:1px;text-transform:uppercase;color:var(--parch-dim); background:var(--panel);border:1px dashed var(--steel);border-radius:10px;padding:12px 20px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px; }
 .session-cta:hover{border-color:var(--gold);color:var(--gold-bright);border-style:solid;}
 .session-cta .dice{font-size:1.1rem;}
@@ -1461,11 +1461,27 @@ function showSessionCreated(code){
   document.getElementById('sc-back').onclick = ()=>{ history.replaceState(null,'',location.pathname); renderSelector(); };
 }
 
+async function copyTextToClipboard(text){
+  if(navigator.clipboard && window.isSecureContext){
+    try{ await navigator.clipboard.writeText(text); return true; }catch(e){ /* fall through to legacy path */ }
+  }
+  // Clipboard API is unavailable over plain HTTP (non-secure context) — fall back to execCommand.
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  let ok = false;
+  try{ ok = document.execCommand('copy'); }catch(e){ ok = false; }
+  document.body.removeChild(ta);
+  return ok;
+}
 document.querySelectorAll('[data-copy-target]').forEach(btn=>{
   btn.addEventListener('click', async ()=>{
     const input = document.getElementById(btn.getAttribute('data-copy-target'));
-    try{ await navigator.clipboard.writeText(input.value); }
-    catch(e){ input.select(); }
+    await copyTextToClipboard(input.value);
     const original = btn.textContent;
     btn.textContent = t('btn_copied');
     setTimeout(()=>{ btn.textContent = original; }, 1500);
