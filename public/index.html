@@ -35,6 +35,18 @@ input, select, button, textarea{font-family:inherit;}
 .sun-ray{transform-origin:37px 37px;animation:spin 40s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 @media (prefers-reduced-motion: reduce){.sun-ray{animation:none;}}
+@media(max-width:480px){ .header .sun{ display:none; } }
+
+.header-toggle-btn{ display:none; }
+@media(max-width:480px){
+  .header-toggle-btn{
+    display:inline-block; margin:8px auto 0; font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:1px;text-transform:uppercase;
+    background:var(--panel-2);border:1px solid var(--steel);color:var(--parch-dim);border-radius:50px;padding:6px 16px;cursor:pointer;
+  }
+  .header-toggle-btn:active{border-color:var(--gold);color:var(--gold-bright);}
+  .header-collapsible{ display:none; }
+  .header-collapsible.expanded{ display:block; }
+}
 
 .name-input{
   font-family:'Cinzel Decorative',serif; font-size:clamp(1.4rem, 6vw, 2.2rem); color:var(--gold-bright);
@@ -397,29 +409,32 @@ table.eqp tr:last-child td{border-bottom:none;}
       </svg>
     </div>
     <input class="name-input" id="char-name" type="text">
-    <div class="identity-row" id="identity-row"></div>
-    <div class="header-controls">
-      <button class="back-btn" id="btn-back" data-i18n="btn_back">← Personajes</button>
-      <div class="control-group">
-        <label class="control-label" id="level-label" for="level-select">Nivel de Personaje</label>
-        <select class="level-select" id="level-select"></select>
-      </div>
-      <div class="control-group">
-        <label class="control-label" data-i18n="xp_label">Experiencia (PX)</label>
-        <input class="level-select" id="xp-input" type="number" min="0" step="1" style="width:88px;text-align:center;">
-      </div>
-      <div class="control-group">
-        <div class="lang-toggle">
-          <button class="lang-btn active" id="lang-es" data-lang="es">ES</button>
-          <button class="lang-btn" id="lang-en" data-lang="en">EN</button>
+    <button class="header-toggle-btn" id="header-toggle-btn" data-i18n="btn_header_expand">▼ Detalles</button>
+    <div class="header-collapsible" id="header-collapsible">
+      <div class="identity-row" id="identity-row"></div>
+      <div class="header-controls">
+        <button class="back-btn" id="btn-back" data-i18n="btn_back">← Personajes</button>
+        <div class="control-group">
+          <label class="control-label" id="level-label" for="level-select">Nivel de Personaje</label>
+          <select class="level-select" id="level-select"></select>
         </div>
+        <div class="control-group">
+          <label class="control-label" data-i18n="xp_label">Experiencia (PX)</label>
+          <input class="level-select" id="xp-input" type="number" min="0" step="1" style="width:88px;text-align:center;">
+        </div>
+        <div class="control-group">
+          <div class="lang-toggle">
+            <button class="lang-btn active" id="lang-es" data-lang="es">ES</button>
+            <button class="lang-btn" id="lang-en" data-lang="en">EN</button>
+          </div>
+        </div>
+        <div class="control-group" id="session-badge-wrap" style="display:none;">
+          <span class="session-badge"><span class="dot-live"></span><span id="session-badge-code">------</span></span>
+          <button class="ghost-btn" id="btn-leave-session" data-i18n="btn_leave_session">Salir de sesión</button>
+        </div>
+        <button class="ghost-btn" id="inspiration-toggle" data-i18n="btn_inspiration">⭐ Inspiración</button>
+        <span id="save-status"></span>
       </div>
-      <div class="control-group" id="session-badge-wrap" style="display:none;">
-        <span class="session-badge"><span class="dot-live"></span><span id="session-badge-code">------</span></span>
-        <button class="ghost-btn" id="btn-leave-session" data-i18n="btn_leave_session">Salir de sesión</button>
-      </div>
-      <button class="ghost-btn" id="inspiration-toggle" data-i18n="btn_inspiration">⭐ Inspiración</button>
-      <span id="save-status"></span>
     </div>
   </div>
 
@@ -769,6 +784,7 @@ const I18N = {
     conc_badge:'Concentración', btn_concentrate:'Concentrarme', concentrate_toast:'Ahora estás concentrado',
     prep_limit_toast:'Ya tienes {n} conjuros preparados', prep_limit_detail:'quita uno antes de añadir otro',
     check_label:'Prueba', save_label:'Salvación', level_label:'Nivel de Personaje', level_option:'Nivel', xp_label:'Experiencia (PX)',
+    btn_header_expand:'▼ Detalles', btn_header_collapse:'▲ Detalles',
     h_loh:'Imposición de Manos (Lay on Hands)', p_loh:'Reserva de 5 PV al día. Acción bonus para curar; gasta 5 PV para curar enfermedad o eliminar Envenenado.',
     lbl_loh_available:'Reserva disponible:', unit_slash:'/ 5 PV', btn_loh_reset:'Descanso largo (restaurar reserva)',
     h_divine_sense:'Sentido Divino (Divine Sense)', p_divine_sense:'Detecta celestiales, fiendes o no-muertos a 60 ft. 3 usos/día (= Mod. Carisma).',
@@ -827,6 +843,7 @@ const I18N = {
     conc_badge:'Concentration', btn_concentrate:'Concentrate', concentrate_toast:'You are now concentrating',
     prep_limit_toast:'You already have {n} spells prepared', prep_limit_detail:'remove one before adding another',
     check_label:'Check', save_label:'Save', level_label:'Character Level', level_option:'Level', xp_label:'Experience (XP)',
+    btn_header_expand:'▼ Details', btn_header_collapse:'▲ Details',
     h_loh:'Lay on Hands', p_loh:'5 HP pool per day. Bonus action to heal; spend 5 HP to cure a disease or remove the Poisoned condition.',
     lbl_loh_available:'Available pool:', unit_slash:'/ 5 HP', btn_loh_reset:'Long rest (restore pool)',
     h_divine_sense:'Divine Sense', p_divine_sense:'Detects celestials, fiends, or undead within 60 ft. 3 uses/day (= Charisma modifier).',
@@ -1787,6 +1804,8 @@ function showSheet(){
   document.getElementById('screen-sheet').style.display='block';
   document.getElementById('lang-es').classList.toggle('active', currentLang==='es');
   document.getElementById('lang-en').classList.toggle('active', currentLang==='en');
+  document.getElementById('header-collapsible').classList.remove('expanded');
+  document.getElementById('header-toggle-btn').textContent = t('btn_header_expand');
   applyStaticText();
   renderAll();
   renderSpellResults('');
@@ -2260,6 +2279,13 @@ document.getElementById('inspiration-toggle').addEventListener('click', ()=>{
   character.heroicInspiration = !character.heroicInspiration;
   scheduleSave();
   renderInspiration();
+});
+
+document.getElementById('header-toggle-btn').addEventListener('click', ()=>{
+  const wrap = document.getElementById('header-collapsible');
+  const btn = document.getElementById('header-toggle-btn');
+  const expanded = wrap.classList.toggle('expanded');
+  btn.textContent = expanded ? t('btn_header_collapse') : t('btn_header_expand');
 });
 function renderInspiration(){
   document.getElementById('inspiration-toggle').classList.toggle('active', !!character.heroicInspiration);
