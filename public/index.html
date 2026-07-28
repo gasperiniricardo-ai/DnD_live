@@ -272,6 +272,7 @@ table.eqp tr:last-child td{border-bottom:none;}
 .copy-btn:hover, .primary-btn:hover{filter:brightness(1.08);}
 .ghost-btn{ font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:1px;text-transform:uppercase;background:none;border:1px solid var(--steel);color:var(--parch-dim);border-radius:6px;padding:9px 16px;cursor:pointer; }
 .ghost-btn:hover{border-color:var(--gold);color:var(--gold-bright);}
+.ghost-btn.confirm{background:var(--crimson);border-color:var(--crimson-bright);color:#fff;}
 .ghost-btn.active{background:linear-gradient(160deg,var(--gold),#a67f34);color:#1b1400;border-color:var(--gold-bright);}
 .session-error{color:var(--crimson-bright);font-size:.88rem;text-align:center;margin:20px 0;}
 .session-note{font-size:.78rem;color:var(--parch-dim);line-height:1.5;margin-top:6px;}
@@ -425,18 +426,20 @@ table.eqp tr:last-child td{border-bottom:none;}
       <h2 data-i18n="gm_initiative_title">Iniciativa</h2>
       <div id="gm-initiative-list"></div>
       <p class="gm-empty-hint" id="gm-initiative-empty" style="display:none;" data-i18n="gm_initiative_empty">Nadie en la iniciativa todavía.</p>
-      <div class="item-form" style="grid-template-columns:2fr 1fr 1fr auto;margin-top:12px;">
+      <div class="item-form" style="grid-template-columns:2fr 1fr 1fr;margin-top:12px;">
         <input type="text" id="gm-init-name" data-i18n-ph="gm_init_name_ph" placeholder="Nombre">
         <input type="number" id="gm-init-value" data-i18n-ph="gm_init_value_ph" placeholder="Iniciativa">
         <select id="gm-init-type">
           <option value="enemy" data-i18n="gm_init_type_enemy">Enemigo</option>
           <option value="player" data-i18n="gm_init_type_player">Jugador</option>
         </select>
-        <button class="reset-btn" id="gm-init-add" data-i18n="btn_add_item">Añadir</button>
       </div>
       <div class="item-form" id="gm-init-enemy-fields" style="grid-template-columns:1fr 1fr;margin-top:8px;">
         <input type="number" id="gm-init-ac" data-i18n-ph="gm_init_ac_ph" placeholder="CA (opcional)" min="0">
         <input type="number" id="gm-init-hp" data-i18n-ph="gm_init_hp_ph" placeholder="PG máx. (opcional)" min="1">
+      </div>
+      <div style="text-align:center;margin-top:10px;">
+        <button class="reset-btn" id="gm-init-add" data-i18n="btn_add">Añadir</button>
       </div>
       <div style="display:flex;gap:10px;margin-top:14px;justify-content:center;flex-wrap:wrap;">
         <button class="ghost-btn" id="gm-init-next" data-i18n="gm_init_next">Siguiente turno →</button>
@@ -515,6 +518,7 @@ table.eqp tr:last-child td{border-bottom:none;}
           <button class="ghost-btn" id="btn-leave-session" data-i18n="btn_leave_session">Salir de sesión</button>
         </div>
         <button class="ghost-btn" id="inspiration-toggle" data-i18n="btn_inspiration">⭐ Inspiración</button>
+        <button class="ghost-btn" id="btn-restore-backup" data-i18n="btn_restore_backup" data-i18n-title="btn_restore_backup_title" title="Restaura el personaje a como estaba al abrirlo por última vez">↺ Restaurar copia</button>
         <span id="save-status"></span>
       </div>
     </div>
@@ -839,7 +843,7 @@ const I18N = {
     gm_no_players:'Esperando a que se unan jugadores…', gm_prepared_label:'Hechizos preparados', gm_no_prepared:'Ninguno preparado', gm_passives_label:'Pasivas (Percepción / Investigación / Perspicacia)',
     gm_initiative_title:'Iniciativa', gm_initiative_empty:'Nadie en la iniciativa todavía.',
     gm_init_name_ph:'Nombre', gm_init_value_ph:'Iniciativa', gm_init_type_enemy:'Enemigo', gm_init_type_player:'Jugador',
-    gm_init_ac_ph:'CA (opcional)', gm_init_hp_ph:'PG máx. (opcional)', gm_init_ac_label:'Clase de Armadura',
+    gm_init_ac_ph:'CA (opcional)', gm_init_hp_ph:'PG máx. (opcional)', gm_init_ac_label:'Clase de Armadura', btn_add:'Añadir',
     gm_init_next:'Siguiente turno →', gm_init_clear:'Limpiar iniciativa', gm_code_label:'CÓDIGO',
     gm_dice_title:'Tirador de Dados', gm_dice_ph:'Ej. 2d10+2', gm_dice_roll_btn:'Tirar', gm_dice_invalid:'Formato no válido. Usa algo como 2d10+2.',
     gm_spell_search_title:'Buscador de Hechizos',
@@ -886,6 +890,9 @@ const I18N = {
     h_damage_notes:'Resistencias, inmunidades y vulnerabilidades', damage_note_ph:'Escribe aquí...', btn_add_damage:'Añadir resistencia/inmunidad',
     h_passives:'Pasivas', lab_passive_perception:'Percepción Pasiva', lab_passive_investigation:'Investigación Pasiva', lab_passive_insight:'Perspicacia Pasiva',
     btn_inspiration:'⭐ Inspiración',
+    btn_restore_backup:'↺ Restaurar copia', btn_restore_backup_title:'Restaura el personaje a como estaba al abrirlo por última vez',
+    btn_restore_backup_confirm:'¿Restaurar? toca de nuevo', restore_no_backup_toast:'No hay copia de seguridad disponible todavía',
+    restore_done_toast:'Personaje restaurado a la última copia de seguridad',
     lbl_resource_available:'Disponible:', btn_resource_reset:'Descanso largo (restaurar recurso)',
     h_conditions:'Condiciones activas', lbl_exhaustion:'Agotamiento (nivel):', p_exhaustion:'−2 a tiradas de d20 por nivel; a nivel 6, mueres.',
     h_currency:'Monedas', eqp_weight_title:'Peso (lb)',
@@ -910,7 +917,7 @@ const I18N = {
     gm_no_players:'Waiting for players to join…', gm_prepared_label:'Prepared spells', gm_no_prepared:'None prepared', gm_passives_label:'Passives (Perception / Investigation / Insight)',
     gm_initiative_title:'Initiative', gm_initiative_empty:'No one on the initiative order yet.',
     gm_init_name_ph:'Name', gm_init_value_ph:'Initiative', gm_init_type_enemy:'Enemy', gm_init_type_player:'Player',
-    gm_init_ac_ph:'AC (optional)', gm_init_hp_ph:'Max HP (optional)', gm_init_ac_label:'Armor Class',
+    gm_init_ac_ph:'AC (optional)', gm_init_hp_ph:'Max HP (optional)', gm_init_ac_label:'Armor Class', btn_add:'Add',
     gm_init_next:'Next turn →', gm_init_clear:'Clear initiative', gm_code_label:'CODE',
     gm_dice_title:'Dice Roller', gm_dice_ph:'e.g. 2d10+2', gm_dice_roll_btn:'Roll', gm_dice_invalid:'Invalid format. Try something like 2d10+2.',
     gm_spell_search_title:'Spell Search',
@@ -957,6 +964,9 @@ const I18N = {
     h_damage_notes:'Resistances, immunities & vulnerabilities', damage_note_ph:'Type here...', btn_add_damage:'Add resistance/immunity',
     h_passives:'Passives', lab_passive_perception:'Passive Perception', lab_passive_investigation:'Passive Investigation', lab_passive_insight:'Passive Insight',
     btn_inspiration:'⭐ Inspiration',
+    btn_restore_backup:'↺ Restore backup', btn_restore_backup_title:'Restores the character to how it was when last opened',
+    btn_restore_backup_confirm:'Restore? tap again', restore_no_backup_toast:'No backup available yet',
+    restore_done_toast:'Character restored to the last backup',
     lbl_resource_available:'Available:', btn_resource_reset:'Long rest (restore resource)',
     h_conditions:'Active Conditions', lbl_exhaustion:'Exhaustion (level):', p_exhaustion:'−2 to d20 rolls per level; at level 6, you die.',
     h_currency:'Currency', eqp_weight_title:'Weight (lb)',
@@ -2705,6 +2715,14 @@ function applySessionI18n(rootId){
     const key = el.getAttribute('data-i18n');
     if(I18N[currentLang][key]!==undefined) el.textContent = I18N[currentLang][key];
   });
+  document.querySelectorAll('#'+rootId+' [data-i18n-ph]').forEach(el=>{
+    const key = el.getAttribute('data-i18n-ph');
+    if(I18N[currentLang][key]!==undefined) el.placeholder = I18N[currentLang][key];
+  });
+  document.querySelectorAll('#'+rootId+' [data-i18n-title]').forEach(el=>{
+    const key = el.getAttribute('data-i18n-title');
+    if(I18N[currentLang][key]!==undefined) el.title = I18N[currentLang][key];
+  });
 }
 
 // ---- CREATE (GM) ----
@@ -2801,34 +2819,8 @@ async function joinSessionWith(code, existingId, createNew){
   } else {
     const data = await sharedGet('char_data_'+existingId);
     character = data;
-    if(!character.equipment) character.equipment = [];
-    if(!character.weapons) character.weapons = [];
-    if(!character.skillProf) character.skillProf = {};
-    if(!character.saveProf) character.saveProf = {FUE:false,DES:false,CON:false,INT:false,SAB:false,CAR:false};
-    if(!character.preparedSpellIds) character.preparedSpellIds = [];
-    if(!character.spellSlotsUsed) character.spellSlotsUsed = {};
-    if(!character.traits) character.traits = [];
-    if(!character.proficiencyNotes) character.proficiencyNotes = [];
-    if(character.bonusPreparedSlots===undefined) character.bonusPreparedSlots = 0;
-    if(character.xp===undefined) character.xp = 0;
-    if(character.ac===undefined) character.ac = 10;
-    if(character.speed===undefined) character.speed = 30;
-    if(character.initiativeBonus===undefined) character.initiativeBonus = 0;
-    if(character.hp.temp===undefined) character.hp.temp = 0;
-    if(!character.deathSaves) character.deathSaves = {success:0, failure:0};
-    if(!character.concentration) character.concentration = {active:false, spell:''};
-    if(character.resourcePool===undefined) character.resourcePool = null;
-    if(character.heroicInspiration===undefined) character.heroicInspiration = false;
-    if(!character.currency) character.currency = {cp:0,sp:0,ep:0,gp:0,pp:0};
-    if(!character.conditions) character.conditions = {};
-    if(character.exhaustion===undefined) character.exhaustion = 0;
-    if(!character.notes) character.notes = {personality:'',ideals:'',bonds:'',flaws:'',free:''};
-    if(!character.skillExpertise) character.skillExpertise = {};
-    if(!character.size) character.size = 'medium';
-    if(character.senses===undefined) character.senses = '';
-    if(!character.damageNotes) character.damageNotes = [];
-    if(!character.turnState) character.turnState = { movementUsed:0, actionUsed:false, bonusUsed:false, reactionUsed:false };
-    migrateIdentity(character);
+    try{ await sharedSet('char_backup_'+existingId, JSON.parse(JSON.stringify(data))); }catch(e){ /* non-critical */ }
+    migrateCharacter(character);
   }
   await sharedSet('last_opened_id', character.id);
   sessionCode = code;
@@ -3354,39 +3346,43 @@ async function createNewCharacter(){
   showSheet();
 }
 
+function migrateCharacter(c){
+  if(!c.equipment) c.equipment = [];
+  if(!c.weapons) c.weapons = [];
+  if(!c.skillProf) c.skillProf = {};
+  if(!c.saveProf) c.saveProf = {FUE:false,DES:false,CON:false,INT:false,SAB:false,CAR:false};
+  if(!c.preparedSpellIds) c.preparedSpellIds = [];
+  if(!c.spellSlotsUsed) c.spellSlotsUsed = {};
+  if(!c.traits) c.traits = [];
+  if(!c.proficiencyNotes) c.proficiencyNotes = [];
+  if(c.bonusPreparedSlots===undefined) c.bonusPreparedSlots = 0;
+  if(c.xp===undefined) c.xp = 0;
+  if(c.ac===undefined) c.ac = 10;
+  if(c.speed===undefined) c.speed = 30;
+  if(c.initiativeBonus===undefined) c.initiativeBonus = 0;
+  if(c.hp.temp===undefined) c.hp.temp = 0;
+  if(!c.deathSaves) c.deathSaves = {success:0, failure:0};
+  if(!c.concentration) c.concentration = {active:false, spell:''};
+  if(c.resourcePool===undefined) c.resourcePool = null;
+  if(c.heroicInspiration===undefined) c.heroicInspiration = false;
+  if(!c.currency) c.currency = {cp:0,sp:0,ep:0,gp:0,pp:0};
+  if(!c.conditions) c.conditions = {};
+  if(c.exhaustion===undefined) c.exhaustion = 0;
+  if(!c.notes) c.notes = {personality:'',ideals:'',bonds:'',flaws:'',free:''};
+  if(!c.skillExpertise) c.skillExpertise = {};
+  if(!c.size) c.size = 'medium';
+  if(c.senses===undefined) c.senses = '';
+  if(!c.damageNotes) c.damageNotes = [];
+  if(!c.turnState) c.turnState = { movementUsed:0, actionUsed:false, bonusUsed:false, reactionUsed:false };
+  migrateIdentity(c);
+}
 async function openCharacter(id){
   await flushPendingSave();
   const data = await sharedGet('char_data_'+id);
   if(!data) return;
+  try{ await sharedSet('char_backup_'+id, JSON.parse(JSON.stringify(data))); }catch(e){ /* non-critical */ }
   character = data;
-  if(!character.equipment) character.equipment = [];
-  if(!character.weapons) character.weapons = [];
-  if(!character.skillProf) character.skillProf = {};
-  if(!character.saveProf) character.saveProf = {FUE:false,DES:false,CON:false,INT:false,SAB:false,CAR:false};
-  if(!character.preparedSpellIds) character.preparedSpellIds = [];
-  if(!character.spellSlotsUsed) character.spellSlotsUsed = {};
-  if(!character.traits) character.traits = [];
-  if(!character.proficiencyNotes) character.proficiencyNotes = [];
-  if(character.bonusPreparedSlots===undefined) character.bonusPreparedSlots = 0;
-  if(character.xp===undefined) character.xp = 0;
-  if(character.ac===undefined) character.ac = 10;
-  if(character.speed===undefined) character.speed = 30;
-  if(character.initiativeBonus===undefined) character.initiativeBonus = 0;
-  if(character.hp.temp===undefined) character.hp.temp = 0;
-  if(!character.deathSaves) character.deathSaves = {success:0, failure:0};
-  if(!character.concentration) character.concentration = {active:false, spell:''};
-  if(character.resourcePool===undefined) character.resourcePool = null;
-  if(character.heroicInspiration===undefined) character.heroicInspiration = false;
-  if(!character.currency) character.currency = {cp:0,sp:0,ep:0,gp:0,pp:0};
-  if(!character.conditions) character.conditions = {};
-  if(character.exhaustion===undefined) character.exhaustion = 0;
-  if(!character.notes) character.notes = {personality:'',ideals:'',bonds:'',flaws:'',free:''};
-  if(!character.skillExpertise) character.skillExpertise = {};
-  if(!character.size) character.size = 'medium';
-  if(character.senses===undefined) character.senses = '';
-  if(!character.damageNotes) character.damageNotes = [];
-  if(!character.turnState) character.turnState = { movementUsed:0, actionUsed:false, bonusUsed:false, reactionUsed:false };
-  migrateIdentity(character);
+  migrateCharacter(character);
   await sharedSet('last_opened_id', id);
   showSheet();
 }
@@ -3919,6 +3915,41 @@ document.getElementById('inspiration-toggle').addEventListener('click', ()=>{
   character.heroicInspiration = !character.heroicInspiration;
   scheduleSave();
   renderInspiration();
+});
+
+// ---------- BACKUP RESTORE ----------
+document.getElementById('btn-restore-backup').addEventListener('click', async (e)=>{
+  const btn = e.currentTarget;
+  const toast = document.getElementById('toast');
+  if(!btn.classList.contains('confirm')){
+    const backup = await sharedGet('char_backup_'+character.id);
+    if(!backup){
+      toast.innerHTML = t('restore_no_backup_toast');
+      toast.classList.add('show');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(()=>toast.classList.remove('show'), 2600);
+      return;
+    }
+    btn.classList.add('confirm');
+    btn.textContent = t('btn_restore_backup_confirm');
+    setTimeout(()=>{ btn.classList.remove('confirm'); btn.textContent = t('btn_restore_backup'); }, 2500);
+    return;
+  }
+  btn.classList.remove('confirm');
+  btn.textContent = t('btn_restore_backup');
+  const backup = await sharedGet('char_backup_'+character.id);
+  if(!backup) return;
+  character = backup;
+  migrateCharacter(character);
+  await performSave(character, sessionRole, sessionCode);
+  applyStaticText();
+  renderAll();
+  renderSpellResults(document.getElementById('spell-search').value);
+  renderPreparedList();
+  toast.innerHTML = t('restore_done_toast');
+  toast.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>toast.classList.remove('show'), 2600);
 });
 
 document.getElementById('header-toggle-btn').addEventListener('click', ()=>{
