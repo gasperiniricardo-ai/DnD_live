@@ -95,7 +95,7 @@ input, select, button, textarea{font-family:inherit;}
 .abilities{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
 @media(max-width:600px){.abilities{gap:8px;}}
 @media(max-width:400px){.abilities{grid-template-columns:repeat(2,1fr);}}
-.ability{ background:var(--panel-2);border:1px solid var(--steel);border-radius:8px;text-align:center;padding:12px 8px 10px; cursor:pointer;transition:border-color .2s, transform .15s;position:relative; }
+.ability{ background:var(--panel-2);border:1px solid var(--steel);border-radius:8px;text-align:center;padding:12px 8px 10px; cursor:pointer;transition:border-color .2s, transform .15s;position:relative; user-select:none;-webkit-user-select:none;-webkit-touch-callout:none; }
 .ability:hover{border-color:var(--gold);transform:translateY(-2px);}
 .ability .label{font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:1.5px;color:var(--parch-dim);}
 .ability .score-input{
@@ -105,12 +105,13 @@ input, select, button, textarea{font-family:inherit;}
 .ability .score-input:focus{outline:none;color:var(--gold-bright);}
 .ability .mod{font-family:'JetBrains Mono',monospace;font-size:.95rem;color:var(--gold-bright);background:var(--void);border-radius:6px;padding:2px 8px;display:inline-block;}
 .ability .save{font-size:.62rem;color:var(--parch-dim);margin-top:6px;}
+.save-roll{cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px;}
 .save-star{cursor:pointer;padding:0 2px;}
 
 /* ---------- SKILLS ---------- */
 .skill-list{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;}
 @media(max-width:560px){.skill-list{grid-template-columns:1fr;}}
-.skill{ display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:.85rem;transition:background .2s;gap:8px; }
+.skill{ display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:.85rem;transition:background .2s;gap:8px; user-select:none;-webkit-user-select:none;-webkit-touch-callout:none; }
 .skill:hover{background:var(--panel-2);}
 .skill .dot{width:11px;height:11px;border-radius:50%;background:var(--gold);margin-right:8px;display:inline-block;flex:0 0 auto;cursor:pointer;}
 .skill .name{display:flex;align-items:center;color:var(--parch);min-width:0;}
@@ -1821,7 +1822,7 @@ function renderAbilities(){
     div.innerHTML = `<div class="label">${label}</div>
       <input class="score-input" type="number" value="${score}" data-key="${key}">
       <div class="mod">${fmt(mod)}</div>
-      <div class="save">${t('save_label')} ${fmt(save)} <span class="save-star" data-key="${key}">${saveProf?'★':'☆'}</span></div>`;
+      <div class="save"><span class="save-roll">${t('save_label')} ${fmt(save)}</span> <span class="save-star" data-key="${key}">${saveProf?'★':'☆'}</span></div>`;
     const input = div.querySelector('.score-input');
     input.addEventListener('click', e=>e.stopPropagation());
     input.addEventListener('change', ()=>{
@@ -1839,8 +1840,11 @@ function renderAbilities(){
       scheduleSave();
       renderAbilities();
     });
+    div.querySelector('.save-roll').addEventListener('click', e=>{
+      e.stopPropagation();
+      roll(save, `${label} (${t('save_label')})`);
+    });
     div.addEventListener('click', ()=>roll(mod, `${label} (${t('check_label')})`));
-    div.addEventListener('dblclick', ()=>roll(save, `${label} (${t('save_label')})`));
     abilitiesGrid.appendChild(div);
   });
 }
@@ -2589,10 +2593,12 @@ function renderPreparedList(){
     if(!sp) return;
     const data = sp[currentLang];
     const school = SCHOOL_I18N[sp.school][currentLang];
+    const time = TIME_I18N[sp.time][currentLang];
+    const range = RANGE_I18N[sp.range][currentLang];
+    const duration = DURATION_I18N[sp.duration][currentLang];
     const div = document.createElement('div');
     div.className='feat';
-    const meta = `(${t('level_option')[0]}${sp.level==t('level_option')?'':''}${sp.level} · ${school})`.replace('{level}',sp.level);
-    div.innerHTML = `<div class="ft-name">${data.name} <span style="color:var(--parch-dim);font-weight:400;font-size:.78rem;">(${t('level_option')} ${sp.level} · ${school})</span></div><p>${data.desc}</p>`;
+    div.innerHTML = `<div class="ft-name">${data.name} <span style="color:var(--parch-dim);font-weight:400;font-size:.78rem;">(${t('level_option')} ${sp.level} · ${school} · ${time} · ${range})</span></div><p>${data.desc}<br><span style="color:var(--parch-dim);font-size:.75rem;">${t('duration_label')} ${duration}</span></p>`;
     wrap.appendChild(div);
   });
 }
