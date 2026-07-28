@@ -581,28 +581,33 @@ table.eqp tr:last-child td{border-bottom:none;}
       <h2 data-i18n="h_traits">Rasgos raciales y dotes</h2>
       <div id="traits-list"></div>
       <p id="traits-empty" style="font-size:.83rem;color:var(--parch-dim);display:none;">—</p>
-      <div class="item-form" style="grid-template-columns:2fr 3fr auto;margin-top:14px;">
-        <input type="text" id="trait-name" data-i18n-ph="trait_name_ph" placeholder="Nombre del rasgo">
-        <input type="text" id="trait-desc" data-i18n-ph="trait_desc_ph" placeholder="Descripción">
-        <button class="reset-btn" id="trait-add" data-i18n="btn_add_trait">Añadir rasgo</button>
+      <div style="margin-top:14px;">
+        <select id="trait-select" style="width:100%;background:var(--void);border:1px solid var(--steel);color:var(--parch);border-radius:8px;padding:9px 10px;font-family:inherit;font-size:.85rem;"></select>
+        <div class="item-form" id="trait-custom-wrap" style="grid-template-columns:2fr 3fr;display:none;margin-top:10px;">
+          <input type="text" id="trait-name" data-i18n-ph="trait_name_ph" placeholder="Nombre del rasgo">
+          <input type="text" id="trait-desc" data-i18n-ph="trait_desc_ph" placeholder="Descripción">
+        </div>
+        <button class="reset-btn" id="trait-add" data-i18n="btn_add_trait" style="margin-top:10px;">Añadir rasgo</button>
       </div>
     </div>
     <div class="card">
       <h2 data-i18n="h_proficiencies">Competencias</h2>
       <div id="proficiency-list" style="font-size:.87rem;color:var(--parch);line-height:1.8;"></div>
       <p id="proficiency-empty" style="font-size:.83rem;color:var(--parch-dim);display:none;">—</p>
-      <div class="item-form" style="grid-template-columns:1fr auto;margin-top:14px;">
-        <input type="text" id="prof-note-text" data-i18n-ph="prof_note_ph" placeholder="Ej. Armadura pesada, Idiomas...">
-        <button class="reset-btn" id="prof-note-add" data-i18n="btn_add_item">Añadir</button>
+      <div style="margin-top:14px;">
+        <select id="prof-note-select" style="width:100%;background:var(--void);border:1px solid var(--steel);color:var(--parch);border-radius:8px;padding:9px 10px;font-family:inherit;font-size:.85rem;"></select>
+        <input type="text" id="prof-note-custom" data-i18n-ph="prof_note_ph" placeholder="Escribe aquí..." style="display:none;width:100%;margin-top:10px;background:var(--void);border:1px solid var(--steel);color:var(--parch);border-radius:8px;padding:9px 10px;font-family:inherit;">
+        <button class="reset-btn" id="prof-note-add" data-i18n="btn_add_prof" style="margin-top:10px;">Añadir competencia</button>
       </div>
     </div>
     <div class="card">
       <h2 data-i18n="h_damage_notes">Resistencias, inmunidades y vulnerabilidades</h2>
       <div id="damage-notes-list" style="font-size:.87rem;color:var(--parch);line-height:1.8;"></div>
       <p id="damage-notes-empty" style="font-size:.83rem;color:var(--parch-dim);display:none;">—</p>
-      <div class="item-form" style="grid-template-columns:1fr auto;margin-top:14px;">
-        <input type="text" id="damage-note-text" data-i18n-ph="damage_note_ph" placeholder="Ej. Resistencia al fuego">
-        <button class="reset-btn" id="damage-note-add" data-i18n="btn_add_item">Añadir</button>
+      <div style="margin-top:14px;">
+        <select id="damage-note-select" style="width:100%;background:var(--void);border:1px solid var(--steel);color:var(--parch);border-radius:8px;padding:9px 10px;font-family:inherit;font-size:.85rem;"></select>
+        <input type="text" id="damage-note-custom" data-i18n-ph="damage_note_ph" placeholder="Escribe aquí..." style="display:none;width:100%;margin-top:10px;background:var(--void);border:1px solid var(--steel);color:var(--parch);border-radius:8px;padding:9px 10px;font-family:inherit;">
+        <button class="reset-btn" id="damage-note-add" data-i18n="btn_add_damage" style="margin-top:10px;">Añadir resistencia/inmunidad</button>
       </div>
     </div>
     <div class="card" id="resource-pool-card" style="display:none;">
@@ -719,8 +724,8 @@ const I18N = {
     ds_remaining:'Usos restantes:', btn_ds_reset:'Descanso largo (restaurar usos)',
     h_size_senses:'Tamaño y Sentidos', lbl_size:'Tamaño', lbl_senses:'Sentidos (visión en la oscuridad, etc.)',
     h_traits:'Rasgos raciales y dotes', trait_name_ph:'Nombre del rasgo', trait_desc_ph:'Descripción', btn_add_trait:'Añadir rasgo',
-    h_proficiencies:'Competencias', prof_note_ph:'Ej. Armadura pesada, Idiomas...',
-    h_damage_notes:'Resistencias, inmunidades y vulnerabilidades', damage_note_ph:'Ej. Resistencia al fuego',
+    h_proficiencies:'Competencias', prof_note_ph:'Escribe aquí...', btn_add_prof:'Añadir competencia',
+    h_damage_notes:'Resistencias, inmunidades y vulnerabilidades', damage_note_ph:'Escribe aquí...', btn_add_damage:'Añadir resistencia/inmunidad',
     h_passives:'Pasivas', lab_passive_perception:'Percepción Pasiva', lab_passive_investigation:'Investigación Pasiva', lab_passive_insight:'Perspicacia Pasiva',
     btn_inspiration:'⭐ Inspiración',
     lbl_resource_available:'Disponible:', btn_resource_reset:'Descanso largo (restaurar recurso)',
@@ -773,8 +778,8 @@ const I18N = {
     ds_remaining:'Remaining uses:', btn_ds_reset:'Long rest (restore uses)',
     h_size_senses:'Size & Senses', lbl_size:'Size', lbl_senses:'Senses (darkvision, etc.)',
     h_traits:'Racial Traits & Feats', trait_name_ph:'Trait name', trait_desc_ph:'Description', btn_add_trait:'Add trait',
-    h_proficiencies:'Proficiencies', prof_note_ph:'e.g. Heavy armor, Languages...',
-    h_damage_notes:'Resistances, immunities & vulnerabilities', damage_note_ph:'e.g. Fire resistance',
+    h_proficiencies:'Proficiencies', prof_note_ph:'Type here...', btn_add_prof:'Add proficiency',
+    h_damage_notes:'Resistances, immunities & vulnerabilities', damage_note_ph:'Type here...', btn_add_damage:'Add resistance/immunity',
     h_passives:'Passives', lab_passive_perception:'Passive Perception', lab_passive_investigation:'Passive Investigation', lab_passive_insight:'Passive Insight',
     btn_inspiration:'⭐ Inspiration',
     lbl_resource_available:'Available:', btn_resource_reset:'Long rest (restore resource)',
@@ -893,6 +898,125 @@ const SIZE_OPTIONS = [
   {id:'medium', es:'Mediano', en:'Medium'}, {id:'large', es:'Grande', en:'Large'},
   {id:'huge', es:'Enorme', en:'Huge'},
 ];
+
+/* ---------- PROFICIENCY CATALOG (armor / weapons / tools / languages) ---------- */
+const PROFICIENCY_OPTIONS = [
+  {id:'light_armor', group:'armor', es:'Armadura ligera', en:'Light armor'},
+  {id:'medium_armor', group:'armor', es:'Armadura media', en:'Medium armor'},
+  {id:'heavy_armor', group:'armor', es:'Armadura pesada', en:'Heavy armor'},
+  {id:'shields', group:'armor', es:'Escudos', en:'Shields'},
+  {id:'simple_weapons', group:'weapons', es:'Armas sencillas', en:'Simple weapons'},
+  {id:'martial_weapons', group:'weapons', es:'Armas marciales', en:'Martial weapons'},
+  {id:'thieves_tools', group:'tools', es:"Herramientas de ladrón", en:"Thieves' tools"},
+  {id:'tinkers_tools', group:'tools', es:"Herramientas de artesano", en:"Tinker's tools"},
+  {id:'alchemists_supplies', group:'tools', es:'Suministros de alquimista', en:"Alchemist's supplies"},
+  {id:'herbalism_kit', group:'tools', es:'Kit de herbolario', en:'Herbalism kit'},
+  {id:'disguise_kit', group:'tools', es:'Kit de disfraz', en:'Disguise kit'},
+  {id:'forgery_kit', group:'tools', es:'Kit de falsificación', en:'Forgery kit'},
+  {id:'poisoners_kit', group:'tools', es:'Kit de envenenador', en:"Poisoner's kit"},
+  {id:'navigators_tools', group:'tools', es:'Herramientas de navegante', en:"Navigator's tools"},
+  {id:'gaming_set', group:'tools', es:'Set de juegos', en:'Gaming set'},
+  {id:'musical_instrument', group:'tools', es:'Instrumento musical', en:'Musical instrument'},
+  {id:'land_vehicles', group:'tools', es:'Vehículos (terrestres)', en:'Vehicles (land)'},
+  {id:'water_vehicles', group:'tools', es:'Vehículos (acuáticos)', en:'Vehicles (water)'},
+  {id:'lang_common', group:'lang', es:'Idioma: Común', en:'Language: Common'},
+  {id:'lang_dwarvish', group:'lang', es:'Idioma: Enano', en:'Language: Dwarvish'},
+  {id:'lang_elvish', group:'lang', es:'Idioma: Élfico', en:'Language: Elvish'},
+  {id:'lang_giant', group:'lang', es:'Idioma: Gigante', en:'Language: Giant'},
+  {id:'lang_gnomish', group:'lang', es:'Idioma: Gnomo', en:'Language: Gnomish'},
+  {id:'lang_goblin', group:'lang', es:'Idioma: Goblin', en:'Language: Goblin'},
+  {id:'lang_halfling', group:'lang', es:'Idioma: Mediano', en:'Language: Halfling'},
+  {id:'lang_orc', group:'lang', es:'Idioma: Orco', en:'Language: Orc'},
+  {id:'lang_abyssal', group:'lang', es:'Idioma: Abisal', en:'Language: Abyssal'},
+  {id:'lang_celestial', group:'lang', es:'Idioma: Celestial', en:'Language: Celestial'},
+  {id:'lang_draconic', group:'lang', es:'Idioma: Dracónico', en:'Language: Draconic'},
+  {id:'lang_deep_speech', group:'lang', es:'Idioma: Habla Profunda', en:'Language: Deep Speech'},
+  {id:'lang_infernal', group:'lang', es:'Idioma: Infernal', en:'Language: Infernal'},
+  {id:'lang_primordial', group:'lang', es:'Idioma: Primordial', en:'Language: Primordial'},
+  {id:'lang_sylvan', group:'lang', es:'Idioma: Silvano', en:'Language: Sylvan'},
+  {id:'lang_undercommon', group:'lang', es:'Idioma: Infracomún', en:'Language: Undercommon'},
+];
+const PROFICIENCY_GROUP_LABEL = {
+  armor:{es:'Armadura', en:'Armor'}, weapons:{es:'Armas', en:'Weapons'},
+  tools:{es:'Herramientas', en:'Tools'}, lang:{es:'Idiomas', en:'Languages'},
+};
+
+/* ---------- DAMAGE TYPE CATALOG (resistances / immunities / vulnerabilities) ---------- */
+const DAMAGE_TYPES = [
+  {id:'acid', es:'Ácido', en:'Acid'}, {id:'bludgeoning', es:'Contundente', en:'Bludgeoning'},
+  {id:'cold', es:'Frío', en:'Cold'}, {id:'fire', es:'Fuego', en:'Fire'},
+  {id:'force', es:'Fuerza', en:'Force'}, {id:'lightning', es:'Rayo', en:'Lightning'},
+  {id:'necrotic', es:'Necrótico', en:'Necrotic'}, {id:'piercing', es:'Perforante', en:'Piercing'},
+  {id:'poison', es:'Veneno', en:'Poison'}, {id:'psychic', es:'Psíquico', en:'Psychic'},
+  {id:'radiant', es:'Radiante', en:'Radiant'}, {id:'slashing', es:'Cortante', en:'Slashing'},
+  {id:'thunder', es:'Trueno', en:'Thunder'},
+];
+const DAMAGE_KINDS = [
+  {id:'resistance', es:'Resistencia', en:'Resistance'},
+  {id:'immunity', es:'Inmunidad', en:'Immunity'},
+  {id:'vulnerability', es:'Vulnerabilidad', en:'Vulnerability'},
+];
+const DAMAGE_NOTE_OPTIONS = [];
+DAMAGE_KINDS.forEach(k=>{
+  DAMAGE_TYPES.forEach(dt=>{
+    DAMAGE_NOTE_OPTIONS.push({ id:k.id+'_'+dt.id, group:k.id, es:`${k.es} al daño ${dt.es.toLowerCase()}`, en:`${k.en} to ${dt.en.toLowerCase()} damage` });
+  });
+});
+const DAMAGE_GROUP_LABEL = {
+  resistance:{es:'Resistencias', en:'Resistances'}, immunity:{es:'Inmunidades', en:'Immunities'}, vulnerability:{es:'Vulnerabilidades', en:'Vulnerabilities'},
+};
+
+/* ---------- OFFICIAL FEAT CATALOG (2024 Origin & General feats, abridged) ---------- */
+const FEATS_CATALOG = [
+  {id:'alert', group:'origin', es:{name:'Alerta', desc:'Sumas tu bonificador de competencia a la iniciativa y no puedes ser sorprendido mientras estés consciente.'}, en:{name:'Alert', desc:'You add your proficiency bonus to initiative and cannot be surprised while conscious.'}},
+  {id:'crafter', group:'origin', es:{name:'Artesano', desc:'Competencia en tres herramientas de artesano; 20% de descuento al comprar objetos no mágicos; menos tiempo fabricando objetos.'}, en:{name:'Crafter', desc:'Proficiency with three artisan tools; 20% discount buying nonmagical items; less time crafting.'}},
+  {id:'healer', group:'origin', es:{name:'Sanador', desc:'Con un kit de sanador, restauras puntos de golpe extra al estabilizar o curar a una criatura.'}, en:{name:'Healer', desc:'Using a healer’s kit, you restore extra hit points when stabilizing or healing a creature.'}},
+  {id:'lucky', group:'origin', es:{name:'Afortunado', desc:'Tienes puntos de suerte (= bonificador de competencia) para darte ventaja o imponer desventaja en una tirada.'}, en:{name:'Lucky', desc:'You have Luck Points (= proficiency bonus) to grant yourself advantage or impose disadvantage on a roll.'}},
+  {id:'magic_initiate', group:'origin', es:{name:'Iniciado en Magia', desc:'Aprendes dos cantrips y un conjuro de nivel 1 de una lista de clase, lanzable una vez gratis por descanso largo.'}, en:{name:'Magic Initiate', desc:'You learn two cantrips and one 1st-level spell from a class list, castable once for free per long rest.'}},
+  {id:'musician', group:'origin', es:{name:'Músico', desc:'Competencia con tres instrumentos musicales; puedes dar Inspiración a aliados que te oigan tocar tras un descanso corto/largo.'}, en:{name:'Musician', desc:'Proficiency with three musical instruments; you can grant Inspiration to allies who hear you play after a rest.'}},
+  {id:'savage_attacker', group:'origin', es:{name:'Atacante Salvaje', desc:'Una vez por turno, tira el daño de un ataque cuerpo a cuerpo dos veces y elige el resultado que prefieras.'}, en:{name:'Savage Attacker', desc:'Once per turn, roll melee weapon damage twice and choose either result.'}},
+  {id:'skilled', group:'origin', es:{name:'Experto', desc:'Ganas competencia en tres habilidades o herramientas de tu elección.'}, en:{name:'Skilled', desc:'You gain proficiency in three skills or tools of your choice.'}},
+  {id:'tavern_brawler', group:'origin', es:{name:'Pendenciero de Taberna', desc:'Competencia con armas improvisadas; tu golpe desarmado usa 1d4; puedes agarrar tras golpear.'}, en:{name:'Tavern Brawler', desc:'Proficiency with improvised weapons; your unarmed strike uses 1d4; you can grapple after hitting.'}},
+  {id:'tough', group:'origin', es:{name:'Resistente', desc:'Tu máximo de puntos de golpe aumenta en 2 por nivel de personaje.'}, en:{name:'Tough', desc:'Your hit point maximum increases by 2 per character level.'}},
+  {id:'ability_score_improvement', group:'general', es:{name:'Mejora de Característica', desc:'Aumenta una puntuación de característica en 2, o dos puntuaciones en 1 cada una (máx. 20).'}, en:{name:'Ability Score Improvement', desc:'Increase one ability score by 2, or two ability scores by 1 each (max 20).'}},
+  {id:'actor', group:'general', es:{name:'Actor', desc:'+1 a Carisma; ventaja en pruebas de Interpretación/Engaño al hacerte pasar por otro; puedes imitar voces y sonidos.'}, en:{name:'Actor', desc:'+1 Charisma; advantage on Deception/Performance checks to pass as someone else; you can mimic voices and sounds.'}},
+  {id:'athlete', group:'general', es:{name:'Atleta', desc:'+1 FUE o DES; te levantas gastando solo 5 pies de movimiento; mejora en escalar/saltar.'}, en:{name:'Athlete', desc:'+1 STR or DEX; standing up costs only 5 feet of movement; improved climbing/jumping.'}},
+  {id:'charger', group:'general', es:{name:'Embestidor', desc:'Tras usar Correr, puedes hacer un ataque adicional o empujar a una criatura.'}, en:{name:'Charger', desc:'After you Dash, you can make one extra attack or shove a creature.'}},
+  {id:'chef', group:'general', es:{name:'Cocinero', desc:'Preparas comida especial que otorga puntos de golpe temporales o beneficios en descansos cortos/largos.'}, en:{name:'Chef', desc:'You prepare special food that grants temporary hit points or benefits during rests.'}},
+  {id:'crusher', group:'general', es:{name:'Aplastador', desc:'Daño contundente puede empujar 5 pies; críticos con daño contundente dan ventaja al siguiente ataque contra el objetivo.'}, en:{name:'Crusher', desc:'Bludgeoning damage can push 5 feet; critical hits with bludgeoning grant advantage on the next attack against the target.'}},
+  {id:'defensive_duelist', group:'general', es:{name:'Duelista Defensivo', desc:'Con un arma finesse, usa tu reacción para sumar tu bono de competencia a la CA contra un ataque cuerpo a cuerpo.'}, en:{name:'Defensive Duelist', desc:'With a finesse weapon, use your reaction to add your proficiency bonus to AC against one melee attack.'}},
+  {id:'dual_wielder', group:'general', es:{name:'Combate a Dos Armas', desc:'+1 CA mientras luchas con dos armas; puedes usar armas a dos manos como si fueran ligeras para este estilo.'}, en:{name:'Dual Wielder', desc:'+1 AC while wielding two weapons; you can use two-handed weapons as if light for this fighting style.'}},
+  {id:'durable', group:'general', es:{name:'Duradero', desc:'+1 Constitución; cuando recuperas puntos de golpe con un dado de golpe, el mínimo es el doble de tu mod. de Constitución.'}, en:{name:'Durable', desc:'+1 Constitution; when you regain hit points from a Hit Die, the minimum is twice your Constitution modifier.'}},
+  {id:'elemental_adept', group:'general', es:{name:'Adepto Elemental', desc:'Elige un tipo de daño; tus conjuros de ese tipo ignoran resistencia y tratan los 1 en dados de daño como 2.'}, en:{name:'Elemental Adept', desc:'Choose a damage type; your spells of that type ignore resistance and treat 1s on damage dice as 2s.'}},
+  {id:'fey_touched', group:'general', es:{name:'Tocado por las Hadas', desc:'+1 INT/SAB/CAR; aprendes Bruma y un conjuro de adivinación o encantamiento de nivel 1, lanzable gratis una vez por descanso largo.'}, en:{name:'Fey Touched', desc:'+1 INT/WIS/CHA; you learn Misty Step and one 1st-level divination or enchantment spell, castable free once per long rest.'}},
+  {id:'grappler', group:'general', es:{name:'Forcejeador', desc:'Ventaja en ataques contra una criatura que ya tengas agarrada; puedes intentar inmovilizar a una criatura agarrada.'}, en:{name:'Grappler', desc:'Advantage on attacks against a creature you are grappling; you can attempt to pin a grappled creature.'}},
+  {id:'great_weapon_master', group:'general', es:{name:'Maestro con Armas Grandes', desc:'Puedes restar 5 al ataque para sumar 10 al daño con armas pesadas; ataque adicional al derribar o dar un crítico.'}, en:{name:'Great Weapon Master', desc:'You can take -5 to hit for +10 damage with heavy weapons; bonus attack on a critical hit or reducing a creature to 0 HP.'}},
+  {id:'heavily_armored', group:'general', es:{name:'Fuertemente Armado', desc:'+1 Fuerza; ganas competencia con armadura pesada.'}, en:{name:'Heavily Armored', desc:'+1 Strength; you gain proficiency with heavy armor.'}},
+  {id:'heavy_armor_master', group:'general', es:{name:'Maestro de Armadura Pesada', desc:'+1 Fuerza; con armadura pesada, reduces en 3 el daño contundente/perforante/cortante no mágico que recibes.'}, en:{name:'Heavy Armor Master', desc:'+1 Strength; while wearing heavy armor, reduce nonmagical bludgeoning/piercing/slashing damage taken by 3.'}},
+  {id:'inspiring_leader', group:'general', es:{name:'Líder Inspirador', desc:'Pasas 10 minutos inspirando a hasta 6 aliados, que ganan puntos de golpe temporales.'}, en:{name:'Inspiring Leader', desc:'You spend 10 minutes inspiring up to 6 allies, who gain temporary hit points.'}},
+  {id:'keen_mind', group:'general', es:{name:'Mente Aguda', desc:'+1 Inteligencia; siempre sabes qué dirección es el norte y cuánto tiempo falta para el amanecer/anochecer; recuerdas con detalle lo visto/oído en el último mes.'}, en:{name:'Keen Mind', desc:'+1 Intelligence; you always know which way is north and recall anything seen or heard in detail within the last month.'}},
+  {id:'lightly_armored', group:'general', es:{name:'Ligeramente Armado', desc:'+1 FUE o DES; ganas competencia con armadura ligera.'}, en:{name:'Lightly Armored', desc:'+1 STR or DEX; you gain proficiency with light armor.'}},
+  {id:'mage_slayer', group:'general', es:{name:'Cazador de Magos', desc:'Puedes usar tu reacción para atacar a una criatura que lanza un conjuro a tu alcance; ventaja en salvaciones contra conjuros dirigidos a ti.'}, en:{name:'Mage Slayer', desc:'You can use your reaction to attack a creature that casts a spell within reach; advantage on saves against spells targeting you.'}},
+  {id:'medium_armor_master', group:'general', es:{name:'Maestro de Armadura Media', desc:'Con armadura media, el máximo de bono de Destreza a la CA sube a +3 y no impone desventaja en Sigilo.'}, en:{name:'Medium Armor Master', desc:'While wearing medium armor, your max Dexterity AC bonus becomes +3 and it does not impose disadvantage on Stealth.'}},
+  {id:'mobile', group:'general', es:{name:'Móvil', desc:'+10 pies de velocidad; ignoras terreno difícil al usar Correr; no provocas ataque de oportunidad del objetivo que atacas.'}, en:{name:'Mobile', desc:'+10 feet of speed; ignore difficult terrain when you Dash; no opportunity attacks from a creature you attack.'}},
+  {id:'moderately_armored', group:'general', es:{name:'Moderadamente Armado', desc:'+1 FUE o DES; ganas competencia con armadura media y escudos.'}, en:{name:'Moderately Armored', desc:'+1 STR or DEX; you gain proficiency with medium armor and shields.'}},
+  {id:'mounted_combatant', group:'general', es:{name:'Combatiente Montado', desc:'Ventaja en ataques cuerpo a cuerpo contra criaturas más pequeñas que tu montura; puedes forzar un ataque a caer sobre ti en vez de tu montura.'}, en:{name:'Mounted Combatant', desc:'Advantage on melee attacks against creatures smaller than your mount; you can force an attack to target you instead of your mount.'}},
+  {id:'observant', group:'general', es:{name:'Observador', desc:'+1 INT o SAB; +5 a Percepción/Investigación pasivas; puedes leer los labios.'}, en:{name:'Observant', desc:'+1 INT or WIS; +5 to passive Perception/Investigation; you can read lips.'}},
+  {id:'piercer', group:'general', es:{name:'Perforador', desc:'Puedes re-tirar un dado de daño perforante; críticos con daño perforante suman un dado extra de daño.'}, en:{name:'Piercer', desc:'You can reroll one piercing damage die; critical hits with piercing damage add an extra damage die.'}},
+  {id:'poisoner', group:'general', es:{name:'Envenenador', desc:'Aplicar veneno a un arma es una acción adicional; ganas competencia con kit de envenenador; tus venenos ignoran resistencia.'}, en:{name:'Poisoner', desc:'Applying poison to a weapon is a bonus action; you gain proficiency with poisoner’s kit; your poisons ignore resistance.'}},
+  {id:'polearm_master', group:'general', es:{name:'Maestro de Arma de Asta', desc:'Ataque adicional con el extremo romo de un arma de asta; ataque de oportunidad cuando una criatura entra en tu alcance.'}, en:{name:'Polearm Master', desc:'Bonus attack with the butt end of a polearm; opportunity attack when a creature enters your reach.'}},
+  {id:'resilient', group:'general', es:{name:'Resiliente', desc:'+1 a una característica; ganas competencia en su salvación.'}, en:{name:'Resilient', desc:'+1 to one ability score; you gain proficiency in saving throws with that ability.'}},
+  {id:'ritual_caster', group:'general', es:{name:'Lanzador de Rituales', desc:'Ganas un libro/lista de rituales de una clase de conjuros que puedes lanzar como rituales.'}, en:{name:'Ritual Caster', desc:'You gain a ritual book/list from a spellcasting class that you can cast as rituals.'}},
+  {id:'sentinel', group:'general', es:{name:'Centinela', desc:'Cuando impactas con un ataque de oportunidad, la velocidad del objetivo se vuelve 0; puedes atacar aunque la criatura use Desenganchar.'}, en:{name:'Sentinel', desc:'When you hit with an opportunity attack, the target’s speed becomes 0; you can attack even if the creature Disengages.'}},
+  {id:'sharpshooter', group:'general', es:{name:'Tirador Certero', desc:'Ignoras cobertura media/tres cuartos con armas a distancia; puedes restar 5 al ataque para sumar 10 al daño.'}, en:{name:'Sharpshooter', desc:'Ignore half/three-quarters cover with ranged weapons; you can take -5 to hit for +10 damage.'}},
+  {id:'shield_master', group:'general', es:{name:'Maestro del Escudo', desc:'Acción adicional para empujar con el escudo; con escudo, bono a salvaciones de Destreza contra efectos de área.'}, en:{name:'Shield Master', desc:'Bonus action to shove with your shield; while wielding a shield, bonus to Dexterity saves against area effects.'}},
+  {id:'skill_expert', group:'general', es:{name:'Experto en Habilidades', desc:'+1 a una característica; competencia en una habilidad; Pericia (doble competencia) en otra habilidad ya competente.'}, en:{name:'Skill Expert', desc:'+1 to one ability score; proficiency in one skill; Expertise in another skill you’re already proficient with.'}},
+  {id:'speedy', group:'general', es:{name:'Veloz', desc:'+10 pies de velocidad; puedes usar Correr como acción adicional un número de veces igual a tu bono de competencia por descanso largo.'}, en:{name:'Speedy', desc:'+10 feet of speed; you can Dash as a bonus action a number of times equal to your proficiency bonus per long rest.'}},
+  {id:'tough_general', group:'general', es:{name:'Duro de Pelar', desc:'(Genérico) +2 al máximo de puntos de golpe por nivel de personaje.'}, en:{name:'Tough (general)', desc:'(Generic) +2 to hit point maximum per character level.'}},
+  {id:'war_caster', group:'general', es:{name:'Conjurador de Guerra', desc:'Ventaja en salvaciones de Constitución para mantener la concentración; puedes lanzar un conjuro en vez de hacer un ataque de oportunidad.'}, en:{name:'War Caster', desc:'Advantage on Constitution saves to maintain concentration; you can cast a spell instead of making an opportunity attack.'}},
+  {id:'weapon_master', group:'general', es:{name:'Maestro de Armas', desc:'Competencia con cuatro armas de tu elección; ganas una Propiedad de Maestría adicional con dos armas.'}, en:{name:'Weapon Master', desc:'Proficiency with four weapons of your choice; you gain an extra Mastery property with two weapons.'}},
+];
+const FEAT_GROUP_LABEL = { origin:{es:'Dotes de Origen', en:'Origin Feats'}, general:{es:'Dotes Generales', en:'General Feats'} };
 const ALIGNMENT_OPTIONS = [
   {id:'lawful_good', es:'Legal Bueno', en:'Lawful Good'}, {id:'neutral_good', es:'Neutral Bueno', en:'Neutral Good'},
   {id:'chaotic_good', es:'Caótico Bueno', en:'Chaotic Good'}, {id:'lawful_neutral', es:'Legal Neutral', en:'Lawful Neutral'},
@@ -2184,6 +2308,7 @@ function renderClassConditionalCards(){
 
 // ---------- TRAITS / FEATS (data-driven per character) ----------
 function renderTraits(){
+  populateCatalogSelect(document.getElementById('trait-select'), FEATS_CATALOG, FEAT_GROUP_LABEL, o=>o[currentLang].name);
   const wrap = document.getElementById('traits-list');
   const empty = document.getElementById('traits-empty');
   wrap.innerHTML = '';
@@ -2218,14 +2343,48 @@ document.getElementById('senses-input').addEventListener('input', (e)=>{
   character.senses = e.target.value;
   scheduleSave();
 });
+// ---------- CATALOG SELECT HELPER (grouped official list + "Otra..." custom entry) ----------
+function populateCatalogSelect(selectEl, catalog, groupLabels, labelFn){
+  const prevValue = selectEl.value;
+  const groups = [...new Set(catalog.map(o=>o.group))];
+  let html = '';
+  groups.forEach(g=>{
+    html += `<optgroup label="${groupLabels[g][currentLang]}">`;
+    catalog.filter(o=>o.group===g).forEach(o=>{
+      html += `<option value="${o.id}">${labelFn(o)}</option>`;
+    });
+    html += `</optgroup>`;
+  });
+  html += `<option value="other">${t('opt_other')}</option>`;
+  selectEl.innerHTML = html;
+  if(prevValue) selectEl.value = prevValue;
+}
+
+document.getElementById('trait-select').addEventListener('change', (e)=>{
+  document.getElementById('trait-custom-wrap').style.display = e.target.value==='other' ? 'grid' : 'none';
+});
+document.getElementById('prof-note-select').addEventListener('change', (e)=>{
+  document.getElementById('prof-note-custom').style.display = e.target.value==='other' ? 'block' : 'none';
+});
+document.getElementById('damage-note-select').addEventListener('change', (e)=>{
+  document.getElementById('damage-note-custom').style.display = e.target.value==='other' ? 'block' : 'none';
+});
+
 document.getElementById('trait-add').addEventListener('click', ()=>{
-  const nameInput = document.getElementById('trait-name');
-  const descInput = document.getElementById('trait-desc');
-  const name = nameInput.value.trim();
-  const desc = descInput.value.trim();
-  if(!name){ nameInput.focus(); return; }
-  character.traits.push({ es:{name, desc}, en:{name, desc} });
-  nameInput.value=''; descInput.value='';
+  const sel = document.getElementById('trait-select');
+  if(sel.value==='other'){
+    const nameInput = document.getElementById('trait-name');
+    const descInput = document.getElementById('trait-desc');
+    const name = nameInput.value.trim();
+    const desc = descInput.value.trim();
+    if(!name){ nameInput.focus(); return; }
+    character.traits.push({ es:{name, desc}, en:{name, desc} });
+    nameInput.value=''; descInput.value='';
+  } else {
+    const feat = FEATS_CATALOG.find(f=>f.id===sel.value);
+    if(!feat) return;
+    character.traits.push({ es:feat.es, en:feat.en });
+  }
   scheduleSave();
   renderTraits();
 });
@@ -2251,26 +2410,42 @@ function renderNoteList(containerId, emptyId, list){
   });
 }
 function renderProficiencyNotes(){
+  populateCatalogSelect(document.getElementById('prof-note-select'), PROFICIENCY_OPTIONS, PROFICIENCY_GROUP_LABEL, o=>o[currentLang]);
   renderNoteList('proficiency-list','proficiency-empty', character.proficiencyNotes||[]);
 }
 function renderDamageNotes(){
+  populateCatalogSelect(document.getElementById('damage-note-select'), DAMAGE_NOTE_OPTIONS, DAMAGE_GROUP_LABEL, o=>o[currentLang]);
   renderNoteList('damage-notes-list','damage-notes-empty', character.damageNotes||[]);
 }
 document.getElementById('prof-note-add').addEventListener('click', ()=>{
-  const input = document.getElementById('prof-note-text');
-  const text = input.value.trim();
-  if(!text) return;
-  character.proficiencyNotes.push({es:text, en:text});
-  input.value='';
+  const sel = document.getElementById('prof-note-select');
+  if(sel.value==='other'){
+    const input = document.getElementById('prof-note-custom');
+    const text = input.value.trim();
+    if(!text) return;
+    character.proficiencyNotes.push({es:text, en:text});
+    input.value=''; input.style.display='none';
+  } else {
+    const opt = PROFICIENCY_OPTIONS.find(o=>o.id===sel.value);
+    if(!opt) return;
+    character.proficiencyNotes.push({es:opt.es, en:opt.en});
+  }
   scheduleSave();
   renderProficiencyNotes();
 });
 document.getElementById('damage-note-add').addEventListener('click', ()=>{
-  const input = document.getElementById('damage-note-text');
-  const text = input.value.trim();
-  if(!text) return;
-  character.damageNotes.push({es:text, en:text});
-  input.value='';
+  const sel = document.getElementById('damage-note-select');
+  if(sel.value==='other'){
+    const input = document.getElementById('damage-note-custom');
+    const text = input.value.trim();
+    if(!text) return;
+    character.damageNotes.push({es:text, en:text});
+    input.value=''; input.style.display='none';
+  } else {
+    const opt = DAMAGE_NOTE_OPTIONS.find(o=>o.id===sel.value);
+    if(!opt) return;
+    character.damageNotes.push({es:opt.es, en:opt.en});
+  }
   scheduleSave();
   renderDamageNotes();
 });
