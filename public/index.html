@@ -175,6 +175,22 @@ input, select, button, textarea{font-family:inherit;}
 .spell-desc{ max-height:0;overflow:hidden;transition:max-height .25s ease;font-size:.83rem;color:var(--parch-dim);line-height:1.55;padding:0 14px; }
 .spell-item.open .spell-desc{max-height:260px;padding:0 14px 14px;}
 .spell-no-results{font-size:.85rem;color:var(--parch-dim);text-align:center;padding:14px;}
+.conc-badge{ display:inline-block;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;background:var(--void);border:1px solid var(--gold);color:var(--gold-bright);border-radius:50px;padding:2px 8px;margin-left:6px;vertical-align:middle; }
+
+/* ---------- TURN SIMULATOR ---------- */
+.turn-grid{ display:grid;grid-template-columns:repeat(3,1fr);gap:16px; }
+@media(max-width:640px){ .turn-grid{ grid-template-columns:1fr; } }
+#turn-simulator-card h3{ display:flex;align-items:center;gap:8px;flex-wrap:wrap; }
+.turn-item{ background:var(--panel-2);border:1px solid var(--steel);border-radius:8px;padding:9px 11px;margin-bottom:8px;cursor:pointer;font-size:.82rem;transition:border-color .2s;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none; }
+.turn-item:hover{border-color:var(--gold);}
+.turn-item.turn-used{opacity:.5;}
+.turn-item .ti-name{color:var(--gold-bright);font-weight:600;}
+.turn-item .ti-meta{color:var(--parch-dim);font-size:.72rem;margin-top:2px;}
+.turn-item .ti-desc{display:none;margin-top:6px;font-size:.78rem;color:var(--parch-dim);line-height:1.45;}
+.turn-item.open .ti-desc{display:block;}
+.turn-empty-hint{font-size:.8rem;color:var(--parch-dim);}
+.turn-status{ font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;padding:2px 10px;border-radius:50px;background:var(--void);border:1px solid var(--gold);color:var(--gold-bright); }
+.turn-status.used{border-color:var(--steel);color:var(--parch-dim);}
 #spell-search{ width:100%;background:var(--void);border:1px solid var(--steel);color:var(--parch);font-family:'Inter',sans-serif;border-radius:8px;padding:10px 14px;font-size:.9rem;margin-bottom:14px; }
 
 /* ---------- ITEM LISTS (weapons / equipment) ---------- */
@@ -495,6 +511,35 @@ table.eqp tr:last-child td{border-bottom:none;}
       </div>
     </div>
 
+    <div class="card" id="turn-simulator-card">
+      <h2 data-i18n="h_turn_sim">Simulador de Turno</h2>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+        <div id="turn-movement-display" style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--gold-bright);"></div>
+        <button class="reset-btn" id="turn-reset" data-i18n="btn_new_turn">Nuevo turno</button>
+      </div>
+      <div class="turn-grid">
+        <div>
+          <h3 id="turn-action-header" data-i18n="lab_action">Acción</h3>
+          <div id="turn-action-list"></div>
+        </div>
+        <div>
+          <h3 id="turn-bonus-header" data-i18n="lab_bonus">Acción Adicional</h3>
+          <div id="turn-bonus-list"></div>
+        </div>
+        <div>
+          <h3 data-i18n="lab_movement">Movimiento</h3>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="item-btn" id="turn-move-minus" title="-5 ft">−5</button>
+            <button class="item-btn" id="turn-move-plus" title="+5 ft">+5</button>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <h3 id="turn-reaction-header" data-i18n="lab_reaction">Reacción</h3>
+        <div id="turn-reaction-list"></div>
+      </div>
+    </div>
+
     <div class="card" id="smite-card">
       <h2 data-i18n="h_smite">Castigo Divino (Divine Smite)</h2>
       <p style="font-size:.85rem;color:var(--parch-dim);" data-i18n="p_smite">Siempre preparado gratis. Puedes lanzarlo 1 vez al día sin gastar hueco de conjuro.</p>
@@ -584,9 +629,10 @@ table.eqp tr:last-child td{border-bottom:none;}
       <p id="traits-empty" style="font-size:.83rem;color:var(--parch-dim);display:none;">—</p>
       <div style="margin-top:14px;">
         <select id="trait-select" style="width:100%;background:var(--void);border:1px solid var(--steel);color:var(--parch);border-radius:8px;padding:9px 10px;font-family:inherit;font-size:.85rem;"></select>
-        <div class="item-form" id="trait-custom-wrap" style="grid-template-columns:2fr 3fr;display:none;margin-top:10px;">
+        <div class="item-form" id="trait-custom-wrap" style="grid-template-columns:2fr 3fr 1fr;display:none;margin-top:10px;">
           <input type="text" id="trait-name" data-i18n-ph="trait_name_ph" placeholder="Nombre del rasgo">
           <input type="text" id="trait-desc" data-i18n-ph="trait_desc_ph" placeholder="Descripción">
+          <select id="trait-action-type"></select>
         </div>
         <button class="reset-btn" id="trait-add" data-i18n="btn_add_trait" style="margin-top:10px;">Añadir rasgo</button>
       </div>
@@ -708,6 +754,9 @@ const I18N = {
     btn_short_rest:'Descanso corto', short_rest_toast:'Descanso corto', short_rest_detail:'huecos de Pacto restaurados',
     h_weapons:'Armas', wpn_name_ph:'Nombre del arma', wpn_damage_ph:'Daño (ej. 1d8 cortante)', btn_add_weapon:'Añadir arma', wpn_tohit:'para golpear', wpn_bonus_title:'Bono extra',
     wpn_range_ph:'Alcance (ej. 20/60 ft)', wpn_ammo_title:'Munición (dejar vacío si no aplica)', wpn_ammo_label:'Munición',
+    h_turn_sim:'Simulador de Turno', btn_new_turn:'Nuevo turno', lab_action:'Acción', lab_bonus:'Acción Adicional', lab_movement:'Movimiento', lab_reaction:'Reacción',
+    turn_status_available:'Disponible', turn_status_used:'Usada', turn_empty:'Nada disponible aquí.',
+    turn_attack_label:'Atacar', turn_cast_label:'Lanzar',
     h_smite:'Castigo Divino (Divine Smite)', p_smite:'Siempre preparado gratis. Puedes lanzarlo 1 vez al día sin gastar hueco de conjuro.',
     smite_available:'Uso gratuito diario: disponible', smite_used:'Uso gratuito diario: gastado',
     h_spellcasting:'Lanzamiento de conjuros', lab_dc:'CD de Salvación', lab_spellatk:'Ataque Mágico', lab_pb:'Bono de Competencia',
@@ -717,6 +766,7 @@ const I18N = {
     p_prepared_empty:'Aún no has elegido conjuros preparados. Búscalos abajo y toca la estrella para prepararlos.',
     h_spell_search:'Buscador de Hechizos', search_placeholder:'Buscar por nombre, nivel o escuela...',
     no_results:'No se encontraron hechizos con ese criterio.', duration_label:'Duración:',
+    conc_badge:'Concentración', btn_concentrate:'Concentrarme', concentrate_toast:'Ahora estás concentrado',
     prep_limit_toast:'Ya tienes {n} conjuros preparados', prep_limit_detail:'quita uno antes de añadir otro',
     check_label:'Prueba', save_label:'Salvación', level_label:'Nivel de Personaje', level_option:'Nivel', xp_label:'Experiencia (PX)',
     h_loh:'Imposición de Manos (Lay on Hands)', p_loh:'Reserva de 5 PV al día. Acción bonus para curar; gasta 5 PV para curar enfermedad o eliminar Envenenado.',
@@ -762,6 +812,9 @@ const I18N = {
     btn_short_rest:'Short rest', short_rest_toast:'Short rest', short_rest_detail:'Pact slots restored',
     h_weapons:'Weapons', wpn_name_ph:'Weapon name', wpn_damage_ph:'Damage (e.g. 1d8 slashing)', btn_add_weapon:'Add Weapon', wpn_tohit:'to hit', wpn_bonus_title:'Extra bonus',
     wpn_range_ph:'Range (e.g. 20/60 ft)', wpn_ammo_title:'Ammunition (leave empty if not applicable)', wpn_ammo_label:'Ammo',
+    h_turn_sim:'Turn Simulator', btn_new_turn:'New turn', lab_action:'Action', lab_bonus:'Bonus Action', lab_movement:'Movement', lab_reaction:'Reaction',
+    turn_status_available:'Available', turn_status_used:'Used', turn_empty:'Nothing available here.',
+    turn_attack_label:'Attack', turn_cast_label:'Cast',
     h_smite:'Divine Smite', p_smite:'Always prepared for free. You can cast it once per day without spending a spell slot.',
     smite_available:'Free daily use: available', smite_used:'Free daily use: used',
     h_spellcasting:'Spellcasting', lab_dc:'Save DC', lab_spellatk:'Spell Attack', lab_pb:'Proficiency Bonus',
@@ -771,6 +824,7 @@ const I18N = {
     p_prepared_empty:'You have not chosen any prepared spells yet. Search below and tap the star to prepare them.',
     h_spell_search:'Spell Search', search_placeholder:'Search by name, level, or school...',
     no_results:'No spells found matching that search.', duration_label:'Duration:',
+    conc_badge:'Concentration', btn_concentrate:'Concentrate', concentrate_toast:'You are now concentrating',
     prep_limit_toast:'You already have {n} spells prepared', prep_limit_detail:'remove one before adding another',
     check_label:'Check', save_label:'Save', level_label:'Character Level', level_option:'Level', xp_label:'Experience (XP)',
     h_loh:'Lay on Hands', p_loh:'5 HP pool per day. Bonus action to heal; spend 5 HP to cure a disease or remove the Poisoned condition.',
@@ -969,55 +1023,61 @@ const DAMAGE_GROUP_LABEL = {
 
 /* ---------- OFFICIAL FEAT CATALOG (2024 Origin & General feats, abridged) ---------- */
 const FEATS_CATALOG = [
-  {id:'alert', group:'origin', es:{name:'Alerta', desc:'Sumas tu bonificador de competencia a la iniciativa y no puedes ser sorprendido mientras estés consciente.'}, en:{name:'Alert', desc:'You add your proficiency bonus to initiative and cannot be surprised while conscious.'}},
-  {id:'crafter', group:'origin', es:{name:'Artesano', desc:'Competencia en tres herramientas de artesano; 20% de descuento al comprar objetos no mágicos; menos tiempo fabricando objetos.'}, en:{name:'Crafter', desc:'Proficiency with three artisan tools; 20% discount buying nonmagical items; less time crafting.'}},
-  {id:'healer', group:'origin', es:{name:'Sanador', desc:'Con un kit de sanador, restauras puntos de golpe extra al estabilizar o curar a una criatura.'}, en:{name:'Healer', desc:'Using a healer’s kit, you restore extra hit points when stabilizing or healing a creature.'}},
-  {id:'lucky', group:'origin', es:{name:'Afortunado', desc:'Tienes puntos de suerte (= bonificador de competencia) para darte ventaja o imponer desventaja en una tirada.'}, en:{name:'Lucky', desc:'You have Luck Points (= proficiency bonus) to grant yourself advantage or impose disadvantage on a roll.'}},
-  {id:'magic_initiate', group:'origin', es:{name:'Iniciado en Magia', desc:'Aprendes dos cantrips y un conjuro de nivel 1 de una lista de clase, lanzable una vez gratis por descanso largo.'}, en:{name:'Magic Initiate', desc:'You learn two cantrips and one 1st-level spell from a class list, castable once for free per long rest.'}},
-  {id:'musician', group:'origin', es:{name:'Músico', desc:'Competencia con tres instrumentos musicales; puedes dar Inspiración a aliados que te oigan tocar tras un descanso corto/largo.'}, en:{name:'Musician', desc:'Proficiency with three musical instruments; you can grant Inspiration to allies who hear you play after a rest.'}},
-  {id:'savage_attacker', group:'origin', es:{name:'Atacante Salvaje', desc:'Una vez por turno, tira el daño de un ataque cuerpo a cuerpo dos veces y elige el resultado que prefieras.'}, en:{name:'Savage Attacker', desc:'Once per turn, roll melee weapon damage twice and choose either result.'}},
-  {id:'skilled', group:'origin', es:{name:'Experto', desc:'Ganas competencia en tres habilidades o herramientas de tu elección.'}, en:{name:'Skilled', desc:'You gain proficiency in three skills or tools of your choice.'}},
-  {id:'tavern_brawler', group:'origin', es:{name:'Pendenciero de Taberna', desc:'Competencia con armas improvisadas; tu golpe desarmado usa 1d4; puedes agarrar tras golpear.'}, en:{name:'Tavern Brawler', desc:'Proficiency with improvised weapons; your unarmed strike uses 1d4; you can grapple after hitting.'}},
-  {id:'tough', group:'origin', es:{name:'Resistente', desc:'Tu máximo de puntos de golpe aumenta en 2 por nivel de personaje.'}, en:{name:'Tough', desc:'Your hit point maximum increases by 2 per character level.'}},
-  {id:'ability_score_improvement', group:'general', es:{name:'Mejora de Característica', desc:'Aumenta una puntuación de característica en 2, o dos puntuaciones en 1 cada una (máx. 20).'}, en:{name:'Ability Score Improvement', desc:'Increase one ability score by 2, or two ability scores by 1 each (max 20).'}},
-  {id:'actor', group:'general', es:{name:'Actor', desc:'+1 a Carisma; ventaja en pruebas de Interpretación/Engaño al hacerte pasar por otro; puedes imitar voces y sonidos.'}, en:{name:'Actor', desc:'+1 Charisma; advantage on Deception/Performance checks to pass as someone else; you can mimic voices and sounds.'}},
-  {id:'athlete', group:'general', es:{name:'Atleta', desc:'+1 FUE o DES; te levantas gastando solo 5 pies de movimiento; mejora en escalar/saltar.'}, en:{name:'Athlete', desc:'+1 STR or DEX; standing up costs only 5 feet of movement; improved climbing/jumping.'}},
-  {id:'charger', group:'general', es:{name:'Embestidor', desc:'Tras usar Correr, puedes hacer un ataque adicional o empujar a una criatura.'}, en:{name:'Charger', desc:'After you Dash, you can make one extra attack or shove a creature.'}},
-  {id:'chef', group:'general', es:{name:'Cocinero', desc:'Preparas comida especial que otorga puntos de golpe temporales o beneficios en descansos cortos/largos.'}, en:{name:'Chef', desc:'You prepare special food that grants temporary hit points or benefits during rests.'}},
-  {id:'crusher', group:'general', es:{name:'Aplastador', desc:'Daño contundente puede empujar 5 pies; críticos con daño contundente dan ventaja al siguiente ataque contra el objetivo.'}, en:{name:'Crusher', desc:'Bludgeoning damage can push 5 feet; critical hits with bludgeoning grant advantage on the next attack against the target.'}},
-  {id:'defensive_duelist', group:'general', es:{name:'Duelista Defensivo', desc:'Con un arma finesse, usa tu reacción para sumar tu bono de competencia a la CA contra un ataque cuerpo a cuerpo.'}, en:{name:'Defensive Duelist', desc:'With a finesse weapon, use your reaction to add your proficiency bonus to AC against one melee attack.'}},
-  {id:'dual_wielder', group:'general', es:{name:'Combate a Dos Armas', desc:'+1 CA mientras luchas con dos armas; puedes usar armas a dos manos como si fueran ligeras para este estilo.'}, en:{name:'Dual Wielder', desc:'+1 AC while wielding two weapons; you can use two-handed weapons as if light for this fighting style.'}},
-  {id:'durable', group:'general', es:{name:'Duradero', desc:'+1 Constitución; cuando recuperas puntos de golpe con un dado de golpe, el mínimo es el doble de tu mod. de Constitución.'}, en:{name:'Durable', desc:'+1 Constitution; when you regain hit points from a Hit Die, the minimum is twice your Constitution modifier.'}},
-  {id:'elemental_adept', group:'general', es:{name:'Adepto Elemental', desc:'Elige un tipo de daño; tus conjuros de ese tipo ignoran resistencia y tratan los 1 en dados de daño como 2.'}, en:{name:'Elemental Adept', desc:'Choose a damage type; your spells of that type ignore resistance and treat 1s on damage dice as 2s.'}},
-  {id:'fey_touched', group:'general', es:{name:'Tocado por las Hadas', desc:'+1 INT/SAB/CAR; aprendes Bruma y un conjuro de adivinación o encantamiento de nivel 1, lanzable gratis una vez por descanso largo.'}, en:{name:'Fey Touched', desc:'+1 INT/WIS/CHA; you learn Misty Step and one 1st-level divination or enchantment spell, castable free once per long rest.'}},
-  {id:'grappler', group:'general', es:{name:'Forcejeador', desc:'Ventaja en ataques contra una criatura que ya tengas agarrada; puedes intentar inmovilizar a una criatura agarrada.'}, en:{name:'Grappler', desc:'Advantage on attacks against a creature you are grappling; you can attempt to pin a grappled creature.'}},
-  {id:'great_weapon_master', group:'general', es:{name:'Maestro con Armas Grandes', desc:'Puedes restar 5 al ataque para sumar 10 al daño con armas pesadas; ataque adicional al derribar o dar un crítico.'}, en:{name:'Great Weapon Master', desc:'You can take -5 to hit for +10 damage with heavy weapons; bonus attack on a critical hit or reducing a creature to 0 HP.'}},
-  {id:'heavily_armored', group:'general', es:{name:'Fuertemente Armado', desc:'+1 Fuerza; ganas competencia con armadura pesada.'}, en:{name:'Heavily Armored', desc:'+1 Strength; you gain proficiency with heavy armor.'}},
-  {id:'heavy_armor_master', group:'general', es:{name:'Maestro de Armadura Pesada', desc:'+1 Fuerza; con armadura pesada, reduces en 3 el daño contundente/perforante/cortante no mágico que recibes.'}, en:{name:'Heavy Armor Master', desc:'+1 Strength; while wearing heavy armor, reduce nonmagical bludgeoning/piercing/slashing damage taken by 3.'}},
-  {id:'inspiring_leader', group:'general', es:{name:'Líder Inspirador', desc:'Pasas 10 minutos inspirando a hasta 6 aliados, que ganan puntos de golpe temporales.'}, en:{name:'Inspiring Leader', desc:'You spend 10 minutes inspiring up to 6 allies, who gain temporary hit points.'}},
-  {id:'keen_mind', group:'general', es:{name:'Mente Aguda', desc:'+1 Inteligencia; siempre sabes qué dirección es el norte y cuánto tiempo falta para el amanecer/anochecer; recuerdas con detalle lo visto/oído en el último mes.'}, en:{name:'Keen Mind', desc:'+1 Intelligence; you always know which way is north and recall anything seen or heard in detail within the last month.'}},
-  {id:'lightly_armored', group:'general', es:{name:'Ligeramente Armado', desc:'+1 FUE o DES; ganas competencia con armadura ligera.'}, en:{name:'Lightly Armored', desc:'+1 STR or DEX; you gain proficiency with light armor.'}},
-  {id:'mage_slayer', group:'general', es:{name:'Cazador de Magos', desc:'Puedes usar tu reacción para atacar a una criatura que lanza un conjuro a tu alcance; ventaja en salvaciones contra conjuros dirigidos a ti.'}, en:{name:'Mage Slayer', desc:'You can use your reaction to attack a creature that casts a spell within reach; advantage on saves against spells targeting you.'}},
-  {id:'medium_armor_master', group:'general', es:{name:'Maestro de Armadura Media', desc:'Con armadura media, el máximo de bono de Destreza a la CA sube a +3 y no impone desventaja en Sigilo.'}, en:{name:'Medium Armor Master', desc:'While wearing medium armor, your max Dexterity AC bonus becomes +3 and it does not impose disadvantage on Stealth.'}},
-  {id:'mobile', group:'general', es:{name:'Móvil', desc:'+10 pies de velocidad; ignoras terreno difícil al usar Correr; no provocas ataque de oportunidad del objetivo que atacas.'}, en:{name:'Mobile', desc:'+10 feet of speed; ignore difficult terrain when you Dash; no opportunity attacks from a creature you attack.'}},
-  {id:'moderately_armored', group:'general', es:{name:'Moderadamente Armado', desc:'+1 FUE o DES; ganas competencia con armadura media y escudos.'}, en:{name:'Moderately Armored', desc:'+1 STR or DEX; you gain proficiency with medium armor and shields.'}},
-  {id:'mounted_combatant', group:'general', es:{name:'Combatiente Montado', desc:'Ventaja en ataques cuerpo a cuerpo contra criaturas más pequeñas que tu montura; puedes forzar un ataque a caer sobre ti en vez de tu montura.'}, en:{name:'Mounted Combatant', desc:'Advantage on melee attacks against creatures smaller than your mount; you can force an attack to target you instead of your mount.'}},
-  {id:'observant', group:'general', es:{name:'Observador', desc:'+1 INT o SAB; +5 a Percepción/Investigación pasivas; puedes leer los labios.'}, en:{name:'Observant', desc:'+1 INT or WIS; +5 to passive Perception/Investigation; you can read lips.'}},
-  {id:'piercer', group:'general', es:{name:'Perforador', desc:'Puedes re-tirar un dado de daño perforante; críticos con daño perforante suman un dado extra de daño.'}, en:{name:'Piercer', desc:'You can reroll one piercing damage die; critical hits with piercing damage add an extra damage die.'}},
-  {id:'poisoner', group:'general', es:{name:'Envenenador', desc:'Aplicar veneno a un arma es una acción adicional; ganas competencia con kit de envenenador; tus venenos ignoran resistencia.'}, en:{name:'Poisoner', desc:'Applying poison to a weapon is a bonus action; you gain proficiency with poisoner’s kit; your poisons ignore resistance.'}},
-  {id:'polearm_master', group:'general', es:{name:'Maestro de Arma de Asta', desc:'Ataque adicional con el extremo romo de un arma de asta; ataque de oportunidad cuando una criatura entra en tu alcance.'}, en:{name:'Polearm Master', desc:'Bonus attack with the butt end of a polearm; opportunity attack when a creature enters your reach.'}},
-  {id:'resilient', group:'general', es:{name:'Resiliente', desc:'+1 a una característica; ganas competencia en su salvación.'}, en:{name:'Resilient', desc:'+1 to one ability score; you gain proficiency in saving throws with that ability.'}},
-  {id:'ritual_caster', group:'general', es:{name:'Lanzador de Rituales', desc:'Ganas un libro/lista de rituales de una clase de conjuros que puedes lanzar como rituales.'}, en:{name:'Ritual Caster', desc:'You gain a ritual book/list from a spellcasting class that you can cast as rituals.'}},
-  {id:'sentinel', group:'general', es:{name:'Centinela', desc:'Cuando impactas con un ataque de oportunidad, la velocidad del objetivo se vuelve 0; puedes atacar aunque la criatura use Desenganchar.'}, en:{name:'Sentinel', desc:'When you hit with an opportunity attack, the target’s speed becomes 0; you can attack even if the creature Disengages.'}},
-  {id:'sharpshooter', group:'general', es:{name:'Tirador Certero', desc:'Ignoras cobertura media/tres cuartos con armas a distancia; puedes restar 5 al ataque para sumar 10 al daño.'}, en:{name:'Sharpshooter', desc:'Ignore half/three-quarters cover with ranged weapons; you can take -5 to hit for +10 damage.'}},
-  {id:'shield_master', group:'general', es:{name:'Maestro del Escudo', desc:'Acción adicional para empujar con el escudo; con escudo, bono a salvaciones de Destreza contra efectos de área.'}, en:{name:'Shield Master', desc:'Bonus action to shove with your shield; while wielding a shield, bonus to Dexterity saves against area effects.'}},
-  {id:'skill_expert', group:'general', es:{name:'Experto en Habilidades', desc:'+1 a una característica; competencia en una habilidad; Pericia (doble competencia) en otra habilidad ya competente.'}, en:{name:'Skill Expert', desc:'+1 to one ability score; proficiency in one skill; Expertise in another skill you’re already proficient with.'}},
-  {id:'speedy', group:'general', es:{name:'Veloz', desc:'+10 pies de velocidad; puedes usar Correr como acción adicional un número de veces igual a tu bono de competencia por descanso largo.'}, en:{name:'Speedy', desc:'+10 feet of speed; you can Dash as a bonus action a number of times equal to your proficiency bonus per long rest.'}},
-  {id:'tough_general', group:'general', es:{name:'Duro de Pelar', desc:'(Genérico) +2 al máximo de puntos de golpe por nivel de personaje.'}, en:{name:'Tough (general)', desc:'(Generic) +2 to hit point maximum per character level.'}},
-  {id:'war_caster', group:'general', es:{name:'Conjurador de Guerra', desc:'Ventaja en salvaciones de Constitución para mantener la concentración; puedes lanzar un conjuro en vez de hacer un ataque de oportunidad.'}, en:{name:'War Caster', desc:'Advantage on Constitution saves to maintain concentration; you can cast a spell instead of making an opportunity attack.'}},
-  {id:'weapon_master', group:'general', es:{name:'Maestro de Armas', desc:'Competencia con cuatro armas de tu elección; ganas una Propiedad de Maestría adicional con dos armas.'}, en:{name:'Weapon Master', desc:'Proficiency with four weapons of your choice; you gain an extra Mastery property with two weapons.'}},
+  {id:'alert', group:'origin', at:'passive', es:{name:'Alerta', desc:'Sumas tu bonificador de competencia a la iniciativa y no puedes ser sorprendido mientras estés consciente.'}, en:{name:'Alert', desc:'You add your proficiency bonus to initiative and cannot be surprised while conscious.'}},
+  {id:'crafter', group:'origin', at:'passive', es:{name:'Artesano', desc:'Competencia en tres herramientas de artesano; 20% de descuento al comprar objetos no mágicos; menos tiempo fabricando objetos.'}, en:{name:'Crafter', desc:'Proficiency with three artisan tools; 20% discount buying nonmagical items; less time crafting.'}},
+  {id:'healer', group:'origin', at:'action', es:{name:'Sanador', desc:'Con un kit de sanador, restauras puntos de golpe extra al estabilizar o curar a una criatura.'}, en:{name:'Healer', desc:'Using a healer’s kit, you restore extra hit points when stabilizing or healing a creature.'}},
+  {id:'lucky', group:'origin', at:'free', es:{name:'Afortunado', desc:'Tienes puntos de suerte (= bonificador de competencia) para darte ventaja o imponer desventaja en una tirada.'}, en:{name:'Lucky', desc:'You have Luck Points (= proficiency bonus) to grant yourself advantage or impose disadvantage on a roll.'}},
+  {id:'magic_initiate', group:'origin', at:'passive', es:{name:'Iniciado en Magia', desc:'Aprendes dos cantrips y un conjuro de nivel 1 de una lista de clase, lanzable una vez gratis por descanso largo.'}, en:{name:'Magic Initiate', desc:'You learn two cantrips and one 1st-level spell from a class list, castable once for free per long rest.'}},
+  {id:'musician', group:'origin', at:'passive', es:{name:'Músico', desc:'Competencia con tres instrumentos musicales; puedes dar Inspiración a aliados que te oigan tocar tras un descanso corto/largo.'}, en:{name:'Musician', desc:'Proficiency with three musical instruments; you can grant Inspiration to allies who hear you play after a rest.'}},
+  {id:'savage_attacker', group:'origin', at:'passive', es:{name:'Atacante Salvaje', desc:'Una vez por turno, tira el daño de un ataque cuerpo a cuerpo dos veces y elige el resultado que prefieras.'}, en:{name:'Savage Attacker', desc:'Once per turn, roll melee weapon damage twice and choose either result.'}},
+  {id:'skilled', group:'origin', at:'passive', es:{name:'Experto', desc:'Ganas competencia en tres habilidades o herramientas de tu elección.'}, en:{name:'Skilled', desc:'You gain proficiency in three skills or tools of your choice.'}},
+  {id:'tavern_brawler', group:'origin', at:'passive', es:{name:'Pendenciero de Taberna', desc:'Competencia con armas improvisadas; tu golpe desarmado usa 1d4; puedes agarrar tras golpear.'}, en:{name:'Tavern Brawler', desc:'Proficiency with improvised weapons; your unarmed strike uses 1d4; you can grapple after hitting.'}},
+  {id:'tough', group:'origin', at:'passive', es:{name:'Resistente', desc:'Tu máximo de puntos de golpe aumenta en 2 por nivel de personaje.'}, en:{name:'Tough', desc:'Your hit point maximum increases by 2 per character level.'}},
+  {id:'ability_score_improvement', group:'general', at:'passive', es:{name:'Mejora de Característica', desc:'Aumenta una puntuación de característica en 2, o dos puntuaciones en 1 cada una (máx. 20).'}, en:{name:'Ability Score Improvement', desc:'Increase one ability score by 2, or two ability scores by 1 each (max 20).'}},
+  {id:'actor', group:'general', at:'passive', es:{name:'Actor', desc:'+1 a Carisma; ventaja en pruebas de Interpretación/Engaño al hacerte pasar por otro; puedes imitar voces y sonidos.'}, en:{name:'Actor', desc:'+1 Charisma; advantage on Deception/Performance checks to pass as someone else; you can mimic voices and sounds.'}},
+  {id:'athlete', group:'general', at:'passive', es:{name:'Atleta', desc:'+1 FUE o DES; te levantas gastando solo 5 pies de movimiento; mejora en escalar/saltar.'}, en:{name:'Athlete', desc:'+1 STR or DEX; standing up costs only 5 feet of movement; improved climbing/jumping.'}},
+  {id:'charger', group:'general', at:'action', es:{name:'Embestidor', desc:'Tras usar Correr, puedes hacer un ataque adicional o empujar a una criatura.'}, en:{name:'Charger', desc:'After you Dash, you can make one extra attack or shove a creature.'}},
+  {id:'chef', group:'general', at:'passive', es:{name:'Cocinero', desc:'Preparas comida especial que otorga puntos de golpe temporales o beneficios en descansos cortos/largos.'}, en:{name:'Chef', desc:'You prepare special food that grants temporary hit points or benefits during rests.'}},
+  {id:'crusher', group:'general', at:'passive', es:{name:'Aplastador', desc:'Daño contundente puede empujar 5 pies; críticos con daño contundente dan ventaja al siguiente ataque contra el objetivo.'}, en:{name:'Crusher', desc:'Bludgeoning damage can push 5 feet; critical hits with bludgeoning grant advantage on the next attack against the target.'}},
+  {id:'defensive_duelist', group:'general', at:'reaction', es:{name:'Duelista Defensivo', desc:'Con un arma finesse, usa tu reacción para sumar tu bono de competencia a la CA contra un ataque cuerpo a cuerpo.'}, en:{name:'Defensive Duelist', desc:'With a finesse weapon, use your reaction to add your proficiency bonus to AC against one melee attack.'}},
+  {id:'dual_wielder', group:'general', at:'passive', es:{name:'Combate a Dos Armas', desc:'+1 CA mientras luchas con dos armas; puedes usar armas a dos manos como si fueran ligeras para este estilo.'}, en:{name:'Dual Wielder', desc:'+1 AC while wielding two weapons; you can use two-handed weapons as if light for this fighting style.'}},
+  {id:'durable', group:'general', at:'passive', es:{name:'Duradero', desc:'+1 Constitución; cuando recuperas puntos de golpe con un dado de golpe, el mínimo es el doble de tu mod. de Constitución.'}, en:{name:'Durable', desc:'+1 Constitution; when you regain hit points from a Hit Die, the minimum is twice your Constitution modifier.'}},
+  {id:'elemental_adept', group:'general', at:'passive', es:{name:'Adepto Elemental', desc:'Elige un tipo de daño; tus conjuros de ese tipo ignoran resistencia y tratan los 1 en dados de daño como 2.'}, en:{name:'Elemental Adept', desc:'Choose a damage type; your spells of that type ignore resistance and treat 1s on damage dice as 2s.'}},
+  {id:'fey_touched', group:'general', at:'passive', es:{name:'Tocado por las Hadas', desc:'+1 INT/SAB/CAR; aprendes Bruma y un conjuro de adivinación o encantamiento de nivel 1, lanzable gratis una vez por descanso largo.'}, en:{name:'Fey Touched', desc:'+1 INT/WIS/CHA; you learn Misty Step and one 1st-level divination or enchantment spell, castable free once per long rest.'}},
+  {id:'grappler', group:'general', at:'passive', es:{name:'Forcejeador', desc:'Ventaja en ataques contra una criatura que ya tengas agarrada; puedes intentar inmovilizar a una criatura agarrada.'}, en:{name:'Grappler', desc:'Advantage on attacks against a creature you are grappling; you can attempt to pin a grappled creature.'}},
+  {id:'great_weapon_master', group:'general', at:'bonus', es:{name:'Maestro con Armas Grandes', desc:'Puedes restar 5 al ataque para sumar 10 al daño con armas pesadas; ataque adicional al derribar o dar un crítico.'}, en:{name:'Great Weapon Master', desc:'You can take -5 to hit for +10 damage with heavy weapons; bonus attack on a critical hit or reducing a creature to 0 HP.'}},
+  {id:'heavily_armored', group:'general', at:'passive', es:{name:'Fuertemente Armado', desc:'+1 Fuerza; ganas competencia con armadura pesada.'}, en:{name:'Heavily Armored', desc:'+1 Strength; you gain proficiency with heavy armor.'}},
+  {id:'heavy_armor_master', group:'general', at:'passive', es:{name:'Maestro de Armadura Pesada', desc:'+1 Fuerza; con armadura pesada, reduces en 3 el daño contundente/perforante/cortante no mágico que recibes.'}, en:{name:'Heavy Armor Master', desc:'+1 Strength; while wearing heavy armor, reduce nonmagical bludgeoning/piercing/slashing damage taken by 3.'}},
+  {id:'inspiring_leader', group:'general', at:'action', es:{name:'Líder Inspirador', desc:'Pasas 10 minutos inspirando a hasta 6 aliados, que ganan puntos de golpe temporales.'}, en:{name:'Inspiring Leader', desc:'You spend 10 minutes inspiring up to 6 allies, who gain temporary hit points.'}},
+  {id:'keen_mind', group:'general', at:'passive', es:{name:'Mente Aguda', desc:'+1 Inteligencia; siempre sabes qué dirección es el norte y cuánto tiempo falta para el amanecer/anochecer; recuerdas con detalle lo visto/oído en el último mes.'}, en:{name:'Keen Mind', desc:'+1 Intelligence; you always know which way is north and recall anything seen or heard in detail within the last month.'}},
+  {id:'lightly_armored', group:'general', at:'passive', es:{name:'Ligeramente Armado', desc:'+1 FUE o DES; ganas competencia con armadura ligera.'}, en:{name:'Lightly Armored', desc:'+1 STR or DEX; you gain proficiency with light armor.'}},
+  {id:'mage_slayer', group:'general', at:'reaction', es:{name:'Cazador de Magos', desc:'Puedes usar tu reacción para atacar a una criatura que lanza un conjuro a tu alcance; ventaja en salvaciones contra conjuros dirigidos a ti.'}, en:{name:'Mage Slayer', desc:'You can use your reaction to attack a creature that casts a spell within reach; advantage on saves against spells targeting you.'}},
+  {id:'medium_armor_master', group:'general', at:'passive', es:{name:'Maestro de Armadura Media', desc:'Con armadura media, el máximo de bono de Destreza a la CA sube a +3 y no impone desventaja en Sigilo.'}, en:{name:'Medium Armor Master', desc:'While wearing medium armor, your max Dexterity AC bonus becomes +3 and it does not impose disadvantage on Stealth.'}},
+  {id:'mobile', group:'general', at:'passive', es:{name:'Móvil', desc:'+10 pies de velocidad; ignoras terreno difícil al usar Correr; no provocas ataque de oportunidad del objetivo que atacas.'}, en:{name:'Mobile', desc:'+10 feet of speed; ignore difficult terrain when you Dash; no opportunity attacks from a creature you attack.'}},
+  {id:'moderately_armored', group:'general', at:'passive', es:{name:'Moderadamente Armado', desc:'+1 FUE o DES; ganas competencia con armadura media y escudos.'}, en:{name:'Moderately Armored', desc:'+1 STR or DEX; you gain proficiency with medium armor and shields.'}},
+  {id:'mounted_combatant', group:'general', at:'passive', es:{name:'Combatiente Montado', desc:'Ventaja en ataques cuerpo a cuerpo contra criaturas más pequeñas que tu montura; puedes forzar un ataque a caer sobre ti en vez de tu montura.'}, en:{name:'Mounted Combatant', desc:'Advantage on melee attacks against creatures smaller than your mount; you can force an attack to target you instead of your mount.'}},
+  {id:'observant', group:'general', at:'passive', es:{name:'Observador', desc:'+1 INT o SAB; +5 a Percepción/Investigación pasivas; puedes leer los labios.'}, en:{name:'Observant', desc:'+1 INT or WIS; +5 to passive Perception/Investigation; you can read lips.'}},
+  {id:'piercer', group:'general', at:'passive', es:{name:'Perforador', desc:'Puedes re-tirar un dado de daño perforante; críticos con daño perforante suman un dado extra de daño.'}, en:{name:'Piercer', desc:'You can reroll one piercing damage die; critical hits with piercing damage add an extra damage die.'}},
+  {id:'poisoner', group:'general', at:'bonus', es:{name:'Envenenador', desc:'Aplicar veneno a un arma es una acción adicional; ganas competencia con kit de envenenador; tus venenos ignoran resistencia.'}, en:{name:'Poisoner', desc:'Applying poison to a weapon is a bonus action; you gain proficiency with poisoner’s kit; your poisons ignore resistance.'}},
+  {id:'polearm_master', group:'general', at:'bonus', es:{name:'Maestro de Arma de Asta', desc:'Ataque adicional con el extremo romo de un arma de asta; ataque de oportunidad cuando una criatura entra en tu alcance.'}, en:{name:'Polearm Master', desc:'Bonus attack with the butt end of a polearm; opportunity attack when a creature enters your reach.'}},
+  {id:'resilient', group:'general', at:'passive', es:{name:'Resiliente', desc:'+1 a una característica; ganas competencia en su salvación.'}, en:{name:'Resilient', desc:'+1 to one ability score; you gain proficiency in saving throws with that ability.'}},
+  {id:'ritual_caster', group:'general', at:'action', es:{name:'Lanzador de Rituales', desc:'Ganas un libro/lista de rituales de una clase de conjuros que puedes lanzar como rituales.'}, en:{name:'Ritual Caster', desc:'You gain a ritual book/list from a spellcasting class that you can cast as rituals.'}},
+  {id:'sentinel', group:'general', at:'reaction', es:{name:'Centinela', desc:'Cuando impactas con un ataque de oportunidad, la velocidad del objetivo se vuelve 0; puedes atacar aunque la criatura use Desenganchar.'}, en:{name:'Sentinel', desc:'When you hit with an opportunity attack, the target’s speed becomes 0; you can attack even if the creature Disengages.'}},
+  {id:'sharpshooter', group:'general', at:'passive', es:{name:'Tirador Certero', desc:'Ignoras cobertura media/tres cuartos con armas a distancia; puedes restar 5 al ataque para sumar 10 al daño.'}, en:{name:'Sharpshooter', desc:'Ignore half/three-quarters cover with ranged weapons; you can take -5 to hit for +10 damage.'}},
+  {id:'shield_master', group:'general', at:'bonus', es:{name:'Maestro del Escudo', desc:'Acción adicional para empujar con el escudo; con escudo, bono a salvaciones de Destreza contra efectos de área.'}, en:{name:'Shield Master', desc:'Bonus action to shove with your shield; while wielding a shield, bonus to Dexterity saves against area effects.'}},
+  {id:'skill_expert', group:'general', at:'passive', es:{name:'Experto en Habilidades', desc:'+1 a una característica; competencia en una habilidad; Pericia (doble competencia) en otra habilidad ya competente.'}, en:{name:'Skill Expert', desc:'+1 to one ability score; proficiency in one skill; Expertise in another skill you’re already proficient with.'}},
+  {id:'speedy', group:'general', at:'bonus', es:{name:'Veloz', desc:'+10 pies de velocidad; puedes usar Correr como acción adicional un número de veces igual a tu bono de competencia por descanso largo.'}, en:{name:'Speedy', desc:'+10 feet of speed; you can Dash as a bonus action a number of times equal to your proficiency bonus per long rest.'}},
+  {id:'tough_general', group:'general', at:'passive', es:{name:'Duro de Pelar', desc:'(Genérico) +2 al máximo de puntos de golpe por nivel de personaje.'}, en:{name:'Tough (general)', desc:'(Generic) +2 to hit point maximum per character level.'}},
+  {id:'war_caster', group:'general', at:'reaction', es:{name:'Conjurador de Guerra', desc:'Ventaja en salvaciones de Constitución para mantener la concentración; puedes lanzar un conjuro en vez de hacer un ataque de oportunidad.'}, en:{name:'War Caster', desc:'Advantage on Constitution saves to maintain concentration; you can cast a spell instead of making an opportunity attack.'}},
+  {id:'weapon_master', group:'general', at:'passive', es:{name:'Maestro de Armas', desc:'Competencia con cuatro armas de tu elección; ganas una Propiedad de Maestría adicional con dos armas.'}, en:{name:'Weapon Master', desc:'Proficiency with four weapons of your choice; you gain an extra Mastery property with two weapons.'}},
 ];
 const FEAT_GROUP_LABEL = { origin:{es:'Dotes de Origen', en:'Origin Feats'}, general:{es:'Dotes Generales', en:'General Feats'} };
+const ACTION_TYPE_OPTIONS = [
+  {id:'passive', es:'Pasivo', en:'Passive'}, {id:'action', es:'Acción', en:'Action'},
+  {id:'bonus', es:'Acción Adicional', en:'Bonus Action'}, {id:'reaction', es:'Reacción', en:'Reaction'},
+  {id:'free', es:'Sin acción', en:'No action'},
+];
+const ACTION_TYPE_LABEL = {}; ACTION_TYPE_OPTIONS.forEach(o=>ACTION_TYPE_LABEL[o.id]=o);
 const ALIGNMENT_OPTIONS = [
   {id:'lawful_good', es:'Legal Bueno', en:'Lawful Good'}, {id:'neutral_good', es:'Neutral Bueno', en:'Neutral Good'},
   {id:'chaotic_good', es:'Caótico Bueno', en:'Chaotic Good'}, {id:'lawful_neutral', es:'Legal Neutral', en:'Lawful Neutral'},
@@ -1074,6 +1134,7 @@ function countsAgainstPrepLimit(spellId){
   return !!sp && sp.level>0;
 }
 function modOf(score){ return Math.floor((score-10)/2); }
+function isConcentration(sp){ return sp.duration.indexOf('conc_')===0; }
 function fmt(n){return n>=0?`+${n}`:`${n}`;}
 
 const spellDB = [
@@ -1274,6 +1335,7 @@ function defaultCharacter(id, seedAster){
       resourcePool:null, heroicInspiration:false, currency:{cp:0,sp:0,ep:0,gp:0,pp:25},
       conditions:{}, exhaustion:0, notes:{personality:'',ideals:'',bonds:'',flaws:'',free:''}, skillExpertise:{},
       size:'medium', senses:'', damageNotes:[],
+      turnState:{ movementUsed:0, actionUsed:false, bonusUsed:false, reactionUsed:false },
     };
   }
   return {
@@ -1292,6 +1354,7 @@ function defaultCharacter(id, seedAster){
     resourcePool:null, heroicInspiration:false, currency:{cp:0,sp:0,ep:0,gp:0,pp:0},
     conditions:{}, exhaustion:0, notes:{personality:'',ideals:'',bonds:'',flaws:'',free:''},
     size:'medium', senses:'', damageNotes:[],
+    turnState:{ movementUsed:0, actionUsed:false, bonusUsed:false, reactionUsed:false },
   };
 }
 
@@ -1503,6 +1566,7 @@ async function joinSessionWith(code, existingId, createNew){
     if(!character.size) character.size = 'medium';
     if(character.senses===undefined) character.senses = '';
     if(!character.damageNotes) character.damageNotes = [];
+    if(!character.turnState) character.turnState = { movementUsed:0, actionUsed:false, bonusUsed:false, reactionUsed:false };
     migrateIdentity(character);
   }
   await storageSet('last_opened_id', character.id);
@@ -1707,6 +1771,7 @@ async function openCharacter(id){
   if(!character.size) character.size = 'medium';
   if(character.senses===undefined) character.senses = '';
   if(!character.damageNotes) character.damageNotes = [];
+  if(!character.turnState) character.turnState = { movementUsed:0, actionUsed:false, bonusUsed:false, reactionUsed:false };
   migrateIdentity(character);
   await storageSet('last_opened_id', id);
   showSheet();
@@ -2037,6 +2102,7 @@ function renderAll(){
   renderNotes();
   renderDamageNotes();
   renderSizeSenses();
+  renderTurnSimulator();
 }
 
 document.getElementById('lang-es').addEventListener('click', ()=>{ currentLang='es'; applyStaticText(); renderAll(); renderSpellResults(document.getElementById('spell-search').value); renderPreparedList(); });
@@ -2313,6 +2379,8 @@ function renderClassConditionalCards(){
 // ---------- TRAITS / FEATS (data-driven per character) ----------
 function renderTraits(){
   populateCatalogSelect(document.getElementById('trait-select'), FEATS_CATALOG, FEAT_GROUP_LABEL, o=>o[currentLang].name);
+  const atSel = document.getElementById('trait-action-type');
+  atSel.innerHTML = ACTION_TYPE_OPTIONS.map(o=>`<option value="${o.id}">${o[currentLang]}</option>`).join('');
   const wrap = document.getElementById('traits-list');
   const empty = document.getElementById('traits-empty');
   wrap.innerHTML = '';
@@ -2320,10 +2388,12 @@ function renderTraits(){
   if(traits.length===0){ empty.style.display='block'; return; }
   empty.style.display='none';
   traits.forEach((tr,idx)=>{
+    const at = tr.actionType || 'passive';
+    const atBadge = at==='passive' ? '' : `<span class="conc-badge">${ACTION_TYPE_LABEL[at][currentLang]}</span>`;
     const div = document.createElement('div');
     div.className='feat';
     div.style.display='flex'; div.style.justifyContent='space-between'; div.style.gap='10px';
-    div.innerHTML = `<div><div class="ft-name">${tr[currentLang].name}</div><p>${tr[currentLang].desc}</p></div>
+    div.innerHTML = `<div><div class="ft-name">${tr[currentLang].name}${atBadge}</div><p>${tr[currentLang].desc}</p></div>
       <button class="item-btn remove" data-idx="${idx}" title="×" style="flex:0 0 auto;">×</button>`;
     div.querySelector('.remove').addEventListener('click', ()=>{
       character.traits.splice(idx,1);
@@ -2379,15 +2449,16 @@ document.getElementById('trait-add').addEventListener('click', ()=>{
   if(sel.value==='other'){
     const nameInput = document.getElementById('trait-name');
     const descInput = document.getElementById('trait-desc');
+    const atSel = document.getElementById('trait-action-type');
     const name = nameInput.value.trim();
     const desc = descInput.value.trim();
     if(!name){ nameInput.focus(); return; }
-    character.traits.push({ es:{name, desc}, en:{name, desc} });
+    character.traits.push({ es:{name, desc}, en:{name, desc}, actionType:atSel.value });
     nameInput.value=''; descInput.value='';
   } else {
     const feat = FEATS_CATALOG.find(f=>f.id===sel.value);
     if(!feat) return;
-    character.traits.push({ es:feat.es, en:feat.en });
+    character.traits.push({ es:feat.es, en:feat.en, actionType:feat.at||'passive' });
   }
   scheduleSave();
   renderTraits();
@@ -2541,6 +2612,91 @@ document.getElementById('wpn-add').addEventListener('click', ()=>{
   renderWeapons(); renderEquipment();
 });
 
+// ---------- TURN SIMULATOR ----------
+function turnItem(name, meta, desc, statusUsed, onClick){
+  const div = document.createElement('div');
+  div.className = 'turn-item' + (statusUsed ? ' turn-used' : '');
+  div.innerHTML = `<div class="ti-name">${name}</div>${meta?`<div class="ti-meta">${meta}</div>`:''}${desc?`<div class="ti-desc">${desc}</div>`:''}`;
+  div.addEventListener('click', ()=>{
+    if(desc) div.classList.toggle('open');
+    if(onClick) onClick();
+  });
+  return div;
+}
+function renderTurnHeader(id, key, label){
+  const used = !!character.turnState[key];
+  document.getElementById(id).innerHTML = `${label} <span class="turn-status${used?' used':''}">${used ? t('turn_status_used') : t('turn_status_available')}</span>`;
+}
+function renderTurnSimulator(){
+  const ts = character.turnState;
+  const PB = pbForLevel(character.level);
+  const remaining = Math.max(0, character.speed - ts.movementUsed);
+  document.getElementById('turn-movement-display').textContent = `${remaining} / ${character.speed} ft`;
+
+  renderTurnHeader('turn-action-header','actionUsed', t('lab_action'));
+  renderTurnHeader('turn-bonus-header','bonusUsed', t('lab_bonus'));
+  renderTurnHeader('turn-reaction-header','reactionUsed', t('lab_reaction'));
+
+  const actionList = document.getElementById('turn-action-list');
+  const bonusList = document.getElementById('turn-bonus-list');
+  const reactionList = document.getElementById('turn-reaction-list');
+  actionList.innerHTML = ''; bonusList.innerHTML = ''; reactionList.innerHTML = '';
+
+  character.weapons.forEach(w=>{
+    const data = w[currentLang];
+    const atkBonus = fmt(modOf(character.abilities[w.abilityKey]) + PB + (w.bonus||0));
+    actionList.appendChild(turnItem(`${t('turn_attack_label')}: ${data.name}`, `${atkBonus} ${t('wpn_tohit')} · ${data.damage}`, null, ts.actionUsed, ()=>{
+      roll(modOf(character.abilities[w.abilityKey]) + PB + (w.bonus||0), data.name);
+      ts.actionUsed = true; scheduleSave(); renderTurnSimulator();
+    }));
+  });
+  character.preparedSpellIds.forEach(id=>{
+    const sp = spellDB.find(s=>s.id===id);
+    if(!sp) return;
+    const data = sp[currentLang];
+    if(sp.time!=='action' && sp.time!=='bonus_action') return;
+    const targetList = sp.time==='action' ? actionList : bonusList;
+    const usedFlag = sp.time==='action' ? ts.actionUsed : ts.bonusUsed;
+    const concTag = isConcentration(sp) ? ` · ${t('conc_badge')}` : '';
+    targetList.appendChild(turnItem(`${t('turn_cast_label')}: ${data.name}`, `${t('level_option')} ${sp.level}${concTag}`, data.desc, usedFlag, ()=>{
+      if(sp.time==='action'){ ts.actionUsed = true; } else { ts.bonusUsed = true; }
+      scheduleSave(); renderTurnSimulator();
+    }));
+  });
+  (character.traits||[]).forEach(tr=>{
+    const at = tr.actionType;
+    if(at!=='action' && at!=='bonus' && at!=='reaction') return;
+    const data = tr[currentLang];
+    const targetList = at==='action' ? actionList : (at==='bonus' ? bonusList : reactionList);
+    const usedFlag = at==='action' ? ts.actionUsed : (at==='bonus' ? ts.bonusUsed : ts.reactionUsed);
+    targetList.appendChild(turnItem(data.name, null, data.desc, usedFlag, ()=>{
+      if(at==='action') ts.actionUsed = true;
+      else if(at==='bonus') ts.bonusUsed = true;
+      else ts.reactionUsed = true;
+      scheduleSave(); renderTurnSimulator();
+    }));
+  });
+
+  if(actionList.children.length===0) actionList.innerHTML = `<p class="turn-empty-hint">${t('turn_empty')}</p>`;
+  if(bonusList.children.length===0) bonusList.innerHTML = `<p class="turn-empty-hint">${t('turn_empty')}</p>`;
+  if(reactionList.children.length===0) reactionList.innerHTML = `<p class="turn-empty-hint">${t('turn_empty')}</p>`;
+}
+document.getElementById('turn-reset').addEventListener('click', ()=>{
+  character.turnState = { movementUsed:0, actionUsed:false, bonusUsed:false, reactionUsed:false };
+  scheduleSave();
+  renderTurnSimulator();
+});
+document.getElementById('turn-move-plus').addEventListener('click', ()=>{
+  character.turnState.movementUsed = Math.min(character.speed, character.turnState.movementUsed+5);
+  scheduleSave();
+  renderTurnSimulator();
+});
+document.getElementById('turn-move-minus').addEventListener('click', ()=>{
+  character.turnState.movementUsed = Math.max(0, character.turnState.movementUsed-5);
+  scheduleSave();
+  renderTurnSimulator();
+});
+
 // ---------- EQUIPMENT ----------
 function renderEquipment(){
   const table = document.getElementById('equipment-table');
@@ -2596,9 +2752,22 @@ function renderPreparedList(){
     const time = TIME_I18N[sp.time][currentLang];
     const range = RANGE_I18N[sp.range][currentLang];
     const duration = DURATION_I18N[sp.duration][currentLang];
+    const concBadge = isConcentration(sp) ? `<span class="conc-badge">${t('conc_badge')}</span>` : '';
     const div = document.createElement('div');
     div.className='feat';
-    div.innerHTML = `<div class="ft-name">${data.name} <span style="color:var(--parch-dim);font-weight:400;font-size:.78rem;">(${t('level_option')} ${sp.level} · ${school} · ${time} · ${range})</span></div><p>${data.desc}<br><span style="color:var(--parch-dim);font-size:.75rem;">${t('duration_label')} ${duration}</span></p>`;
+    div.innerHTML = `<div class="ft-name">${data.name}${concBadge} <span style="color:var(--parch-dim);font-weight:400;font-size:.78rem;">(${t('level_option')} ${sp.level} · ${school} · ${time} · ${range})</span></div><p>${data.desc}<br><span style="color:var(--parch-dim);font-size:.75rem;">${t('duration_label')} ${duration}</span></p>
+      ${isConcentration(sp) ? `<button class="ghost-btn concentrate-btn" data-name="${data.name}" style="margin-top:8px;font-size:.68rem;padding:6px 12px;">${t('btn_concentrate')}</button>` : ''}`;
+    const concBtn = div.querySelector('.concentrate-btn');
+    if(concBtn) concBtn.addEventListener('click', ()=>{
+      character.concentration = { active:true, spell:concBtn.dataset.name };
+      scheduleSave();
+      renderConcentration();
+      const toast = document.getElementById('toast');
+      toast.textContent = t('concentrate_toast');
+      toast.classList.add('show');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(()=>toast.classList.remove('show'), 1800);
+    });
     wrap.appendChild(div);
   });
 }
@@ -2628,9 +2797,10 @@ function renderSpellResults(filter=''){
     const item = document.createElement('div');
     item.className='spell-item';
     const isPrepared = character.preparedSpellIds.includes(s.id);
+    const concBadge = isConcentration(s) ? `<span class="conc-badge">${t('conc_badge')}</span>` : '';
     item.innerHTML = `
       <div class="spell-head">
-        <div class="spell-title"><span class="sn">${data.name}</span><span class="sm">${t('level_option')} ${s.level} · ${school} · ${time} · ${range}</span></div>
+        <div class="spell-title"><span class="sn">${data.name}${concBadge}</span><span class="sm">${t('level_option')} ${s.level} · ${school} · ${time} · ${range}</span></div>
         <button class="spell-prepare ${isPrepared?'on':''}" title="★" data-id="${s.id}">★</button>
       </div>
       <div class="spell-desc">${data.desc}<br><span style="color:var(--parch-dim);font-size:.75rem;">${t('duration_label')} ${duration}</span></div>
