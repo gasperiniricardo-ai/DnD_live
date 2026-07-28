@@ -125,6 +125,16 @@ input, select, button, textarea{font-family:inherit;}
 .statbox .big{font-family:'JetBrains Mono',monospace;font-size:1.6rem;font-weight:700;color:var(--gold-bright);}
 @media(max-width:480px){ .statbox .big{ font-size:1.2rem; } }
 .statbox .lab{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:1.5px;color:var(--parch-dim);margin-top:2px;}
+.statbox input.big{background:none;border:none;text-align:center;width:100%;color:inherit;padding:0;}
+.statbox input.big:focus{outline:none;color:var(--parch);}
+.statbox{cursor:default;}
+.statbox.rollable{cursor:pointer;transition:transform .15s;}
+.statbox.rollable:hover{transform:translateY(-2px);}
+.death-pip{width:22px;height:22px;border-radius:50%;border:2px solid var(--steel-light);cursor:pointer;background:var(--panel-2);display:inline-block;margin:0 3px;}
+.death-pip.success.used{background:var(--gold);border-color:var(--gold-bright);}
+.death-pip.failure.used{background:var(--crimson);border-color:var(--crimson-bright);}
+.condition-chip{ font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.5px;text-transform:uppercase;background:var(--panel-2);border:1px solid var(--steel);color:var(--parch-dim);border-radius:50px;padding:6px 14px;cursor:pointer;transition:all .15s; }
+.condition-chip.active{background:var(--crimson);border-color:var(--crimson-bright);color:#fff;}
 @media(max-width:480px){ .statbox .lab{ font-size:.56rem;letter-spacing:.8px; } }
 
 .hp-tracker{display:flex;align-items:center;justify-content:center;gap:14px;margin:14px 0;}
@@ -225,6 +235,7 @@ table.eqp tr:last-child td{border-bottom:none;}
 .copy-btn:hover, .primary-btn:hover{filter:brightness(1.08);}
 .ghost-btn{ font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:1px;text-transform:uppercase;background:none;border:1px solid var(--steel);color:var(--parch-dim);border-radius:6px;padding:9px 16px;cursor:pointer; }
 .ghost-btn:hover{border-color:var(--gold);color:var(--gold-bright);}
+.ghost-btn.active{background:linear-gradient(160deg,var(--gold),#a67f34);color:#1b1400;border-color:var(--gold-bright);}
 .session-error{color:var(--crimson-bright);font-size:.88rem;text-align:center;margin:20px 0;}
 .session-note{font-size:.78rem;color:var(--parch-dim);line-height:1.5;margin-top:6px;}
 
@@ -390,6 +401,7 @@ table.eqp tr:last-child td{border-bottom:none;}
         <span class="session-badge"><span class="dot-live"></span><span id="session-badge-code">------</span></span>
         <button class="ghost-btn" id="btn-leave-session" data-i18n="btn_leave_session">Salir de sesión</button>
       </div>
+      <button class="ghost-btn" id="inspiration-toggle" data-i18n="btn_inspiration">⭐ Inspiración</button>
       <span id="save-status"></span>
     </div>
   </div>
@@ -412,10 +424,31 @@ table.eqp tr:last-child td{border-bottom:none;}
       <h2><span data-i18n="h_skills">Habilidades — toca para tirar</span> <span style="font-family:'Inter',sans-serif;font-size:.7rem;font-weight:400;color:var(--parch-dim);text-transform:none;letter-spacing:0;" data-i18n="h_skills_note">(punto dorado = competente, toca el punto para cambiar)</span></h2>
       <div class="skill-list" id="skills-list"></div>
     </div>
+    <div class="card">
+      <h2 data-i18n="h_passives">Pasivas</h2>
+      <div class="stat-row">
+        <div class="statbox"><div class="big" id="passive-perception">10</div><div class="lab" data-i18n="lab_passive_perception">Percepción Pasiva</div></div>
+        <div class="statbox"><div class="big" id="passive-investigation">10</div><div class="lab" data-i18n="lab_passive_investigation">Investigación Pasiva</div></div>
+        <div class="statbox"><div class="big" id="passive-insight">10</div><div class="lab" data-i18n="lab_passive_insight">Perspicacia Pasiva</div></div>
+      </div>
+    </div>
   </div>
 
   <!-- ================= COMBATE ================= -->
   <div class="panel" id="combate">
+    <div class="card">
+      <h2 data-i18n="h_combat_stats">Estadísticas de Combate</h2>
+      <div class="stat-row">
+        <div class="statbox"><input class="big" id="ac-input" type="number" min="0" value="10"><div class="lab" data-i18n="lab_ac">CA</div></div>
+        <div class="statbox rollable" id="init-box">
+          <div class="big" id="init-display">+0</div>
+          <div class="lab" data-i18n="lab_initiative">Iniciativa</div>
+          <input id="init-bonus-input" type="number" value="0" title="Bono extra" style="width:38px;font-size:.65rem;text-align:center;background:var(--void);border:1px solid var(--steel);border-radius:4px;margin-top:4px;color:var(--parch-dim);">
+        </div>
+        <div class="statbox"><input class="big" id="speed-input" type="number" min="0" step="5" value="30"><div class="lab" data-i18n="lab_speed">Velocidad (ft)</div></div>
+      </div>
+    </div>
+
     <div class="card">
       <h2 data-i18n="h_vitals">Estadísticas vitales</h2>
       <h3 data-i18n="h_hp">Puntos de Golpe</h3>
@@ -425,7 +458,26 @@ table.eqp tr:last-child td{border-bottom:none;}
         <button class="hp-btn" id="hp-plus">+</button>
       </div>
       <div class="hp-bar-bg"><div class="hp-bar-fill" id="hp-bar" style="width:100%"></div></div>
+      <div class="pool-row" style="justify-content:center;margin-top:12px;">
+        <span class="pool-label" data-i18n="lbl_temp_hp">PG temporales:</span>
+        <input class="loh-input" id="hp-temp-input" type="number" value="0" min="0" style="width:64px;">
+      </div>
       <div style="text-align:center;"><button class="reset-btn" id="hp-reset" data-i18n="btn_hp_reset">Descanso largo (restaurar PV)</button></div>
+    </div>
+
+    <div class="card" id="death-saves-card">
+      <h2 data-i18n="h_death_saves">Salvaciones contra la Muerte</h2>
+      <div style="display:flex;gap:36px;flex-wrap:wrap;justify-content:center;">
+        <div style="text-align:center;">
+          <div class="pool-label" data-i18n="lbl_death_success" style="margin-bottom:8px;">Éxitos</div>
+          <div id="death-success-pips"></div>
+        </div>
+        <div style="text-align:center;">
+          <div class="pool-label" data-i18n="lbl_death_failure" style="margin-bottom:8px;">Fallos</div>
+          <div id="death-fail-pips"></div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:14px;"><button class="reset-btn" id="death-reset" data-i18n="btn_death_reset">Reiniciar salvaciones</button></div>
     </div>
 
     <div class="card">
@@ -436,6 +488,8 @@ table.eqp tr:last-child td{border-bottom:none;}
         <select id="wpn-ability"></select>
         <input type="text" id="wpn-damage" data-i18n-ph="wpn_damage_ph" placeholder="Daño (ej. 1d8 cortante)">
         <input type="number" id="wpn-bonus" value="0" data-i18n-title="wpn_bonus_title" title="Bono extra">
+        <input type="text" id="wpn-range" data-i18n-ph="wpn_range_ph" placeholder="Alcance (ej. 20/60 ft)">
+        <input type="number" id="wpn-ammo" min="0" data-i18n-title="wpn_ammo_title" title="Munición (dejar vacío si no aplica)" data-i18n-ph="wpn_ammo_label" placeholder="Munición">
         <button class="reset-btn" id="wpn-add" data-i18n="btn_add_weapon">Añadir arma</button>
       </div>
     </div>
@@ -444,6 +498,16 @@ table.eqp tr:last-child td{border-bottom:none;}
       <h2 data-i18n="h_smite">Castigo Divino (Divine Smite)</h2>
       <p style="font-size:.85rem;color:var(--parch-dim);" data-i18n="p_smite">Siempre preparado gratis. Puedes lanzarlo 1 vez al día sin gastar hueco de conjuro.</p>
       <button class="smite-toggle" id="smite-toggle"></button>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="h_conditions">Condiciones activas</h2>
+      <div id="conditions-list" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+      <div class="pool-row" style="margin-top:14px;">
+        <span class="pool-label" data-i18n="lbl_exhaustion">Agotamiento (nivel):</span>
+        <input class="loh-input" id="exhaustion-input" type="number" min="0" max="6" value="0" style="width:56px;">
+        <span style="color:var(--parch-dim);font-size:.78rem;" data-i18n="p_exhaustion">−2 a tiradas de d20 por nivel; a nivel 6, mueres.</span>
+      </div>
     </div>
   </div>
 
@@ -457,7 +521,17 @@ table.eqp tr:last-child td{border-bottom:none;}
         <div class="statbox"><div class="big" id="pb-display">+2</div><div class="lab" data-i18n="lab_pb">Bono de Competencia</div></div>
       </div>
       <div id="spell-slots-container"></div>
-      <div style="text-align:center;"><button class="reset-btn" id="slots-reset" data-i18n="btn_slots_reset">Descanso largo (restaurar huecos)</button></div>
+      <div style="text-align:center;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button class="reset-btn" id="slots-reset" data-i18n="btn_slots_reset">Descanso largo (restaurar huecos)</button>
+        <button class="reset-btn" id="short-rest-btn" data-i18n="btn_short_rest">Descanso corto</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2 data-i18n="h_concentration">Concentración</h2>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button class="smite-toggle" id="concentration-toggle"></button>
+        <input type="text" id="concentration-spell" data-i18n-ph="concentration_spell_ph" placeholder="¿En qué conjuro estás concentrado?" style="flex:1;min-width:180px;background:var(--void);border:1px solid var(--steel);color:var(--parch);border-radius:8px;padding:8px 10px;font-family:inherit;">
+      </div>
     </div>
     <div class="card">
       <h2><span data-i18n="h_prepared">Conjuros preparados</span> <span id="prep-counter" style="font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--gold-bright);"></span></h2>
@@ -491,27 +565,90 @@ table.eqp tr:last-child td{border-bottom:none;}
       <button class="reset-btn" id="ds-reset" data-i18n="btn_ds_reset">Descanso largo (restaurar usos)</button>
     </div>
     <div class="card">
+      <h2 data-i18n="h_size_senses">Tamaño y Sentidos</h2>
+      <div class="identity-row" style="justify-content:flex-start;gap:20px;">
+        <div class="identity-field">
+          <label data-i18n="lbl_size">Tamaño</label>
+          <select id="size-select"></select>
+        </div>
+      </div>
+      <div style="margin-top:12px;">
+        <label class="pool-label" data-i18n="lbl_senses">Sentidos (visión en la oscuridad, etc.)</label>
+        <input type="text" id="senses-input" style="width:100%;margin-top:6px;background:var(--void);border:1px solid var(--steel);color:var(--parch);border-radius:8px;padding:8px 10px;font-family:inherit;">
+      </div>
+    </div>
+    <div class="card">
       <h2 data-i18n="h_traits">Rasgos raciales y dotes</h2>
       <div id="traits-list"></div>
       <p id="traits-empty" style="font-size:.83rem;color:var(--parch-dim);display:none;">—</p>
+      <div class="item-form" style="grid-template-columns:2fr 3fr auto;margin-top:14px;">
+        <input type="text" id="trait-name" data-i18n-ph="trait_name_ph" placeholder="Nombre del rasgo">
+        <input type="text" id="trait-desc" data-i18n-ph="trait_desc_ph" placeholder="Descripción">
+        <button class="reset-btn" id="trait-add" data-i18n="btn_add_trait">Añadir rasgo</button>
+      </div>
     </div>
     <div class="card">
       <h2 data-i18n="h_proficiencies">Competencias</h2>
       <div id="proficiency-list" style="font-size:.87rem;color:var(--parch);line-height:1.8;"></div>
       <p id="proficiency-empty" style="font-size:.83rem;color:var(--parch-dim);display:none;">—</p>
+      <div class="item-form" style="grid-template-columns:1fr auto;margin-top:14px;">
+        <input type="text" id="prof-note-text" data-i18n-ph="prof_note_ph" placeholder="Ej. Armadura pesada, Idiomas...">
+        <button class="reset-btn" id="prof-note-add" data-i18n="btn_add_item">Añadir</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2 data-i18n="h_damage_notes">Resistencias, inmunidades y vulnerabilidades</h2>
+      <div id="damage-notes-list" style="font-size:.87rem;color:var(--parch);line-height:1.8;"></div>
+      <p id="damage-notes-empty" style="font-size:.83rem;color:var(--parch-dim);display:none;">—</p>
+      <div class="item-form" style="grid-template-columns:1fr auto;margin-top:14px;">
+        <input type="text" id="damage-note-text" data-i18n-ph="damage_note_ph" placeholder="Ej. Resistencia al fuego">
+        <button class="reset-btn" id="damage-note-add" data-i18n="btn_add_item">Añadir</button>
+      </div>
+    </div>
+    <div class="card" id="resource-pool-card" style="display:none;">
+      <h2 id="resource-pool-label">Recurso de Clase</h2>
+      <div class="pool-row">
+        <span class="pool-label" data-i18n="lbl_resource_available">Disponible:</span>
+        <input class="loh-input" id="resource-current-input" type="number" min="0">
+        <span style="color:var(--parch-dim)">/ <span id="resource-max-display"></span></span>
+      </div>
+      <button class="reset-btn" id="resource-reset" data-i18n="btn_resource_reset">Descanso largo (restaurar recurso)</button>
     </div>
   </div>
 
   <!-- ================= EQUIPO ================= -->
   <div class="panel" id="equipo">
     <div class="card">
+      <h2 data-i18n="h_currency">Monedas</h2>
+      <div class="stat-row">
+        <div class="statbox"><input class="big" id="cur-cp" type="number" min="0" value="0"><div class="lab">PC</div></div>
+        <div class="statbox"><input class="big" id="cur-sp" type="number" min="0" value="0"><div class="lab">PP</div></div>
+        <div class="statbox"><input class="big" id="cur-ep" type="number" min="0" value="0"><div class="lab">PE</div></div>
+        <div class="statbox"><input class="big" id="cur-gp" type="number" min="0" value="0"><div class="lab">PO</div></div>
+        <div class="statbox"><input class="big" id="cur-pp" type="number" min="0" value="0"><div class="lab">PL</div></div>
+      </div>
+    </div>
+    <div class="card">
       <h2 data-i18n="h_equipment">Equipamiento</h2>
       <div class="table-wrap"><table class="eqp" id="equipment-table"></table></div>
-      <div class="item-form eqp-form">
+      <p style="font-size:.8rem;color:var(--parch-dim);margin-top:10px;" id="weight-summary"></p>
+      <div class="item-form eqp-form" style="grid-template-columns:2fr 2fr 90px auto;">
         <input type="text" id="eqp-name" data-i18n-ph="eqp_name_ph" placeholder="Objeto">
         <input type="text" id="eqp-detail" data-i18n-ph="eqp_detail_ph" placeholder="Detalle">
+        <input type="number" id="eqp-weight" min="0" step="0.1" value="0" data-i18n-title="eqp_weight_title" title="Peso (lb)">
         <button class="reset-btn" id="eqp-add" data-i18n="btn_add_item">Añadir objeto</button>
       </div>
+    </div>
+    <div class="card">
+      <h2 data-i18n="h_notes">Notas y Rol</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div><label class="pool-label" data-i18n="lbl_personality">Rasgos de personalidad</label><textarea id="note-personality" rows="3" style="width:100%;background:var(--void);border:1px solid var(--steel);color:var(--parch);border-radius:8px;padding:8px;font-family:inherit;margin-top:4px;"></textarea></div>
+        <div><label class="pool-label" data-i18n="lbl_ideals">Ideales</label><textarea id="note-ideals" rows="3" style="width:100%;background:var(--void);border:1px solid var(--steel);color:var(--parch);border-radius:8px;padding:8px;font-family:inherit;margin-top:4px;"></textarea></div>
+        <div><label class="pool-label" data-i18n="lbl_bonds">Vínculos</label><textarea id="note-bonds" rows="3" style="width:100%;background:var(--void);border:1px solid var(--steel);color:var(--parch);border-radius:8px;padding:8px;font-family:inherit;margin-top:4px;"></textarea></div>
+        <div><label class="pool-label" data-i18n="lbl_flaws">Defectos</label><textarea id="note-flaws" rows="3" style="width:100%;background:var(--void);border:1px solid var(--steel);color:var(--parch);border-radius:8px;padding:8px;font-family:inherit;margin-top:4px;"></textarea></div>
+      </div>
+      <label class="pool-label" style="margin-top:14px;display:block;" data-i18n="lbl_free_notes">Notas libres</label>
+      <textarea id="note-free" rows="4" style="width:100%;background:var(--void);border:1px solid var(--steel);color:var(--parch);border-radius:8px;padding:8px;font-family:inherit;margin-top:4px;"></textarea>
     </div>
   </div>
 
@@ -557,8 +694,14 @@ const I18N = {
     btn_close_session:'Cerrar sesión', btn_leave_session:'Salir de sesión',
     session_closed_msg:'El GM ha cerrado esta sesión. Tu progreso se ha guardado.',
     h_abilities:'Atributos — toca para tirar', h_skills:'Habilidades — toca para tirar', h_skills_note:'(punto dorado = competente, toca el punto para cambiar)',
-    h_vitals:'Estadísticas vitales', h_hp:'Puntos de Golpe', btn_hp_reset:'Descanso largo (restaurar PV)',
+    h_combat_stats:'Estadísticas de Combate', lab_ac:'CA', lab_initiative:'Iniciativa', lab_speed:'Velocidad (ft)',
+    expertise_title:'Pericia (doble competencia) — toca para quitar', proficient_title:'Competente — toca para Pericia', untrained_title:'Sin competencia — toca para marcar',
+    h_vitals:'Estadísticas vitales', h_hp:'Puntos de Golpe', btn_hp_reset:'Descanso largo (restaurar PV)', lbl_temp_hp:'PG temporales:',
+    h_death_saves:'Salvaciones contra la Muerte', lbl_death_success:'Éxitos', lbl_death_failure:'Fallos', btn_death_reset:'Reiniciar salvaciones',
+    h_concentration:'Concentración', concentration_on:'Concentrado', concentration_off:'Sin concentración', concentration_spell_ph:'¿En qué conjuro estás concentrado?',
+    btn_short_rest:'Descanso corto', short_rest_toast:'Descanso corto', short_rest_detail:'huecos de Pacto restaurados',
     h_weapons:'Armas', wpn_name_ph:'Nombre del arma', wpn_damage_ph:'Daño (ej. 1d8 cortante)', btn_add_weapon:'Añadir arma', wpn_tohit:'para golpear', wpn_bonus_title:'Bono extra',
+    wpn_range_ph:'Alcance (ej. 20/60 ft)', wpn_ammo_title:'Munición (dejar vacío si no aplica)', wpn_ammo_label:'Munición',
     h_smite:'Castigo Divino (Divine Smite)', p_smite:'Siempre preparado gratis. Puedes lanzarlo 1 vez al día sin gastar hueco de conjuro.',
     smite_available:'Uso gratuito diario: disponible', smite_used:'Uso gratuito diario: gastado',
     h_spellcasting:'Lanzamiento de conjuros', lab_dc:'CD de Salvación', lab_spellatk:'Ataque Mágico', lab_pb:'Bono de Competencia',
@@ -574,7 +717,16 @@ const I18N = {
     lbl_loh_available:'Reserva disponible:', unit_slash:'/ 5 PV', btn_loh_reset:'Descanso largo (restaurar reserva)',
     h_divine_sense:'Sentido Divino (Divine Sense)', p_divine_sense:'Detecta celestiales, fiendes o no-muertos a 60 ft. 3 usos/día (= Mod. Carisma).',
     ds_remaining:'Usos restantes:', btn_ds_reset:'Descanso largo (restaurar usos)',
-    h_traits:'Rasgos raciales y dotes', h_proficiencies:'Competencias',
+    h_size_senses:'Tamaño y Sentidos', lbl_size:'Tamaño', lbl_senses:'Sentidos (visión en la oscuridad, etc.)',
+    h_traits:'Rasgos raciales y dotes', trait_name_ph:'Nombre del rasgo', trait_desc_ph:'Descripción', btn_add_trait:'Añadir rasgo',
+    h_proficiencies:'Competencias', prof_note_ph:'Ej. Armadura pesada, Idiomas...',
+    h_damage_notes:'Resistencias, inmunidades y vulnerabilidades', damage_note_ph:'Ej. Resistencia al fuego',
+    h_passives:'Pasivas', lab_passive_perception:'Percepción Pasiva', lab_passive_investigation:'Investigación Pasiva', lab_passive_insight:'Perspicacia Pasiva',
+    btn_inspiration:'⭐ Inspiración',
+    lbl_resource_available:'Disponible:', btn_resource_reset:'Descanso largo (restaurar recurso)',
+    h_conditions:'Condiciones activas', lbl_exhaustion:'Agotamiento (nivel):', p_exhaustion:'−2 a tiradas de d20 por nivel; a nivel 6, mueres.',
+    h_currency:'Monedas', eqp_weight_title:'Peso (lb)',
+    h_notes:'Notas y Rol', lbl_personality:'Rasgos de personalidad', lbl_ideals:'Ideales', lbl_bonds:'Vínculos', lbl_flaws:'Defectos', lbl_free_notes:'Notas libres',
     h_equipment:'Equipamiento', eqp_name_ph:'Objeto', eqp_detail_ph:'Detalle', btn_add_item:'Añadir objeto',
     class_ph:'Clase', race_ph:'Especie', background_ph:'Trasfondo', alignment_ph:'Alineamiento', deity_ph:'Deidad',
     opt_select:'— Selecciona —', opt_none:'Ninguna', opt_other:'Otra…', opt_other_ph:'Escribe aquí…',
@@ -596,8 +748,14 @@ const I18N = {
     btn_close_session:'Close session', btn_leave_session:'Leave session',
     session_closed_msg:'The GM has closed this session. Your progress has been saved.',
     h_abilities:'Ability Scores — tap to roll', h_skills:'Skills — tap to roll', h_skills_note:'(gold dot = proficient, tap dot to change)',
-    h_vitals:'Vital Statistics', h_hp:'Hit Points', btn_hp_reset:'Long rest (restore HP)',
+    h_combat_stats:'Combat Statistics', lab_ac:'AC', lab_initiative:'Initiative', lab_speed:'Speed (ft)',
+    expertise_title:'Expertise (double proficiency) — tap to clear', proficient_title:'Proficient — tap for Expertise', untrained_title:'Untrained — tap to set proficient',
+    h_vitals:'Vital Statistics', h_hp:'Hit Points', btn_hp_reset:'Long rest (restore HP)', lbl_temp_hp:'Temp HP:',
+    h_death_saves:'Death Saving Throws', lbl_death_success:'Successes', lbl_death_failure:'Failures', btn_death_reset:'Reset saves',
+    h_concentration:'Concentration', concentration_on:'Concentrating', concentration_off:'Not concentrating', concentration_spell_ph:'What spell are you concentrating on?',
+    btn_short_rest:'Short rest', short_rest_toast:'Short rest', short_rest_detail:'Pact slots restored',
     h_weapons:'Weapons', wpn_name_ph:'Weapon name', wpn_damage_ph:'Damage (e.g. 1d8 slashing)', btn_add_weapon:'Add Weapon', wpn_tohit:'to hit', wpn_bonus_title:'Extra bonus',
+    wpn_range_ph:'Range (e.g. 20/60 ft)', wpn_ammo_title:'Ammunition (leave empty if not applicable)', wpn_ammo_label:'Ammo',
     h_smite:'Divine Smite', p_smite:'Always prepared for free. You can cast it once per day without spending a spell slot.',
     smite_available:'Free daily use: available', smite_used:'Free daily use: used',
     h_spellcasting:'Spellcasting', lab_dc:'Save DC', lab_spellatk:'Spell Attack', lab_pb:'Proficiency Bonus',
@@ -613,7 +771,16 @@ const I18N = {
     lbl_loh_available:'Available pool:', unit_slash:'/ 5 HP', btn_loh_reset:'Long rest (restore pool)',
     h_divine_sense:'Divine Sense', p_divine_sense:'Detects celestials, fiends, or undead within 60 ft. 3 uses/day (= Charisma modifier).',
     ds_remaining:'Remaining uses:', btn_ds_reset:'Long rest (restore uses)',
-    h_traits:'Racial Traits & Feats', h_proficiencies:'Proficiencies',
+    h_size_senses:'Size & Senses', lbl_size:'Size', lbl_senses:'Senses (darkvision, etc.)',
+    h_traits:'Racial Traits & Feats', trait_name_ph:'Trait name', trait_desc_ph:'Description', btn_add_trait:'Add trait',
+    h_proficiencies:'Proficiencies', prof_note_ph:'e.g. Heavy armor, Languages...',
+    h_damage_notes:'Resistances, immunities & vulnerabilities', damage_note_ph:'e.g. Fire resistance',
+    h_passives:'Passives', lab_passive_perception:'Passive Perception', lab_passive_investigation:'Passive Investigation', lab_passive_insight:'Passive Insight',
+    btn_inspiration:'⭐ Inspiration',
+    lbl_resource_available:'Available:', btn_resource_reset:'Long rest (restore resource)',
+    h_conditions:'Active Conditions', lbl_exhaustion:'Exhaustion (level):', p_exhaustion:'−2 to d20 rolls per level; at level 6, you die.',
+    h_currency:'Currency', eqp_weight_title:'Weight (lb)',
+    h_notes:'Notes & Roleplay', lbl_personality:'Personality Traits', lbl_ideals:'Ideals', lbl_bonds:'Bonds', lbl_flaws:'Flaws', lbl_free_notes:'Free notes',
     h_equipment:'Equipment', eqp_name_ph:'Item', eqp_detail_ph:'Detail', btn_add_item:'Add Item',
     class_ph:'Class', race_ph:'Race', background_ph:'Background', alignment_ph:'Alignment', deity_ph:'Deity',
     opt_select:'— Select —', opt_none:'None', opt_other:'Other…', opt_other_ph:'Type here…',
@@ -676,6 +843,15 @@ const skillDefs = [
   {id:'animal', key:'SAB', es:'Trato con Animales', en:'Animal Handling'},
 ];
 function pbForLevel(lvl){ return Math.floor((lvl-1)/4)+2; }
+const CONDITIONS_LIST = [
+  {id:'blinded', es:'Cegado', en:'Blinded'}, {id:'charmed', es:'Encantado', en:'Charmed'},
+  {id:'deafened', es:'Ensordecido', en:'Deafened'}, {id:'frightened', es:'Asustado', en:'Frightened'},
+  {id:'grappled', es:'Agarrado', en:'Grappled'}, {id:'incapacitated', es:'Incapacitado', en:'Incapacitated'},
+  {id:'invisible', es:'Invisible', en:'Invisible'}, {id:'paralyzed', es:'Paralizado', en:'Paralyzed'},
+  {id:'petrified', es:'Petrificado', en:'Petrified'}, {id:'poisoned', es:'Envenenado', en:'Poisoned'},
+  {id:'prone', es:'Derribado', en:'Prone'}, {id:'restrained', es:'Retenido', en:'Restrained'},
+  {id:'stunned', es:'Aturdido', en:'Stunned'}, {id:'unconscious', es:'Inconsciente', en:'Unconscious'},
+];
 const SPELL_ABILITY_BY_CLASS = { cleric:'SAB', druid:'SAB', ranger:'SAB', wizard:'INT', artificer:'INT' };
 function spellAbilityFor(klass){ return SPELL_ABILITY_BY_CLASS[klass] || 'CAR'; }
 const PACT_SLOT_TABLE = { // Warlock Pact Magic: [numSlots, slotLevel]
@@ -711,6 +887,11 @@ const BACKGROUND_OPTIONS = [
   {id:'noble', es:'Noble', en:'Noble'}, {id:'sage', es:'Sabio', en:'Sage'},
   {id:'sailor', es:'Marinero', en:'Sailor'}, {id:'scribe', es:'Escriba', en:'Scribe'},
   {id:'soldier', es:'Soldado', en:'Soldier'}, {id:'wayfarer', es:'Viajero', en:'Wayfarer'},
+];
+const SIZE_OPTIONS = [
+  {id:'tiny', es:'Diminuto', en:'Tiny'}, {id:'small', es:'Pequeño', en:'Small'},
+  {id:'medium', es:'Mediano', en:'Medium'}, {id:'large', es:'Grande', en:'Large'},
+  {id:'huge', es:'Enorme', en:'Huge'},
 ];
 const ALIGNMENT_OPTIONS = [
   {id:'lawful_good', es:'Legal Bueno', en:'Lawful Good'}, {id:'neutral_good', es:'Neutral Bueno', en:'Neutral Good'},
@@ -946,7 +1127,8 @@ function defaultCharacter(id, seedAster){
       abilities:{FUE:18, DES:13, CON:14, INT:9, SAB:12, CAR:16},
       saveProf:{FUE:false, DES:false, CON:false, INT:false, SAB:true, CAR:true},
       skillProf:{history:true, persuasion:true, athletics:true, insight:true, perception:true, investigation:true, intimidation:true, survival:true, acrobatics:true},
-      hp:{current:12, max:12},
+      hp:{current:12, max:12, temp:0},
+      ac:18, speed:30, initiativeBonus:0, deathSaves:{success:0, failure:0}, concentration:{active:false, spell:''},
       weapons:[{id:'longsword', abilityKey:'FUE', bonus:0, es:{name:'Espada Larga', damage:'1d8 cortante / 1d10 versátil'}, en:{name:'Longsword', damage:'1d8 slashing / 1d10 versatile'}}],
       equipment:[
         {id:'eq1', es:{name:'Escudo', detail:'+2 CA'}, en:{name:'Shield', detail:'+2 AC'}},
@@ -964,6 +1146,9 @@ function defaultCharacter(id, seedAster){
          en:{name:'Origin Feat — Skilled', desc:'Proficiency in 3 additional skills: Investigation, Intimidation, and Acrobatics.'}},
       ],
       proficiencyNotes:[], bonusPreparedSlots:0, xp:0,
+      resourcePool:null, heroicInspiration:false, currency:{cp:0,sp:0,ep:0,gp:0,pp:25},
+      conditions:{}, exhaustion:0, notes:{personality:'',ideals:'',bonds:'',flaws:'',free:''}, skillExpertise:{},
+      size:'medium', senses:'', damageNotes:[],
     };
   }
   return {
@@ -973,11 +1158,15 @@ function defaultCharacter(id, seedAster){
     level:1, xp:0,
     abilities:{FUE:10, DES:10, CON:10, INT:10, SAB:10, CAR:10},
     saveProf:{FUE:false, DES:false, CON:false, INT:false, SAB:false, CAR:false},
-    skillProf:{},
-    hp:{current:10, max:10},
+    skillProf:{}, skillExpertise:{},
+    hp:{current:10, max:10, temp:0},
+    ac:10, speed:30, initiativeBonus:0, deathSaves:{success:0, failure:0}, concentration:{active:false, spell:''},
     weapons:[], equipment:[],
     preparedSpellIds:[], spellSlotsUsed:{}, smiteUsed:false, divineSenseUsed:0, layOnHandsCurrent:5,
     traits:[], proficiencyNotes:[], bonusPreparedSlots:0,
+    resourcePool:null, heroicInspiration:false, currency:{cp:0,sp:0,ep:0,gp:0,pp:0},
+    conditions:{}, exhaustion:0, notes:{personality:'',ideals:'',bonds:'',flaws:'',free:''},
+    size:'medium', senses:'', damageNotes:[],
   };
 }
 
@@ -1173,6 +1362,22 @@ async function joinSessionWith(code, existingId, createNew){
     if(!character.proficiencyNotes) character.proficiencyNotes = [];
     if(character.bonusPreparedSlots===undefined) character.bonusPreparedSlots = 0;
     if(character.xp===undefined) character.xp = 0;
+    if(character.ac===undefined) character.ac = 10;
+    if(character.speed===undefined) character.speed = 30;
+    if(character.initiativeBonus===undefined) character.initiativeBonus = 0;
+    if(character.hp.temp===undefined) character.hp.temp = 0;
+    if(!character.deathSaves) character.deathSaves = {success:0, failure:0};
+    if(!character.concentration) character.concentration = {active:false, spell:''};
+    if(character.resourcePool===undefined) character.resourcePool = null;
+    if(character.heroicInspiration===undefined) character.heroicInspiration = false;
+    if(!character.currency) character.currency = {cp:0,sp:0,ep:0,gp:0,pp:0};
+    if(!character.conditions) character.conditions = {};
+    if(character.exhaustion===undefined) character.exhaustion = 0;
+    if(!character.notes) character.notes = {personality:'',ideals:'',bonds:'',flaws:'',free:''};
+    if(!character.skillExpertise) character.skillExpertise = {};
+    if(!character.size) character.size = 'medium';
+    if(character.senses===undefined) character.senses = '';
+    if(!character.damageNotes) character.damageNotes = [];
     migrateIdentity(character);
   }
   await storageSet('last_opened_id', character.id);
@@ -1481,7 +1686,7 @@ function renderAbilities(){
       v = Math.max(1, Math.min(30, v));
       character.abilities[key] = v;
       scheduleSave();
-      renderAbilities(); renderSkills(); renderSpellStats(); renderWeapons(); renderEquipment();
+      renderAbilities(); renderSkills(); renderSpellStats(); renderWeapons(); renderEquipment(); renderCombatStats();
     });
     const star = div.querySelector('.save-star');
     star.addEventListener('click', e=>{
@@ -1504,20 +1709,27 @@ function renderSkills(){
   const sorted = [...skillDefs].sort((a,b)=>a[currentLang].localeCompare(b[currentLang], currentLang));
   sorted.forEach(s=>{
     const prof = !!character.skillProf[s.id];
-    const mod = modOf(character.abilities[s.key]) + (prof?PB:0);
+    const expertise = !!character.skillExpertise[s.id];
+    const mod = modOf(character.abilities[s.key]) + (prof?PB:0) + (expertise?PB:0);
     const name = s[currentLang];
+    const dotColor = expertise ? 'var(--crimson-bright)' : (prof ? 'var(--gold)' : 'var(--steel-light)');
+    const dotTitle = expertise ? t('expertise_title') : (prof ? t('proficient_title') : t('untrained_title'));
     const div = document.createElement('div');
     div.className='skill';
-    div.innerHTML = `<span class="name"><span class="dot" style="background:${prof?'var(--gold)':'var(--steel-light)'}" data-id="${s.id}"></span><span>${name} (${ABILITY_LABEL[currentLang][s.key]})</span></span><span class="val">${fmt(mod)}</span>`;
+    div.innerHTML = `<span class="name"><span class="dot" style="background:${dotColor}" title="${dotTitle}" data-id="${s.id}"></span><span>${name} (${ABILITY_LABEL[currentLang][s.key]})</span></span><span class="val">${fmt(mod)}</span>`;
     div.querySelector('.dot').addEventListener('click', (e)=>{
       e.stopPropagation();
-      character.skillProf[s.id] = !character.skillProf[s.id];
+      // cycle: untrained -> proficient -> expertise -> untrained
+      if(!prof && !expertise){ character.skillProf[s.id] = true; }
+      else if(prof && !expertise){ character.skillExpertise[s.id] = true; }
+      else { character.skillProf[s.id] = false; character.skillExpertise[s.id] = false; }
       scheduleSave();
       renderSkills();
     });
     div.addEventListener('click', ()=>roll(mod, name));
     skillsList.appendChild(div);
   });
+  renderPassives();
 }
 
 // ---------- SPELL STATS ----------
@@ -1571,6 +1783,21 @@ document.getElementById('slots-reset').addEventListener('click', ()=>{
   character.spellSlotsUsed = {};
   scheduleSave();
   renderSpellSlots();
+});
+document.getElementById('short-rest-btn').addEventListener('click', ()=>{
+  // By 2024 rules only Warlock Pact Magic slots recharge on a short rest
+  if(character.identity.klass==='warlock'){
+    character.spellSlotsUsed = {};
+    scheduleSave();
+    renderSpellSlots();
+  }
+  const toast = document.getElementById('toast');
+  toast.innerHTML = character.identity.klass==='warlock'
+    ? `${t('short_rest_toast')} <span class="roll-detail">${t('short_rest_detail')}</span>`
+    : t('short_rest_toast');
+  toast.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>toast.classList.remove('show'), 2200);
 });
 
 // ---------- LEVEL SELECTOR ----------
@@ -1651,6 +1878,17 @@ function renderAll(){
   renderClassConditionalCards();
   renderTraits();
   renderProficiencyNotes();
+  renderCombatStats();
+  renderDeathSaves();
+  renderConcentration();
+  renderConditions();
+  renderInspiration();
+  renderPassives();
+  renderResourcePool();
+  renderCurrency();
+  renderNotes();
+  renderDamageNotes();
+  renderSizeSenses();
 }
 
 document.getElementById('lang-es').addEventListener('click', ()=>{ currentLang='es'; applyStaticText(); renderAll(); renderSpellResults(document.getElementById('spell-search').value); renderPreparedList(); });
@@ -1670,14 +1908,23 @@ document.querySelectorAll('.tab').forEach(tabEl=>{
 const hpCurrent = document.getElementById('hp-current');
 const hpBar = document.getElementById('hp-bar');
 const hpMaxInput = document.getElementById('hp-max-input');
+const hpTempInput = document.getElementById('hp-temp-input');
 function renderHp(){
   hpCurrent.textContent = character.hp.current;
   hpMaxInput.value = character.hp.max;
+  hpTempInput.value = character.hp.temp||0;
   hpBar.style.width = Math.max(0,(character.hp.current/character.hp.max*100))+'%';
 }
+function healToPositive(){
+  // waking back up above 0 clears any death-save progress
+  if(character.hp.current>0 && (character.deathSaves.success>0 || character.deathSaves.failure>0)){
+    character.deathSaves = {success:0, failure:0};
+    renderDeathSaves();
+  }
+}
 document.getElementById('hp-minus').addEventListener('click', ()=>{ character.hp.current=Math.max(0,character.hp.current-1); scheduleSave(); renderHp(); });
-document.getElementById('hp-plus').addEventListener('click', ()=>{ character.hp.current=Math.min(character.hp.max,character.hp.current+1); scheduleSave(); renderHp(); });
-document.getElementById('hp-reset').addEventListener('click', ()=>{ character.hp.current=character.hp.max; scheduleSave(); renderHp(); });
+document.getElementById('hp-plus').addEventListener('click', ()=>{ character.hp.current=Math.min(character.hp.max,character.hp.current+1); scheduleSave(); renderHp(); healToPositive(); });
+document.getElementById('hp-reset').addEventListener('click', ()=>{ character.hp.current=character.hp.max; scheduleSave(); renderHp(); healToPositive(); });
 hpMaxInput.addEventListener('change', ()=>{
   let v = parseInt(hpMaxInput.value,10);
   if(isNaN(v)||v<1) v=1;
@@ -1685,6 +1932,195 @@ hpMaxInput.addEventListener('change', ()=>{
   character.hp.current = Math.min(character.hp.current, v);
   scheduleSave();
   renderHp();
+});
+hpTempInput.addEventListener('change', ()=>{
+  let v = parseInt(hpTempInput.value,10);
+  if(isNaN(v)||v<0) v=0;
+  character.hp.temp = v;
+  hpTempInput.value = v;
+  scheduleSave();
+});
+
+// ---------- COMBAT STATS (AC / Initiative / Speed) ----------
+const acInput = document.getElementById('ac-input');
+const speedInput = document.getElementById('speed-input');
+const initBonusInput = document.getElementById('init-bonus-input');
+function renderCombatStats(){
+  acInput.value = character.ac;
+  speedInput.value = character.speed;
+  initBonusInput.value = character.initiativeBonus||0;
+  document.getElementById('init-display').textContent = fmt(modOf(character.abilities.DES) + (character.initiativeBonus||0));
+}
+acInput.addEventListener('change', ()=>{
+  let v = parseInt(acInput.value,10);
+  if(isNaN(v)||v<0) v=10;
+  character.ac = v; acInput.value = v;
+  scheduleSave();
+});
+speedInput.addEventListener('change', ()=>{
+  let v = parseInt(speedInput.value,10);
+  if(isNaN(v)||v<0) v=0;
+  character.speed = v; speedInput.value = v;
+  scheduleSave();
+});
+initBonusInput.addEventListener('change', ()=>{
+  let v = parseInt(initBonusInput.value,10);
+  if(isNaN(v)) v=0;
+  character.initiativeBonus = v; initBonusInput.value = v;
+  scheduleSave();
+  renderCombatStats();
+});
+initBonusInput.addEventListener('click', e=>e.stopPropagation());
+document.getElementById('init-box').addEventListener('click', ()=>{
+  roll(modOf(character.abilities.DES) + (character.initiativeBonus||0), t('lab_initiative'));
+});
+
+// ---------- DEATH SAVES ----------
+function renderDeathSaves(){
+  const sWrap = document.getElementById('death-success-pips');
+  const fWrap = document.getElementById('death-fail-pips');
+  sWrap.innerHTML=''; fWrap.innerHTML='';
+  for(let i=0;i<3;i++){
+    const p = document.createElement('span');
+    p.className = 'death-pip success' + (i<character.deathSaves.success ? ' used':'');
+    p.addEventListener('click', ()=>{
+      character.deathSaves.success = (i<character.deathSaves.success) ? i : i+1;
+      scheduleSave(); renderDeathSaves();
+    });
+    sWrap.appendChild(p);
+  }
+  for(let i=0;i<3;i++){
+    const p = document.createElement('span');
+    p.className = 'death-pip failure' + (i<character.deathSaves.failure ? ' used':'');
+    p.addEventListener('click', ()=>{
+      character.deathSaves.failure = (i<character.deathSaves.failure) ? i : i+1;
+      scheduleSave(); renderDeathSaves();
+    });
+    fWrap.appendChild(p);
+  }
+}
+document.getElementById('death-reset').addEventListener('click', ()=>{
+  character.deathSaves = {success:0, failure:0};
+  scheduleSave(); renderDeathSaves();
+});
+
+// ---------- CONCENTRATION ----------
+function renderConcentration(){
+  const btn = document.getElementById('concentration-toggle');
+  btn.classList.toggle('used', !character.concentration.active);
+  btn.textContent = character.concentration.active ? t('concentration_on') : t('concentration_off');
+  document.getElementById('concentration-spell').value = character.concentration.spell || '';
+}
+document.getElementById('concentration-toggle').addEventListener('click', ()=>{
+  character.concentration.active = !character.concentration.active;
+  scheduleSave();
+  renderConcentration();
+});
+document.getElementById('concentration-spell').addEventListener('input', (e)=>{
+  character.concentration.spell = e.target.value;
+  scheduleSave();
+});
+
+// ---------- CONDITIONS ----------
+function renderConditions(){
+  const wrap = document.getElementById('conditions-list');
+  wrap.innerHTML = '';
+  CONDITIONS_LIST.forEach(cond=>{
+    const active = !!character.conditions[cond.id];
+    const chip = document.createElement('span');
+    chip.className = 'condition-chip' + (active ? ' active' : '');
+    chip.textContent = cond[currentLang];
+    chip.addEventListener('click', ()=>{
+      character.conditions[cond.id] = !character.conditions[cond.id];
+      scheduleSave();
+      renderConditions();
+    });
+    wrap.appendChild(chip);
+  });
+  document.getElementById('exhaustion-input').value = character.exhaustion||0;
+}
+document.getElementById('exhaustion-input').addEventListener('change', (e)=>{
+  let v = parseInt(e.target.value,10);
+  if(isNaN(v)) v=0;
+  v = Math.max(0, Math.min(6, v));
+  character.exhaustion = v; e.target.value = v;
+  scheduleSave();
+});
+
+// ---------- HEROIC INSPIRATION ----------
+document.getElementById('inspiration-toggle').addEventListener('click', ()=>{
+  character.heroicInspiration = !character.heroicInspiration;
+  scheduleSave();
+  renderInspiration();
+});
+function renderInspiration(){
+  document.getElementById('inspiration-toggle').classList.toggle('active', !!character.heroicInspiration);
+}
+
+// ---------- PASSIVE SCORES ----------
+function renderPassives(){
+  const PB = pbForLevel(character.level);
+  function passive(skillId){
+    const s = skillDefs.find(x=>x.id===skillId);
+    const prof = !!character.skillProf[skillId];
+    const expertise = !!(character.skillExpertise && character.skillExpertise[skillId]);
+    return 10 + modOf(character.abilities[s.key]) + (prof?PB:0) + (expertise?PB:0);
+  }
+  document.getElementById('passive-perception').textContent = passive('perception');
+  document.getElementById('passive-investigation').textContent = passive('investigation');
+  document.getElementById('passive-insight').textContent = passive('insight');
+}
+
+// ---------- CLASS RESOURCE POOL (e.g. Sorcery Points) ----------
+function renderResourcePool(){
+  const card = document.getElementById('resource-pool-card');
+  const rp = character.resourcePool;
+  if(!rp || !rp.max){ card.style.display='none'; return; }
+  card.style.display='block';
+  document.getElementById('resource-pool-label').textContent = rp.label ? rp.label[currentLang] : '';
+  document.getElementById('resource-current-input').value = rp.current;
+  document.getElementById('resource-current-input').max = rp.max;
+  document.getElementById('resource-max-display').textContent = rp.max;
+}
+document.getElementById('resource-current-input').addEventListener('change', (e)=>{
+  let v = parseInt(e.target.value,10);
+  if(isNaN(v)) v=0;
+  const rp = character.resourcePool;
+  v = Math.max(0, Math.min(rp.max, v));
+  rp.current = v; e.target.value = v;
+  scheduleSave();
+});
+document.getElementById('resource-reset').addEventListener('click', ()=>{
+  if(!character.resourcePool) return;
+  character.resourcePool.current = character.resourcePool.max;
+  scheduleSave();
+  renderResourcePool();
+});
+
+// ---------- CURRENCY ----------
+const CURRENCY_KEYS = ['cp','sp','ep','gp','pp'];
+function renderCurrency(){
+  CURRENCY_KEYS.forEach(k=>{ document.getElementById('cur-'+k).value = character.currency[k]||0; });
+}
+CURRENCY_KEYS.forEach(k=>{
+  document.getElementById('cur-'+k).addEventListener('change', (e)=>{
+    let v = parseInt(e.target.value,10);
+    if(isNaN(v)||v<0) v=0;
+    character.currency[k] = v; e.target.value = v;
+    scheduleSave();
+  });
+});
+
+// ---------- NOTES / ROLEPLAY ----------
+const NOTE_FIELDS = [['note-personality','personality'],['note-ideals','ideals'],['note-bonds','bonds'],['note-flaws','flaws'],['note-free','free']];
+function renderNotes(){
+  NOTE_FIELDS.forEach(([elId,key])=>{ document.getElementById(elId).value = character.notes[key]||''; });
+}
+NOTE_FIELDS.forEach(([elId,key])=>{
+  document.getElementById(elId).addEventListener('input', (e)=>{
+    character.notes[key] = e.target.value;
+    scheduleSave();
+  });
 });
 
 // ---------- SMITE ----------
@@ -1734,24 +2170,90 @@ function renderTraits(){
   const traits = character.traits || [];
   if(traits.length===0){ empty.style.display='block'; return; }
   empty.style.display='none';
-  traits.forEach(tr=>{
+  traits.forEach((tr,idx)=>{
     const div = document.createElement('div');
     div.className='feat';
-    div.innerHTML = `<div class="ft-name">${tr[currentLang].name}</div><p>${tr[currentLang].desc}</p>`;
+    div.style.display='flex'; div.style.justifyContent='space-between'; div.style.gap='10px';
+    div.innerHTML = `<div><div class="ft-name">${tr[currentLang].name}</div><p>${tr[currentLang].desc}</p></div>
+      <button class="item-btn remove" data-idx="${idx}" title="×" style="flex:0 0 auto;">×</button>`;
+    div.querySelector('.remove').addEventListener('click', ()=>{
+      character.traits.splice(idx,1);
+      scheduleSave();
+      renderTraits();
+    });
     wrap.appendChild(div);
   });
 }
+function renderSizeSenses(){
+  const sel = document.getElementById('size-select');
+  sel.innerHTML = SIZE_OPTIONS.map(o=>`<option value="${o.id}">${o[currentLang]}</option>`).join('');
+  sel.value = character.size || 'medium';
+  document.getElementById('senses-input').value = character.senses || '';
+}
+document.getElementById('size-select').addEventListener('change', (e)=>{
+  character.size = e.target.value;
+  scheduleSave();
+});
+document.getElementById('senses-input').addEventListener('input', (e)=>{
+  character.senses = e.target.value;
+  scheduleSave();
+});
+document.getElementById('trait-add').addEventListener('click', ()=>{
+  const nameInput = document.getElementById('trait-name');
+  const descInput = document.getElementById('trait-desc');
+  const name = nameInput.value.trim();
+  const desc = descInput.value.trim();
+  if(!name){ nameInput.focus(); return; }
+  character.traits.push({ es:{name, desc}, en:{name, desc} });
+  nameInput.value=''; descInput.value='';
+  scheduleSave();
+  renderTraits();
+});
 
 // ---------- PROFICIENCY NOTES (armor / weapons / languages / misc) ----------
-function renderProficiencyNotes(){
-  const wrap = document.getElementById('proficiency-list');
-  const empty = document.getElementById('proficiency-empty');
+function renderNoteList(containerId, emptyId, list){
+  const wrap = document.getElementById(containerId);
+  const empty = document.getElementById(emptyId);
   wrap.innerHTML = '';
-  const notes = character.proficiencyNotes || [];
-  if(notes.length===0){ empty.style.display='block'; return; }
+  if(!list || list.length===0){ empty.style.display='block'; return; }
   empty.style.display='none';
-  wrap.innerHTML = '• ' + notes.map(n=>n[currentLang]).join('<br>• ');
+  list.forEach((n,idx)=>{
+    const row = document.createElement('div');
+    row.style.display='flex'; row.style.justifyContent='space-between'; row.style.alignItems='center'; row.style.gap='8px';
+    row.innerHTML = `<span>• ${n[currentLang]}</span><button class="item-btn remove" data-idx="${idx}" title="×" style="width:26px;height:26px;font-size:.8rem;flex:0 0 auto;">×</button>`;
+    row.querySelector('.remove').addEventListener('click', ()=>{
+      list.splice(idx,1);
+      scheduleSave();
+      renderProficiencyNotes();
+      renderDamageNotes();
+    });
+    wrap.appendChild(row);
+  });
 }
+function renderProficiencyNotes(){
+  renderNoteList('proficiency-list','proficiency-empty', character.proficiencyNotes||[]);
+}
+function renderDamageNotes(){
+  renderNoteList('damage-notes-list','damage-notes-empty', character.damageNotes||[]);
+}
+document.getElementById('prof-note-add').addEventListener('click', ()=>{
+  const input = document.getElementById('prof-note-text');
+  const text = input.value.trim();
+  if(!text) return;
+  character.proficiencyNotes.push({es:text, en:text});
+  input.value='';
+  scheduleSave();
+  renderProficiencyNotes();
+});
+document.getElementById('damage-note-add').addEventListener('click', ()=>{
+  const input = document.getElementById('damage-note-text');
+  const text = input.value.trim();
+  if(!text) return;
+  character.damageNotes.push({es:text, en:text});
+  input.value='';
+  scheduleSave();
+  renderDamageNotes();
+});
 
 // ---------- LAY ON HANDS ----------
 document.getElementById('loh-current').addEventListener('change', (e)=>{
@@ -1788,14 +2290,17 @@ function renderWeapons(){
     const data = w[currentLang];
     const atkBonus = fmt(modOf(character.abilities[w.abilityKey]) + PB + (w.bonus||0));
     const abilityLabel = ABILITY_LABEL[currentLang][w.abilityKey];
+    const rangeMeta = w.range ? ` · ${w.range}` : '';
+    const ammoMeta = (w.ammoMax!=null) ? ` · ${t('wpn_ammo_label')}: ${w.ammoCurrent}/${w.ammoMax}` : '';
     const card = document.createElement('div');
     card.className = 'item-card';
     card.innerHTML = `
       <div class="item-info">
         <div class="item-name">${data.name}</div>
-        <div class="item-meta">${atkBonus} ${t('wpn_tohit')} (${abilityLabel}+PB) · ${data.damage}</div>
+        <div class="item-meta">${atkBonus} ${t('wpn_tohit')} (${abilityLabel}+PB) · ${data.damage}${rangeMeta}${ammoMeta}</div>
       </div>
       <div class="item-actions">
+        ${w.ammoMax!=null ? '<button class="item-btn" data-action="ammo" title="-1">🏹</button>' : ''}
         <button class="item-btn" data-action="roll" title="🎲">🎲</button>
         <button class="item-btn remove" data-action="remove" title="×">×</button>
       </div>
@@ -1808,6 +2313,12 @@ function renderWeapons(){
       scheduleSave();
       renderWeapons(); renderEquipment();
     });
+    const ammoBtn = card.querySelector('[data-action="ammo"]');
+    if(ammoBtn) ammoBtn.addEventListener('click', ()=>{
+      w.ammoCurrent = Math.max(0, w.ammoCurrent-1);
+      scheduleSave();
+      renderWeapons();
+    });
     list.appendChild(card);
   });
 }
@@ -1815,14 +2326,18 @@ document.getElementById('wpn-add').addEventListener('click', ()=>{
   const nameInput = document.getElementById('wpn-name');
   const dmgInput = document.getElementById('wpn-damage');
   const bonusInput = document.getElementById('wpn-bonus');
+  const rangeInput = document.getElementById('wpn-range');
+  const ammoInput = document.getElementById('wpn-ammo');
   const abilityKey = document.getElementById('wpn-ability').value;
   const name = nameInput.value.trim();
   const damage = dmgInput.value.trim();
   if(!name){ nameInput.focus(); return; }
   const bonus = parseInt(bonusInput.value, 10) || 0;
+  const range = rangeInput.value.trim();
+  const ammoMax = ammoInput.value.trim()!=='' ? parseInt(ammoInput.value,10) : null;
   const id = 'wpn_' + Date.now();
-  character.weapons.push({id, abilityKey, bonus, es:{name, damage}, en:{name, damage}});
-  nameInput.value=''; dmgInput.value=''; bonusInput.value='0';
+  character.weapons.push({id, abilityKey, bonus, range, ammoMax, ammoCurrent:ammoMax, es:{name, damage}, en:{name, damage}});
+  nameInput.value=''; dmgInput.value=''; bonusInput.value='0'; rangeInput.value=''; ammoInput.value='';
   scheduleSave();
   renderWeapons(); renderEquipment();
 });
@@ -1840,19 +2355,25 @@ function renderEquipment(){
   character.equipment.forEach(it=>{
     const data = it[currentLang];
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${data.name}</td><td style="color:var(--parch-dim)">${data.detail||''}</td>`;
+    tr.innerHTML = `<td>${data.name}</td><td style="color:var(--parch-dim)">${data.detail||''}</td><td style="color:var(--parch-dim);text-align:right;">${it.weight?it.weight+' lb':''}</td>`;
     table.appendChild(tr);
   });
+  const totalWeight = character.equipment.reduce((sum,it)=>sum+(it.weight||0),0);
+  const capacity = character.abilities.FUE*15;
+  const label = currentLang==='es' ? `Peso total: ${totalWeight} lb / capacidad ${capacity} lb (FUE × 15)` : `Total weight: ${totalWeight} lb / capacity ${capacity} lb (STR × 15)`;
+  document.getElementById('weight-summary').textContent = totalWeight>0 ? label : '';
 }
 document.getElementById('eqp-add').addEventListener('click', ()=>{
   const nameInput = document.getElementById('eqp-name');
   const detailInput = document.getElementById('eqp-detail');
+  const weightInput = document.getElementById('eqp-weight');
   const name = nameInput.value.trim();
   const detail = detailInput.value.trim();
+  const weight = parseFloat(weightInput.value) || 0;
   if(!name){ nameInput.focus(); return; }
   const id = 'eqp_' + Date.now();
-  character.equipment.push({id, es:{name, detail}, en:{name, detail}});
-  nameInput.value=''; detailInput.value='';
+  character.equipment.push({id, es:{name, detail}, en:{name, detail}, weight});
+  nameInput.value=''; detailInput.value=''; weightInput.value='0';
   scheduleSave();
   renderEquipment();
 });
