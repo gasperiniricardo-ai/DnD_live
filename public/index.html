@@ -1617,8 +1617,12 @@ document.getElementById('btn-leave-session').addEventListener('click', async ()=
 });
 
 // ---- GM DASHBOARD ----
+let gmLastGridSnapshot = null;
+let gmLastFeedSnapshot = null;
 async function startGmView(code){
   hideAllScreens();
+  gmLastGridSnapshot = null;
+  gmLastFeedSnapshot = null;
   sessionCode = code; sessionRole = 'gm';
   document.getElementById('screen-gm').style.display='block';
   applySessionI18n('screen-gm');
@@ -1645,48 +1649,68 @@ async function renderGmDashboard(code){
     return;
   }
   errBox.style.display='none'; content.style.display='block';
-  const grid = document.getElementById('gm-char-grid');
-  grid.innerHTML='';
-  if(!meta.chars || meta.chars.length===0){
-    grid.innerHTML = `<p class="gm-empty-hint">${t('gm_no_players')}</p>`;
-  } else {
+
+  const charsData = [];
+  if(meta.chars && meta.chars.length>0){
     for(const id of meta.chars){
       const c = await sharedGet(sessionCharKey(code, id));
-      if(!c) continue;
-      const card = document.createElement('div');
-      card.className='gm-char-card';
-      const pct = c.hp.max>0 ? Math.max(0, Math.min(100, Math.round(100*c.hp.current/c.hp.max))) : 0;
-      const klassLabel = optionLabel(CLASS_OPTIONS, c.identity.klass, c.identity.klassCustom);
-      let preparedHtml = `<span class="gm-empty-hint">${t('gm_no_prepared')}</span>`;
-      if(c.preparedSpellIds && c.preparedSpellIds.length>0){
-        preparedHtml = c.preparedSpellIds.map(sid=>{
-          const sp = spellDB.find(s=>s.id===sid);
-          if(!sp) return '';
-          return `<span class="gm-spell-chip">${sp[currentLang].name}</span>`;
-        }).join('');
-      }
-      card.innerHTML = `
-        <div class="gcc-name">${c.identity.name || t('default_char_name')}</div>
-        <div class="gcc-meta">${klassLabel ? klassLabel+' · ' : ''}${t('level_option')} ${c.level}</div>
-        <div class="gm-hp-row"><span class="cur">${c.hp.current}</span><span class="max">/ ${c.hp.max} HP</span></div>
-        <div class="gm-hp-bar-bg"><div class="gm-hp-bar-fill" style="width:${pct}%"></div></div>
-        <div class="gm-sub-label">${t('gm_prepared_label')}</div>
-        <div>${preparedHtml}</div>
-      `;
-      grid.appendChild(card);
+      if(c) charsData.push(c);
     }
   }
+  // Only touch the DOM when something actually changed — rebuilding every poll
+  // (even with identical data) causes a visible flicker/reflow every few seconds.
+  const gridSnapshot = JSON.stringify(charsData.map(c=>({
+    id:c.id, name:c.identity.name, klass:c.identity.klass, klassCustom:c.identity.klassCustom,
+    level:c.level, hp:c.hp, prepared:c.preparedSpellIds,
+  })));
+  if(gridSnapshot !== gmLastGridSnapshot){
+    gmLastGridSnapshot = gridSnapshot;
+    const grid = document.getElementById('gm-char-grid');
+    grid.innerHTML='';
+    if(charsData.length===0){
+      grid.innerHTML = `<p class="gm-empty-hint">${t('gm_no_players')}</p>`;
+    } else {
+      charsData.forEach(c=>{
+        const card = document.createElement('div');
+        card.className='gm-char-card';
+        const pct = c.hp.max>0 ? Math.max(0, Math.min(100, Math.round(100*c.hp.current/c.hp.max))) : 0;
+        const klassLabel = optionLabel(CLASS_OPTIONS, c.identity.klass, c.identity.klassCustom);
+        let preparedHtml = `<span class="gm-empty-hint">${t('gm_no_prepared')}</span>`;
+        if(c.preparedSpellIds && c.preparedSpellIds.length>0){
+          preparedHtml = c.preparedSpellIds.map(sid=>{
+            const sp = spellDB.find(s=>s.id===sid);
+            if(!sp) return '';
+            return `<span class="gm-spell-chip">${sp[currentLang].name}</span>`;
+          }).join('');
+        }
+        card.innerHTML = `
+          <div class="gcc-name">${c.identity.name || t('default_char_name')}</div>
+          <div class="gcc-meta">${klassLabel ? klassLabel+' · ' : ''}${t('level_option')} ${c.level}</div>
+          <div class="gm-hp-row"><span class="cur">${c.hp.current}</span><span class="max">/ ${c.hp.max} HP</span></div>
+          <div class="gm-hp-bar-bg"><div class="gm-hp-bar-fill" style="width:${pct}%"></div></div>
+          <div class="gm-sub-label">${t('gm_prepared_label')}</div>
+          <div>${preparedHtml}</div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+  }
+
   const rolls = (await sharedGet(sessionRollsKey(code))) || [];
-  const feed = document.getElementById('gm-roll-feed');
-  if(rolls.length===0){
-    feed.innerHTML = `<p class="gm-empty-hint">${t('gm_feed_empty')}</p>`;
-  } else {
-    feed.innerHTML = rolls.slice().reverse().map(r=>`
-      <div class="gm-roll-row">
-        <span><span class="gm-roll-who">${r.charName}</span> <span class="gm-roll-label">${r.label}</span></span>
-        <span><span class="gm-roll-total">${r.total}</span> <span class="gm-roll-detail">(d20 ${r.d20} ${fmt(r.mod)})</span></span>
-      </div>
-    `).join('');
+  const feedSnapshot = JSON.stringify(rolls);
+  if(feedSnapshot !== gmLastFeedSnapshot){
+    gmLastFeedSnapshot = feedSnapshot;
+    const feed = document.getElementById('gm-roll-feed');
+    if(rolls.length===0){
+      feed.innerHTML = `<p class="gm-empty-hint">${t('gm_feed_empty')}</p>`;
+    } else {
+      feed.innerHTML = rolls.slice().reverse().map(r=>`
+        <div class="gm-roll-row">
+          <span><span class="gm-roll-who">${r.charName}</span> <span class="gm-roll-label">${r.label}</span></span>
+          <span><span class="gm-roll-total">${r.total}</span> <span class="gm-roll-detail">(d20 ${r.d20} ${fmt(r.mod)})</span></span>
+        </div>
+      `).join('');
+    }
   }
 }
 
