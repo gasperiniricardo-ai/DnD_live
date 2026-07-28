@@ -1253,6 +1253,9 @@ const spellDB = [
   {id:'expeditious_retreat', level:1, classes:['sorcerer','warlock','wizard'], school:'transmutation', time:'bonus_action', range:'self', duration:'conc_10min',
     es:{name:'Retirada Expedita', desc:'Tu velocidad aumenta y puedes usar la acción Correr como acción adicional en cada uno de tus turnos mientras dure el conjuro.'},
     en:{name:'Expeditious Retreat', desc:'Your speed increases and you can take the Dash action as a bonus action on each of your turns for the duration.'}},
+  {id:'ray_of_frost', level:0, classes:['sorcerer','wizard'], school:'evocation', time:'action', range:'ft60', duration:'instantaneous',
+    es:{name:'Chispa de Escarcha', desc:'Un rayo de luz azul-blanco golpea a una criatura. Con un ataque de conjuro a distancia, causa 1d8 de daño de frío y reduce su velocidad en 10 pies hasta el inicio de tu siguiente turno.'},
+    en:{name:'Ray of Frost', desc:'A beam of blue-white light streaks toward a creature. With a ranged spell attack, it deals 1d8 cold damage and reduces its speed by 10 feet until the start of your next turn.'}},
 ];
 
 /* ============================================================
@@ -1358,44 +1361,19 @@ function defaultCharacter(id, seedAster){
   };
 }
 
-function getClientId(){
-  const match = document.cookie.match(/(?:^|; )client_id=([^;]+)/);
-  if(match) return match[1];
-  const id = 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2, 12);
-  const expires = new Date(Date.now() + 5*365*24*60*60*1000).toUTCString();
-  document.cookie = `client_id=${id}; expires=${expires}; path=/; samesite=lax`;
-  return id;
-}
-async function storageGet(key){
+async function sharedDelete(key){
   try{
-    const r = await fetch('/api/kv/'+encodeURIComponent(key), { headers:{'X-Client-Id':getClientId()} });
-    if(r.status===404) return null;
-    const data = await r.json();
-    return data.value!==undefined ? JSON.parse(data.value) : null;
-  }catch(e){ return null; }
-}
-async function storageSet(key, value){
-  try{
-    await fetch('/api/kv/'+encodeURIComponent(key), {
-      method:'PUT', headers:{'Content-Type':'application/json', 'X-Client-Id':getClientId()},
-      body: JSON.stringify({ value: JSON.stringify(value) })
-    });
-    return true;
-  }catch(e){ console.error('storage set failed', e); return false; }
-}
-async function storageDelete(key){
-  try{
-    await fetch('/api/kv/'+encodeURIComponent(key), { method:'DELETE', headers:{'X-Client-Id':getClientId()} });
+    await fetch('/api/shared/'+encodeURIComponent(key), { method:'DELETE' });
     return true;
   }catch(e){ return false; }
 }
 
 async function loadIndex(){
-  const idx = await storageGet('char_index');
+  const idx = await sharedGet('char_index');
   charIndex = idx || [];
 }
 async function persistIndex(){
-  await storageSet('char_index', charIndex);
+  await sharedSet('char_index', charIndex);
 }
 function summaryFor(c){
   return { id:c.id, name:c.identity.name || t('default_char_name'), klass:c.identity.klass || '', klassCustom:c.identity.klassCustom || '', level:c.level };
@@ -1418,9 +1396,9 @@ function showSaveStatus(text){
 async function performSave(c, role, code){
   if(!c) return;
   upsertIndexEntry(c);
-  await storageSet('char_data_'+c.id, c);
+  await sharedSet('char_data_'+c.id, c);
   await persistIndex();
-  await storageSet('last_opened_id', c.id);
+  await sharedSet('last_opened_id', c.id);
   if(role==='player' && code){
     await sharedSet(sessionCharKey(code, c.id), c);
   }
@@ -1535,10 +1513,10 @@ async function joinSessionWith(code, existingId, createNew){
     const id = 'char_'+Date.now()+'_'+Math.floor(Math.random()*1000);
     character = defaultCharacter(id, false);
     upsertIndexEntry(character);
-    await storageSet('char_data_'+id, character);
+    await sharedSet('char_data_'+id, character);
     await persistIndex();
   } else {
-    const data = await storageGet('char_data_'+existingId);
+    const data = await sharedGet('char_data_'+existingId);
     character = data;
     if(!character.equipment) character.equipment = [];
     if(!character.weapons) character.weapons = [];
@@ -1569,7 +1547,7 @@ async function joinSessionWith(code, existingId, createNew){
     if(!character.turnState) character.turnState = { movementUsed:0, actionUsed:false, bonusUsed:false, reactionUsed:false };
     migrateIdentity(character);
   }
-  await storageSet('last_opened_id', character.id);
+  await sharedSet('last_opened_id', character.id);
   sessionCode = code;
   sessionRole = 'player';
   const meta = (await sharedGet(sessionKey(code))) || {code, createdAt:Date.now(), active:true, chars:[]};
@@ -1714,7 +1692,7 @@ function renderSelector(){
         setTimeout(()=>card.classList.remove('confirm'), 2500);
         return;
       }
-      await storageDelete('char_data_'+summary.id);
+      await sharedDelete('char_data_'+summary.id);
       charIndex = charIndex.filter(x=>x.id!==summary.id);
       await persistIndex();
       renderSelector();
@@ -1734,15 +1712,15 @@ async function createNewCharacter(){
   const c = defaultCharacter(id, false);
   character = c;
   upsertIndexEntry(c);
-  await storageSet('char_data_'+id, c);
+  await sharedSet('char_data_'+id, c);
   await persistIndex();
-  await storageSet('last_opened_id', id);
+  await sharedSet('last_opened_id', id);
   showSheet();
 }
 
 async function openCharacter(id){
   await flushPendingSave();
-  const data = await storageGet('char_data_'+id);
+  const data = await sharedGet('char_data_'+id);
   if(!data) return;
   character = data;
   if(!character.equipment) character.equipment = [];
@@ -1773,7 +1751,7 @@ async function openCharacter(id){
   if(!character.damageNotes) character.damageNotes = [];
   if(!character.turnState) character.turnState = { movementUsed:0, actionUsed:false, bonusUsed:false, reactionUsed:false };
   migrateIdentity(character);
-  await storageSet('last_opened_id', id);
+  await sharedSet('last_opened_id', id);
   showSheet();
 }
 
@@ -1781,7 +1759,7 @@ document.getElementById('sel-lang-es').addEventListener('click', ()=>{ currentLa
 document.getElementById('sel-lang-en').addEventListener('click', ()=>{ currentLang='en'; renderSelector(); });
 
 document.getElementById('btn-back').addEventListener('click', async ()=>{
-  if(character){ upsertIndexEntry(character); await storageSet('char_data_'+character.id, character); await persistIndex(); }
+  if(character){ upsertIndexEntry(character); await sharedSet('char_data_'+character.id, character); await persistIndex(); }
   renderSelector();
 });
 
@@ -2927,7 +2905,7 @@ async function ensurePresetCharacters(){
     if(charIndex.some(c=>c.id===preset.id)) continue;
     const c = preset.build();
     charIndex.push(summaryFor(c));
-    await storageSet('char_data_'+preset.id, c);
+    await sharedSet('char_data_'+preset.id, c);
   }
   await persistIndex();
 }
@@ -2953,9 +2931,9 @@ async function ensurePresetCharacters(){
   if(charIndex.length===0){
     const seeded = defaultCharacter('char_aster', true);
     charIndex.push(summaryFor(seeded));
-    await storageSet('char_data_char_aster', seeded);
+    await sharedSet('char_data_char_aster', seeded);
     await persistIndex();
-    await storageSet('last_opened_id', 'char_aster');
+    await sharedSet('last_opened_id', 'char_aster');
   }
   await ensurePresetCharacters();
   renderSelector();
