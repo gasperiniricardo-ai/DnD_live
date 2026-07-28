@@ -301,6 +301,14 @@ table.eqp tr:last-child td{border-bottom:none;}
 .gm-roll-total{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--parch);}
 .gm-roll-detail{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--parch-dim);}
 .gm-footer-actions{display:flex;justify-content:center;gap:10px;margin:10px 0 30px;}
+.gm-init-row{ display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border-radius:8px;background:var(--panel-2);border:1px solid var(--steel);margin-bottom:8px; }
+.gm-init-row.current-turn{ border-color:var(--gold);box-shadow:0 0 0 1px var(--gold); }
+.gm-init-left{display:flex;align-items:center;gap:10px;min-width:0;}
+.gm-init-value{ font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold-bright);background:var(--void);border-radius:6px;padding:2px 10px;flex:0 0 auto; }
+.gm-init-name{color:var(--parch);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.gm-init-type-tag{ font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:50px;flex:0 0 auto; }
+.gm-init-type-tag.enemy{background:var(--void);border:1px solid var(--crimson-bright);color:var(--crimson-bright);}
+.gm-init-type-tag.player{background:var(--void);border:1px solid var(--gold);color:var(--gold-bright);}
 
 /* ---------- ROLL TOAST ---------- */
 #toast{ position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:linear-gradient(160deg,var(--gold),#a67f34);color:#1b1400;font-family:'Cinzel',serif;font-weight:700;letter-spacing:.5px;padding:14px 26px;border-radius:10px;box-shadow:0 6px 22px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:all .35s;z-index:50;text-align:center;max-width:90vw; }
@@ -378,10 +386,34 @@ table.eqp tr:last-child td{border-bottom:none;}
   <div class="gm-header">
     <h1 data-i18n="gm_title">Mesa del Game Master</h1>
     <div class="gm-code-tag" id="gm-code-tag">CÓDIGO: ------</div>
+    <div class="selector-lang" style="margin-top:10px;">
+      <div class="lang-toggle">
+        <button class="lang-btn" id="gm-lang-es" data-lang="es">ES</button>
+        <button class="lang-btn" id="gm-lang-en" data-lang="en">EN</button>
+      </div>
+    </div>
   </div>
   <div id="gm-error" class="session-error" style="display:none;" data-i18n="join_error">Esta sesión no existe o ya ha finalizado.</div>
   <div id="gm-content" style="display:none;">
     <div class="gm-grid" id="gm-char-grid"></div>
+    <div class="card">
+      <h2 data-i18n="gm_initiative_title">Iniciativa</h2>
+      <div id="gm-initiative-list"></div>
+      <p class="gm-empty-hint" id="gm-initiative-empty" style="display:none;" data-i18n="gm_initiative_empty">Nadie en la iniciativa todavía.</p>
+      <div class="item-form" style="grid-template-columns:2fr 1fr 1fr auto;margin-top:12px;">
+        <input type="text" id="gm-init-name" data-i18n-ph="gm_init_name_ph" placeholder="Nombre">
+        <input type="number" id="gm-init-value" data-i18n-ph="gm_init_value_ph" placeholder="Iniciativa">
+        <select id="gm-init-type">
+          <option value="enemy" data-i18n="gm_init_type_enemy">Enemigo</option>
+          <option value="player" data-i18n="gm_init_type_player">Jugador</option>
+        </select>
+        <button class="reset-btn" id="gm-init-add" data-i18n="btn_add_item">Añadir</button>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px;justify-content:center;flex-wrap:wrap;">
+        <button class="ghost-btn" id="gm-init-next" data-i18n="gm_init_next">Siguiente turno →</button>
+        <button class="ghost-btn" id="gm-init-clear" data-i18n="gm_init_clear">Limpiar iniciativa</button>
+      </div>
+    </div>
     <div class="card">
       <h2 data-i18n="gm_feed_title">Tiradas en vivo</h2>
       <div class="gm-feed" id="gm-roll-feed"><p class="gm-empty-hint" data-i18n="gm_feed_empty">Aún no se han hecho tiradas.</p></div>
@@ -758,6 +790,9 @@ const I18N = {
     join_pick_existing:'Continúa con uno de tus personajes:', join_or:'o', join_new:'Crear personaje nuevo',
     gm_title:'Mesa del Game Master', gm_feed_title:'Tiradas en vivo', gm_feed_empty:'Aún no se han hecho tiradas.',
     gm_no_players:'Esperando a que se unan jugadores…', gm_prepared_label:'Hechizos preparados', gm_no_prepared:'Ninguno preparado',
+    gm_initiative_title:'Iniciativa', gm_initiative_empty:'Nadie en la iniciativa todavía.',
+    gm_init_name_ph:'Nombre', gm_init_value_ph:'Iniciativa', gm_init_type_enemy:'Enemigo', gm_init_type_player:'Jugador',
+    gm_init_next:'Siguiente turno →', gm_init_clear:'Limpiar iniciativa', gm_code_label:'CÓDIGO',
     btn_close_session:'Cerrar sesión', btn_leave_session:'Salir de sesión',
     session_closed_msg:'El GM ha cerrado esta sesión. Tu progreso se ha guardado.',
     h_abilities:'Atributos — toca para tirar', h_skills:'Habilidades — toca para tirar', h_skills_note:'(punto dorado = competente, toca el punto para cambiar)',
@@ -817,6 +852,9 @@ const I18N = {
     join_pick_existing:'Continue with one of your characters:', join_or:'or', join_new:'Create new character',
     gm_title:'Game Master Table', gm_feed_title:'Live rolls', gm_feed_empty:'No rolls yet.',
     gm_no_players:'Waiting for players to join…', gm_prepared_label:'Prepared spells', gm_no_prepared:'None prepared',
+    gm_initiative_title:'Initiative', gm_initiative_empty:'No one on the initiative order yet.',
+    gm_init_name_ph:'Name', gm_init_value_ph:'Initiative', gm_init_type_enemy:'Enemy', gm_init_type_player:'Player',
+    gm_init_next:'Next turn →', gm_init_clear:'Clear initiative', gm_code_label:'CODE',
     btn_close_session:'Close session', btn_leave_session:'Leave session',
     session_closed_msg:'The GM has closed this session. Your progress has been saved.',
     h_abilities:'Ability Scores — tap to roll', h_skills:'Skills — tap to roll', h_skills_note:'(gold dot = proficient, tap dot to change)',
@@ -1619,14 +1657,18 @@ document.getElementById('btn-leave-session').addEventListener('click', async ()=
 // ---- GM DASHBOARD ----
 let gmLastGridSnapshot = null;
 let gmLastFeedSnapshot = null;
+let gmLastInitSnapshot = null;
 async function startGmView(code){
   hideAllScreens();
   gmLastGridSnapshot = null;
   gmLastFeedSnapshot = null;
+  gmLastInitSnapshot = null;
   sessionCode = code; sessionRole = 'gm';
   document.getElementById('screen-gm').style.display='block';
+  document.getElementById('gm-lang-es').classList.toggle('active', currentLang==='es');
+  document.getElementById('gm-lang-en').classList.toggle('active', currentLang==='en');
   applySessionI18n('screen-gm');
-  document.getElementById('gm-code-tag').textContent = 'CÓDIGO: ' + code;
+  document.getElementById('gm-code-tag').textContent = t('gm_code_label') + ': ' + code;
   history.replaceState(null, '', sessionLinks(code).gm);
   await renderGmDashboard(code);
   clearInterval(gmPollTimer);
@@ -1712,7 +1754,75 @@ async function renderGmDashboard(code){
       `).join('');
     }
   }
+
+  const initData = (await sharedGet(sessionInitiativeKey(code))) || { entries:[], currentTurnId:null };
+  const initSnapshot = JSON.stringify(initData);
+  if(initSnapshot !== gmLastInitSnapshot){
+    gmLastInitSnapshot = initSnapshot;
+    renderGmInitiative(initData);
+  }
 }
+
+function renderGmInitiative(data){
+  const wrap = document.getElementById('gm-initiative-list');
+  const empty = document.getElementById('gm-initiative-empty');
+  const sorted = [...data.entries].sort((a,b)=>b.value-a.value);
+  wrap.innerHTML = '';
+  if(sorted.length===0){ empty.style.display='block'; return; }
+  empty.style.display='none';
+  sorted.forEach(e=>{
+    const row = document.createElement('div');
+    row.className = 'gm-init-row' + (data.currentTurnId===e.id ? ' current-turn' : '');
+    row.innerHTML = `
+      <div class="gm-init-left">
+        <span class="gm-init-value">${e.value}</span>
+        <span class="gm-init-type-tag ${e.isEnemy?'enemy':'player'}">${e.isEnemy?t('gm_init_type_enemy'):t('gm_init_type_player')}</span>
+        <span class="gm-init-name">${e.name}</span>
+      </div>
+      <button class="item-btn remove" data-id="${e.id}" title="×">×</button>
+    `;
+    row.querySelector('.remove').addEventListener('click', async ()=>{
+      const fresh = (await sharedGet(sessionInitiativeKey(sessionCode))) || { entries:[], currentTurnId:null };
+      fresh.entries = fresh.entries.filter(x=>x.id!==e.id);
+      if(fresh.currentTurnId===e.id) fresh.currentTurnId = null;
+      gmLastInitSnapshot = JSON.stringify(fresh);
+      await sharedSet(sessionInitiativeKey(sessionCode), fresh);
+      renderGmInitiative(fresh);
+    });
+    wrap.appendChild(row);
+  });
+}
+document.getElementById('gm-init-add').addEventListener('click', async ()=>{
+  const nameInput = document.getElementById('gm-init-name');
+  const valueInput = document.getElementById('gm-init-value');
+  const typeSelect = document.getElementById('gm-init-type');
+  const name = nameInput.value.trim();
+  const value = parseInt(valueInput.value,10);
+  if(!name || isNaN(value)){ nameInput.focus(); return; }
+  const data = (await sharedGet(sessionInitiativeKey(sessionCode))) || { entries:[], currentTurnId:null };
+  data.entries.push({ id:'init_'+Date.now()+'_'+Math.floor(Math.random()*1000), charId:null, name, value, isEnemy: typeSelect.value==='enemy' });
+  gmLastInitSnapshot = JSON.stringify(data);
+  await sharedSet(sessionInitiativeKey(sessionCode), data);
+  renderGmInitiative(data);
+  nameInput.value=''; valueInput.value='';
+});
+document.getElementById('gm-init-next').addEventListener('click', async ()=>{
+  const data = (await sharedGet(sessionInitiativeKey(sessionCode))) || { entries:[], currentTurnId:null };
+  const sorted = [...data.entries].sort((a,b)=>b.value-a.value);
+  if(sorted.length===0) return;
+  const curIdx = sorted.findIndex(e=>e.id===data.currentTurnId);
+  const nextIdx = (curIdx+1) % sorted.length;
+  data.currentTurnId = sorted[nextIdx].id;
+  gmLastInitSnapshot = JSON.stringify(data);
+  await sharedSet(sessionInitiativeKey(sessionCode), data);
+  renderGmInitiative(data);
+});
+document.getElementById('gm-init-clear').addEventListener('click', async ()=>{
+  const data = { entries:[], currentTurnId:null };
+  gmLastInitSnapshot = JSON.stringify(data);
+  await sharedSet(sessionInitiativeKey(sessionCode), data);
+  renderGmInitiative(data);
+});
 
 /* ============================================================
    SELECTOR SCREEN
@@ -1815,6 +1925,18 @@ async function openCharacter(id){
 document.getElementById('sel-lang-es').addEventListener('click', ()=>{ currentLang='es'; renderSelector(); });
 document.getElementById('sel-lang-en').addEventListener('click', ()=>{ currentLang='en'; renderSelector(); });
 
+document.getElementById('gm-lang-es').addEventListener('click', ()=>{ currentLang='es'; refreshGmLang(); });
+document.getElementById('gm-lang-en').addEventListener('click', ()=>{ currentLang='en'; refreshGmLang(); });
+function refreshGmLang(){
+  document.getElementById('gm-lang-es').classList.toggle('active', currentLang==='es');
+  document.getElementById('gm-lang-en').classList.toggle('active', currentLang==='en');
+  applySessionI18n('screen-gm');
+  if(sessionCode) document.getElementById('gm-code-tag').textContent = t('gm_code_label') + ': ' + sessionCode;
+  // force a full re-render even if the underlying data snapshot is unchanged, since translated text depends on currentLang
+  gmLastGridSnapshot = null; gmLastFeedSnapshot = null; gmLastInitSnapshot = null;
+  if(sessionCode) renderGmDashboard(sessionCode);
+}
+
 document.getElementById('btn-back').addEventListener('click', async ()=>{
   if(character){ upsertIndexEntry(character); await sharedSet('char_data_'+character.id, character); await persistIndex(); }
   renderSelector();
@@ -1846,7 +1968,21 @@ function roll(mod, label){
   window._toastTimer = setTimeout(()=>toast.classList.remove('show'), 2600);
   if(sessionRole==='player' && sessionCode && character){
     publishRoll({ charName: character.identity.name || t('default_char_name'), label, d20, mod, total });
+    if(label === t('lab_initiative')){
+      publishInitiative(sessionCode, character.id, character.identity.name || t('default_char_name'), total);
+    }
   }
+}
+
+function sessionInitiativeKey(code){ return 'session_initiative_'+code; }
+async function publishInitiative(code, charId, name, value){
+  try{
+    const data = (await sharedGet(sessionInitiativeKey(code))) || { entries:[], currentTurnId:null };
+    const idx = data.entries.findIndex(e=>e.charId===charId);
+    if(idx>=0){ data.entries[idx].value = value; data.entries[idx].name = name; }
+    else { data.entries.push({ id:'init_'+Date.now()+'_'+Math.floor(Math.random()*1000), charId, name, value, isEnemy:false }); }
+    await sharedSet(sessionInitiativeKey(code), data);
+  }catch(e){ /* non-critical, ignore */ }
 }
 
 async function publishRoll(entry){
