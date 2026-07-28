@@ -148,6 +148,9 @@ input, select, button, textarea{font-family:inherit;}
 .death-pip.failure.used{background:var(--crimson);border-color:var(--crimson-bright);}
 .condition-chip{ font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.5px;text-transform:uppercase;background:var(--panel-2);border:1px solid var(--steel);color:var(--parch-dim);border-radius:50px;padding:6px 14px;cursor:pointer;transition:all .15s; }
 .condition-chip.active{background:var(--crimson);border-color:var(--crimson-bright);color:#fff;}
+.condition-detail-card{ background:var(--panel-2);border:1px solid var(--crimson-bright);border-left:3px solid var(--crimson-bright);border-radius:8px;padding:10px 14px;margin-bottom:8px; }
+.condition-detail-card .cdc-name{ font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:.5px;text-transform:uppercase;color:var(--crimson-bright);margin-bottom:4px; }
+.condition-detail-card .cdc-desc{ font-size:.82rem;color:var(--parch-dim);line-height:1.45; }
 @media(max-width:480px){ .statbox .lab{ font-size:.56rem;letter-spacing:.8px; } }
 
 .hp-tracker{display:flex;align-items:center;justify-content:center;gap:14px;margin:14px 0;}
@@ -308,14 +311,21 @@ table.eqp tr:last-child td{border-bottom:none;}
 .gm-roll-total{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--parch);}
 .gm-roll-detail{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--parch-dim);}
 .gm-footer-actions{display:flex;justify-content:center;gap:10px;margin:10px 0 30px;}
-.gm-init-row{ display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border-radius:8px;background:var(--panel-2);border:1px solid var(--steel);margin-bottom:8px; }
+.gm-init-row{ display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border-radius:8px;background:var(--panel-2);border:1px solid var(--steel);margin-bottom:8px;flex-wrap:wrap; }
 .gm-init-row.current-turn{ border-color:var(--gold);box-shadow:0 0 0 1px var(--gold); }
+.gm-init-row.defeated{ opacity:.5; }
+.gm-init-row.defeated .gm-init-name{ text-decoration:line-through; }
 .gm-init-left{display:flex;align-items:center;gap:10px;min-width:0;}
 .gm-init-value{ font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold-bright);background:var(--void);border-radius:6px;padding:2px 10px;flex:0 0 auto; }
 .gm-init-name{color:var(--parch);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .gm-init-type-tag{ font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:50px;flex:0 0 auto; }
 .gm-init-type-tag.enemy{background:var(--void);border:1px solid var(--crimson-bright);color:var(--crimson-bright);}
 .gm-init-type-tag.player{background:var(--void);border:1px solid var(--gold);color:var(--gold-bright);}
+.gm-init-ac{ font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--parch-dim);background:var(--void);border:1px solid var(--steel);border-radius:6px;padding:2px 8px;flex:0 0 auto;white-space:nowrap; }
+.gm-init-hp-wrap{ display:flex;align-items:center;gap:5px;flex:0 0 auto; }
+.gm-init-hp-input{ width:48px;background:var(--void);border:1px solid var(--steel);color:var(--gold-bright);font-family:'JetBrains Mono',monospace;font-size:.8rem;border-radius:6px;padding:3px 4px;text-align:center; }
+.gm-init-hp-max{ font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--parch-dim);white-space:nowrap; }
+.down-badge{ font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:50px;background:var(--void);border:1px solid var(--crimson-bright);color:var(--crimson-bright);flex:0 0 auto; }
 
 /* ---------- ROLL TOAST ---------- */
 #toast{ position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:linear-gradient(160deg,var(--gold),#a67f34);color:#1b1400;font-family:'Cinzel',serif;font-weight:700;letter-spacing:.5px;padding:14px 26px;border-radius:10px;box-shadow:0 6px 22px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:all .35s;z-index:50;text-align:center;max-width:90vw; }
@@ -424,6 +434,10 @@ table.eqp tr:last-child td{border-bottom:none;}
         </select>
         <button class="reset-btn" id="gm-init-add" data-i18n="btn_add_item">Añadir</button>
       </div>
+      <div class="item-form" id="gm-init-enemy-fields" style="grid-template-columns:1fr 1fr;margin-top:8px;">
+        <input type="number" id="gm-init-ac" data-i18n-ph="gm_init_ac_ph" placeholder="CA (opcional)" min="0">
+        <input type="number" id="gm-init-hp" data-i18n-ph="gm_init_hp_ph" placeholder="PG máx. (opcional)" min="1">
+      </div>
       <div style="display:flex;gap:10px;margin-top:14px;justify-content:center;flex-wrap:wrap;">
         <button class="ghost-btn" id="gm-init-next" data-i18n="gm_init_next">Siguiente turno →</button>
         <button class="ghost-btn" id="gm-init-clear" data-i18n="gm_init_clear">Limpiar iniciativa</button>
@@ -432,6 +446,22 @@ table.eqp tr:last-child td{border-bottom:none;}
     <div class="card">
       <h2 data-i18n="gm_feed_title">Tiradas en vivo</h2>
       <div class="gm-feed" id="gm-roll-feed"><p class="gm-empty-hint" data-i18n="gm_feed_empty">Aún no se han hecho tiradas.</p></div>
+    </div>
+    <div class="card">
+      <h2 data-i18n="gm_loot_title">Botín del Grupo</h2>
+      <div id="gm-loot-list"></div>
+      <p class="gm-empty-hint" id="gm-loot-empty" style="display:none;" data-i18n="gm_loot_empty">Sin objetos todavía.</p>
+      <div class="item-form" style="grid-template-columns:2fr 70px 2fr auto;margin-top:12px;">
+        <input type="text" id="gm-loot-name" data-i18n-ph="gm_loot_name_ph" placeholder="Objeto">
+        <input type="number" id="gm-loot-qty" value="1" min="1">
+        <input type="text" id="gm-loot-note" data-i18n-ph="gm_loot_note_ph" placeholder="Nota (opcional)">
+        <button class="reset-btn" id="gm-loot-add" data-i18n="btn_add_item">Añadir</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2 data-i18n="gm_bestiary_title">Mini Bestiario</h2>
+      <div class="spell-search-wrap"><input type="text" id="gm-bestiary-search" data-i18n-ph="bestiary_search_placeholder" placeholder="Buscar monstruo por nombre..."></div>
+      <div id="gm-bestiary-results"></div>
     </div>
     <div class="card">
       <h2 data-i18n="gm_spell_search_title">Buscador de Hechizos</h2>
@@ -536,6 +566,7 @@ table.eqp tr:last-child td{border-bottom:none;}
     <div class="card">
       <h2 data-i18n="h_vitals">Estadísticas vitales</h2>
       <h3 data-i18n="h_hp">Puntos de Golpe</h3>
+      <div style="text-align:center;margin-bottom:8px;"><span class="down-badge" id="hp-down-badge" data-i18n="down_badge" style="display:none;">Inconsciente</span></div>
       <div class="hp-tracker">
         <button class="hp-btn" id="hp-minus">−</button>
         <div class="hp-display"><span id="hp-current">12</span><span class="max">/ <input class="loh-input" id="hp-max-input" type="number" value="12" min="1" style="width:56px;font-size:1.1rem;"></span></div>
@@ -616,6 +647,7 @@ table.eqp tr:last-child td{border-bottom:none;}
     <div class="card">
       <h2 data-i18n="h_conditions">Condiciones activas</h2>
       <div id="conditions-list" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+      <div id="conditions-active-detail" style="margin-top:12px;"></div>
       <div class="pool-row" style="margin-top:14px;">
         <span class="pool-label" data-i18n="lbl_exhaustion">Agotamiento (nivel):</span>
         <input class="loh-input" id="exhaustion-input" type="number" min="0" max="6" value="0" style="width:56px;">
@@ -807,15 +839,21 @@ const I18N = {
     gm_no_players:'Esperando a que se unan jugadores…', gm_prepared_label:'Hechizos preparados', gm_no_prepared:'Ninguno preparado', gm_passives_label:'Pasivas (Percepción / Investigación / Perspicacia)',
     gm_initiative_title:'Iniciativa', gm_initiative_empty:'Nadie en la iniciativa todavía.',
     gm_init_name_ph:'Nombre', gm_init_value_ph:'Iniciativa', gm_init_type_enemy:'Enemigo', gm_init_type_player:'Jugador',
+    gm_init_ac_ph:'CA (opcional)', gm_init_hp_ph:'PG máx. (opcional)', gm_init_ac_label:'Clase de Armadura',
     gm_init_next:'Siguiente turno →', gm_init_clear:'Limpiar iniciativa', gm_code_label:'CÓDIGO',
     gm_dice_title:'Tirador de Dados', gm_dice_ph:'Ej. 2d10+2', gm_dice_roll_btn:'Tirar', gm_dice_invalid:'Formato no válido. Usa algo como 2d10+2.',
     gm_spell_search_title:'Buscador de Hechizos',
+    gm_loot_title:'Botín del Grupo', gm_loot_empty:'Sin objetos todavía.', gm_loot_name_ph:'Objeto', gm_loot_note_ph:'Nota (opcional)',
+    gm_bestiary_title:'Mini Bestiario', bestiary_search_placeholder:'Buscar monstruo por nombre...',
+    bestiary_cr_label:'ND', bestiary_ac_label:'CA', bestiary_hp_label:'PG', bestiary_speed_label:'Velocidad',
+    bestiary_add_to_init:'+ Añadir a iniciativa', bestiary_more_hint:'Mostrando {shown} de {total}. Sigue escribiendo para afinar.',
     btn_close_session:'Cerrar sesión', btn_leave_session:'Salir de sesión',
     session_closed_msg:'El GM ha cerrado esta sesión. Tu progreso se ha guardado.',
     h_abilities:'Atributos — toca para tirar', h_skills:'Habilidades — toca para tirar', h_skills_note:'(punto dorado = competente, toca el punto para cambiar)',
     h_combat_stats:'Estadísticas de Combate', lab_ac:'CA', lab_initiative:'Iniciativa', lab_speed:'Velocidad (ft)',
     expertise_title:'Pericia (doble competencia) — toca para quitar', proficient_title:'Competente — toca para Pericia', untrained_title:'Sin competencia — toca para marcar',
     h_vitals:'Estadísticas vitales', h_hp:'Puntos de Golpe', btn_hp_reset:'Descanso largo (restaurar PV)', lbl_temp_hp:'PG temporales:',
+    down_badge:'Inconsciente',
     h_death_saves:'Salvaciones contra la Muerte', lbl_death_success:'Éxitos', lbl_death_failure:'Fallos', btn_death_reset:'Reiniciar salvaciones',
     h_concentration:'Concentración', concentration_on:'Concentrado', concentration_off:'Sin concentración', concentration_spell_ph:'¿En qué conjuro estás concentrado?',
     btn_short_rest:'Descanso corto', short_rest_toast:'Descanso corto', short_rest_detail:'huecos de Pacto restaurados',
@@ -872,15 +910,21 @@ const I18N = {
     gm_no_players:'Waiting for players to join…', gm_prepared_label:'Prepared spells', gm_no_prepared:'None prepared', gm_passives_label:'Passives (Perception / Investigation / Insight)',
     gm_initiative_title:'Initiative', gm_initiative_empty:'No one on the initiative order yet.',
     gm_init_name_ph:'Name', gm_init_value_ph:'Initiative', gm_init_type_enemy:'Enemy', gm_init_type_player:'Player',
+    gm_init_ac_ph:'AC (optional)', gm_init_hp_ph:'Max HP (optional)', gm_init_ac_label:'Armor Class',
     gm_init_next:'Next turn →', gm_init_clear:'Clear initiative', gm_code_label:'CODE',
     gm_dice_title:'Dice Roller', gm_dice_ph:'e.g. 2d10+2', gm_dice_roll_btn:'Roll', gm_dice_invalid:'Invalid format. Try something like 2d10+2.',
     gm_spell_search_title:'Spell Search',
+    gm_loot_title:'Party Loot', gm_loot_empty:'No items yet.', gm_loot_name_ph:'Item', gm_loot_note_ph:'Note (optional)',
+    gm_bestiary_title:'Mini Bestiary', bestiary_search_placeholder:'Search a monster by name...',
+    bestiary_cr_label:'CR', bestiary_ac_label:'AC', bestiary_hp_label:'HP', bestiary_speed_label:'Speed',
+    bestiary_add_to_init:'+ Add to initiative', bestiary_more_hint:'Showing {shown} of {total}. Keep typing to narrow the search.',
     btn_close_session:'Close session', btn_leave_session:'Leave session',
     session_closed_msg:'The GM has closed this session. Your progress has been saved.',
     h_abilities:'Ability Scores — tap to roll', h_skills:'Skills — tap to roll', h_skills_note:'(gold dot = proficient, tap dot to change)',
     h_combat_stats:'Combat Statistics', lab_ac:'AC', lab_initiative:'Initiative', lab_speed:'Speed (ft)',
     expertise_title:'Expertise (double proficiency) — tap to clear', proficient_title:'Proficient — tap for Expertise', untrained_title:'Untrained — tap to set proficient',
     h_vitals:'Vital Statistics', h_hp:'Hit Points', btn_hp_reset:'Long rest (restore HP)', lbl_temp_hp:'Temp HP:',
+    down_badge:'Unconscious',
     h_death_saves:'Death Saving Throws', lbl_death_success:'Successes', lbl_death_failure:'Failures', btn_death_reset:'Reset saves',
     h_concentration:'Concentration', concentration_on:'Concentrating', concentration_off:'Not concentrating', concentration_spell_ph:'What spell are you concentrating on?',
     btn_short_rest:'Short rest', short_rest_toast:'Short rest', short_rest_detail:'Pact slots restored',
@@ -980,14 +1024,110 @@ const skillDefs = [
 ];
 function pbForLevel(lvl){ return Math.floor((lvl-1)/4)+2; }
 const CONDITIONS_LIST = [
-  {id:'blinded', es:'Cegado', en:'Blinded'}, {id:'charmed', es:'Encantado', en:'Charmed'},
-  {id:'deafened', es:'Ensordecido', en:'Deafened'}, {id:'frightened', es:'Asustado', en:'Frightened'},
-  {id:'grappled', es:'Agarrado', en:'Grappled'}, {id:'incapacitated', es:'Incapacitado', en:'Incapacitated'},
-  {id:'invisible', es:'Invisible', en:'Invisible'}, {id:'paralyzed', es:'Paralizado', en:'Paralyzed'},
-  {id:'petrified', es:'Petrificado', en:'Petrified'}, {id:'poisoned', es:'Envenenado', en:'Poisoned'},
-  {id:'prone', es:'Derribado', en:'Prone'}, {id:'restrained', es:'Retenido', en:'Restrained'},
-  {id:'stunned', es:'Aturdido', en:'Stunned'}, {id:'unconscious', es:'Inconsciente', en:'Unconscious'},
+  {id:'blinded', es:'Cegado', en:'Blinded',
+    descEs:'No puedes ver y fallas automáticamente cualquier prueba que requiera vista. Los ataques contra ti tienen ventaja y los tuyos tienen desventaja.',
+    descEn:'You can\'t see and automatically fail any check that requires sight. Attacks against you have advantage, and your own attacks have disadvantage.'},
+  {id:'charmed', es:'Encantado', en:'Charmed',
+    descEs:'No puedes atacar a quien te encantó ni afectarlo con habilidades o efectos dañinos, y esa criatura tiene ventaja en las pruebas sociales que haga contigo.',
+    descEn:'You can\'t attack the charmer or target it with harmful abilities or effects, and the charmer has advantage on social checks against you.'},
+  {id:'deafened', es:'Ensordecido', en:'Deafened',
+    descEs:'No puedes oír y fallas automáticamente cualquier prueba que requiera oído.',
+    descEn:'You can\'t hear and automatically fail any check that requires hearing.'},
+  {id:'frightened', es:'Asustado', en:'Frightened',
+    descEs:'Tienes desventaja en pruebas de característica y tiradas de ataque mientras la fuente de tu miedo esté a la vista, y no puedes acercarte voluntariamente a ella.',
+    descEn:'You have disadvantage on ability checks and attack rolls while the source of your fear is in sight, and you can\'t willingly move closer to it.'},
+  {id:'grappled', es:'Agarrado', en:'Grappled',
+    descEs:'Tu velocidad se vuelve 0. La condición termina si quien te agarra queda incapacitado o si sales de su alcance.',
+    descEn:'Your speed becomes 0. The condition ends if the grappler is incapacitated or you are moved out of its reach.'},
+  {id:'incapacitated', es:'Incapacitado', en:'Incapacitated',
+    descEs:'No puedes realizar acciones ni reacciones, aunque sí puedes moverte (a menos que otra condición lo impida).',
+    descEn:'You can\'t take actions or reactions, though you can still move unless another condition prevents it.'},
+  {id:'invisible', es:'Invisible', en:'Invisible',
+    descEs:'No puedes ser visto sin un sentido especial. A efectos de esconderte cuentas como muy oculto. Los ataques contra ti tienen desventaja y los tuyos tienen ventaja.',
+    descEn:'You can\'t be seen without a special sense. For hiding purposes you count as heavily obscured. Attacks against you have disadvantage, and your own attacks have advantage.'},
+  {id:'paralyzed', es:'Paralizado', en:'Paralyzed',
+    descEs:'Estás incapacitado y no puedes moverte ni hablar. Fallas automáticamente las salvaciones de Fuerza y Destreza, los ataques contra ti tienen ventaja, y cualquier golpe cuerpo a cuerpo a menos de 5 pies es crítico automático.',
+    descEn:'You are incapacitated and can\'t move or speak. You automatically fail Strength and Dexterity saves, attacks against you have advantage, and any melee hit within 5 feet is an automatic critical.'},
+  {id:'petrified', es:'Petrificado', en:'Petrified',
+    descEs:'Te conviertes en piedra junto con lo que llevas encima. Estás incapacitado, no puedes moverte ni hablar, y no eres consciente de tu entorno. Los ataques contra ti tienen ventaja, fallas automáticamente las salvaciones de Fuerza y Destreza, tienes resistencia a todo el daño, y eres inmune a veneno y enfermedad.',
+    descEn:'You turn to stone along with anything you\'re wearing or carrying. You are incapacitated, can\'t move or speak, and are unaware of your surroundings. Attacks against you have advantage, you automatically fail Strength and Dexterity saves, you have resistance to all damage, and you\'re immune to poison and disease.'},
+  {id:'poisoned', es:'Envenenado', en:'Poisoned',
+    descEs:'Tienes desventaja en las tiradas de ataque y en las pruebas de característica.',
+    descEn:'You have disadvantage on attack rolls and ability checks.'},
+  {id:'prone', es:'Derribado', en:'Prone',
+    descEs:'Solo puedes arrastrarte o gastar movimiento para levantarte. Tienes desventaja al atacar; los ataques cuerpo a cuerpo contra ti tienen ventaja y los a distancia tienen desventaja.',
+    descEn:'You can only crawl or spend movement to stand up. You have disadvantage on attack rolls; melee attacks against you have advantage and ranged attacks against you have disadvantage.'},
+  {id:'restrained', es:'Retenido', en:'Restrained',
+    descEs:'Tu velocidad se vuelve 0. Tienes desventaja en tiradas de ataque y en salvaciones de Destreza; los ataques contra ti tienen ventaja.',
+    descEn:'Your speed becomes 0. You have disadvantage on attack rolls and Dexterity saves; attacks against you have advantage.'},
+  {id:'stunned', es:'Aturdido', en:'Stunned',
+    descEs:'Estás incapacitado, no puedes moverte, y solo puedes hablar de forma entrecortada. Fallas automáticamente las salvaciones de Fuerza y Destreza, y los ataques contra ti tienen ventaja.',
+    descEn:'You are incapacitated, can\'t move, and can speak only falteringly. You automatically fail Strength and Dexterity saves, and attacks against you have advantage.'},
+  {id:'unconscious', es:'Inconsciente', en:'Unconscious',
+    descEs:'Estás incapacitado, no puedes moverte ni hablar, no eres consciente de tu entorno, sueltas lo que sostenías y caes derribado. Fallas automáticamente las salvaciones de Fuerza y Destreza, los ataques contra ti tienen ventaja, y cualquier golpe cuerpo a cuerpo a menos de 5 pies es crítico automático.',
+    descEn:'You are incapacitated, can\'t move or speak, are unaware of your surroundings, drop whatever you\'re holding, and fall prone. You automatically fail Strength and Dexterity saves, attacks against you have advantage, and any melee hit within 5 feet is an automatic critical.'},
 ];
+
+/* ---------- MINI BESTIARIO (GM quick reference, low-level common threats) ---------- */
+const BESTIARY = [
+  {id:'goblin', cr:'1/4', ac:15, hp:7, speed:30,
+    es:{name:'Trasgo', tip:'Suele atacar en grupo desde la sombra y huir si se queda solo.'}, en:{name:'Goblin', tip:'Usually attacks in groups from hiding and flees if left alone.'},
+    attacks:[{es:'Cimitarra: +4 a impactar, 1d6+2 cortante.', en:'Scimitar: +4 to hit, 1d6+2 slashing.'},
+             {es:'Arco corto: +4 a impactar (80/320 pies), 1d6+2 perforante.', en:'Shortbow: +4 to hit (80/320 ft), 1d6+2 piercing.'}]},
+  {id:'kobold', cr:'1/8', ac:12, hp:5, speed:30,
+    es:{name:'Kóbold', tip:'Tiene ventaja al atacar si un aliado está junto al objetivo (táctica de manada).'}, en:{name:'Kobold', tip:'Has advantage attacking if an ally is next to the target (pack tactics).'},
+    attacks:[{es:'Daga: +4 a impactar, 1d4+2 perforante.', en:'Dagger: +4 to hit, 1d4+2 piercing.'}]},
+  {id:'giant_rat', cr:'1/8', ac:12, hp:7, speed:30,
+    es:{name:'Rata Gigante', tip:'Ataca en enjambres, con ventaja si hay un aliado junto al objetivo.'}, en:{name:'Giant Rat', tip:'Swarms its prey, with advantage if an ally is next to the target.'},
+    attacks:[{es:'Mordisco: +4 a impactar, 1d4+2 perforante.', en:'Bite: +4 to hit, 1d4+2 piercing.'}]},
+  {id:'wolf', cr:'1/4', ac:13, hp:11, speed:40,
+    es:{name:'Lobo', tip:'Caza en manada; si muerde con ventaja puede derribar al objetivo.'}, en:{name:'Wolf', tip:'Hunts in packs; a hit while it has advantage can knock the target prone.'},
+    attacks:[{es:'Mordisco: +4 a impactar, 2d4+2 perforante; si impacta, salvación de Fuerza o derribado.', en:'Bite: +4 to hit, 2d4+2 piercing; on a hit, target makes a Strength save or is knocked prone.'}]},
+  {id:'skeleton', cr:'1/4', ac:13, hp:13, speed:30,
+    es:{name:'Esqueleto', tip:'Vulnerable a daño contundente; inmune a veneno.'}, en:{name:'Skeleton', tip:'Vulnerable to bludgeoning damage; immune to poison.'},
+    attacks:[{es:'Espada corta: +4 a impactar, 1d6+2 perforante.', en:'Shortsword: +4 to hit, 1d6+2 piercing.'},
+             {es:'Arco corto: +4 a impactar (80/320 pies), 1d6+2 perforante.', en:'Shortbow: +4 to hit (80/320 ft), 1d6+2 piercing.'}]},
+  {id:'zombie', cr:'1/4', ac:8, hp:22, speed:20,
+    es:{name:'Zombi', tip:'Fortaleza de no-muerto: al recibir daño letal puede sobrevivir con 1 PG con una salvación de Constitución.'}, en:{name:'Zombie', tip:'Undead Fortitude: on lethal damage it can survive with 1 HP on a Constitution save.'},
+    attacks:[{es:'Golpe: +3 a impactar, 1d6+1 contundente.', en:'Slam: +3 to hit, 1d6+1 bludgeoning.'}]},
+  {id:'bandit', cr:'1/8', ac:12, hp:11, speed:30,
+    es:{name:'Bandido', tip:'Suele rendirse si la pelea se pone claramente en su contra.'}, en:{name:'Bandit', tip:'Tends to surrender if the fight clearly turns against it.'},
+    attacks:[{es:'Cimitarra: +3 a impactar, 1d6+1 cortante.', en:'Scimitar: +3 to hit, 1d6+1 slashing.'},
+             {es:'Ballesta ligera: +3 a impactar (80/320 pies), 1d8+1 perforante.', en:'Light crossbow: +3 to hit (80/320 ft), 1d8+1 piercing.'}]},
+  {id:'bandit_captain', cr:'2', ac:15, hp:65, speed:30,
+    es:{name:'Capitán Bandido', tip:'Puede desviar un golpe cuerpo a cuerpo como reacción (Parada), mejorando su CA contra ese ataque.'}, en:{name:'Bandit Captain', tip:'Can deflect a melee hit as a reaction (Parry), boosting its AC against that attack.'},
+    attacks:[{es:'Multiataque: 3 golpes con cimitarra, +4 a impactar, 1d6+2 cortante cada uno.', en:'Multiattack: 3 scimitar hits, +4 to hit, 1d6+2 slashing each.'}]},
+  {id:'orc', cr:'1/2', ac:13, hp:15, speed:30,
+    es:{name:'Orco', tip:'Como acción adicional puede moverse hacia un enemigo que pueda ver.'}, en:{name:'Orc', tip:'As a bonus action it can move toward an enemy it can see.'},
+    attacks:[{es:'Hacha grande: +5 a impactar, 1d12+3 cortante.', en:'Greataxe: +5 to hit, 1d12+3 slashing.'},
+             {es:'Jabalina: +5 a impactar (30/120 pies), 1d6+3 perforante.', en:'Javelin: +5 to hit (30/120 ft), 1d6+3 piercing.'}]},
+  {id:'hobgoblin', cr:'1/2', ac:18, hp:11, speed:30,
+    es:{name:'Hobgoblin', tip:'Ventaja Marcial: +2d6 de daño extra al golpear si un aliado está junto al objetivo.'}, en:{name:'Hobgoblin', tip:'Martial Advantage: +2d6 extra damage on a hit if an ally is next to the target.'},
+    attacks:[{es:'Espada larga: +3 a impactar, 1d8+1 cortante (a dos manos 1d10+1).', en:'Longsword: +3 to hit, 1d8+1 slashing (1d10+1 two-handed).'}]},
+  {id:'ghoul', cr:'1', ac:12, hp:22, speed:30,
+    es:{name:'Necrófago', tip:'Sus garras paralizan a quien falle una salvación de Constitución (los elfos son inmunes).'}, en:{name:'Ghoul', tip:'Its claws paralyze on a failed Constitution save (elves are immune).'},
+    attacks:[{es:'Mordisco: +2 a impactar, 2d6 perforante.', en:'Bite: +2 to hit, 2d6 piercing.'},
+             {es:'Garras: +2 a impactar, 2d4 cortante; salvación de Constitución o paralizado 1 minuto.', en:'Claws: +2 to hit, 2d4 slashing; Constitution save or paralyzed for 1 minute.'}]},
+  {id:'giant_spider', cr:'1', ac:14, hp:26, speed:30,
+    es:{name:'Araña Gigante', tip:'Puede lanzar una telaraña a distancia para retener a un objetivo, además de su veneno.'}, en:{name:'Giant Spider', tip:'Can fire webbing at range to restrain a target, on top of its poison bite.'},
+    attacks:[{es:'Mordisco: +5 a impactar, 1d8+3 perforante más 2d8 veneno; salvación de Constitución o envenenado.', en:'Bite: +5 to hit, 1d8+3 piercing plus 2d8 poison; Constitution save or poisoned.'},
+             {es:'Telaraña (a distancia): salvación de Destreza o retenido.', en:'Web (ranged): Dexterity save or restrained.'}]},
+  {id:'owlbear', cr:'3', ac:13, hp:59, speed:40,
+    es:{name:'Búho-Oso', tip:'Pega fuerte y rápido; buen jefe de encuentro para un grupo de nivel 2-3.'}, en:{name:'Owlbear', tip:'Hits hard and fast; a solid boss encounter for a level 2-3 party.'},
+    attacks:[{es:'Multiataque: pico y garras. Pico: +7 a impactar, 1d10+5 perforante. Garras: +7 a impactar, 2d8+5 cortante.', en:'Multiattack: beak and claws. Beak: +7 to hit, 1d10+5 piercing. Claws: +7 to hit, 2d8+5 slashing.'}]},
+  {id:'ogre', cr:'2', ac:11, hp:59, speed:40,
+    es:{name:'Ogro', tip:'Mucha vida y daño, pero lento de reflejos (CA baja); fácil de golpear pero duro de tumbar.'}, en:{name:'Ogre', tip:'High HP and damage but low AC; easy to hit but hard to bring down.'},
+    attacks:[{es:'Garrote grande: +6 a impactar, 2d8+4 contundente.', en:'Greatclub: +6 to hit, 2d8+4 bludgeoning.'},
+             {es:'Jabalina: +6 a impactar (30/120 pies), 2d6+4 perforante.', en:'Javelin: +6 to hit (30/120 ft), 2d6+4 piercing.'}]},
+  {id:'gnoll', cr:'1/2', ac:15, hp:22, speed:30,
+    es:{name:'Gnoll', tip:'Estampida: si reduce a un enemigo a 0 PG, puede morder de nuevo gratis como acción adicional.'}, en:{name:'Gnoll', tip:'Rampage: if it drops a creature to 0 HP, it can make a free bonus-action bite attack.'},
+    attacks:[{es:'Mordisco: +3 a impactar, 1d4+2 perforante.', en:'Bite: +3 to hit, 1d4+2 piercing.'},
+             {es:'Lanza: +3 a impactar, 1d6+2 perforante (a dos manos 1d8+2).', en:'Spear: +3 to hit, 1d6+2 piercing (1d8+2 two-handed).'}]},
+  {id:'black_bear', cr:'1/2', ac:11, hp:19, speed:40,
+    es:{name:'Oso Negro', tip:'Buena bestia de encuentro salvaje de bajo nivel; trepa y nada bien.'}, en:{name:'Black Bear', tip:'Good low-level wilderness encounter; climbs and swims well.'},
+    attacks:[{es:'Multiataque: mordisco y garras. Mordisco: +3 a impactar, 1d6+2 perforante. Garras: +3 a impactar, 2d4+2 cortante.', en:'Multiattack: bite and claws. Bite: +3 to hit, 1d6+2 piercing. Claws: +3 to hit, 2d4+2 slashing.'}]},
+];
+
 const SPELL_ABILITY_BY_CLASS = { cleric:'SAB', druid:'SAB', ranger:'SAB', wizard:'INT', artificer:'INT' };
 function spellAbilityFor(klass){ return SPELL_ABILITY_BY_CLASS[klass] || 'CAR'; }
 const PACT_SLOT_TABLE = { // Warlock Pact Magic: [numSlots, slotLevel]
@@ -2418,6 +2558,7 @@ async function sharedSet(key, value){
 function sessionKey(code){ return 'session_'+code; }
 function sessionCharKey(code, id){ return 'session_char_'+code+'_'+id; }
 function sessionRollsKey(code){ return 'session_rolls_'+code; }
+function sessionLootKey(code){ return 'session_loot_'+code; }
 function genSessionCode(){
   const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no ambiguous chars
   let s='';
@@ -2729,11 +2870,13 @@ document.getElementById('btn-leave-session').addEventListener('click', async ()=
 let gmLastGridSnapshot = null;
 let gmLastFeedSnapshot = null;
 let gmLastInitSnapshot = null;
+let gmLastLootSnapshot = null;
 async function startGmView(code){
   hideAllScreens();
   gmLastGridSnapshot = null;
   gmLastFeedSnapshot = null;
   gmLastInitSnapshot = null;
+  gmLastLootSnapshot = null;
   sessionCode = code; sessionRole = 'gm';
   document.getElementById('screen-gm').style.display='block';
   document.getElementById('gm-lang-es').classList.toggle('active', currentLang==='es');
@@ -2743,6 +2886,8 @@ async function startGmView(code){
   history.replaceState(null, '', sessionLinks(code).gm);
   document.getElementById('gm-spell-search').value = '';
   renderGmSpellResults('');
+  document.getElementById('gm-bestiary-search').value = '';
+  renderGmBestiaryResults('');
   await renderGmDashboard(code);
   clearInterval(gmPollTimer);
   gmPollTimer = setInterval(()=>renderGmDashboard(code), 3000);
@@ -2802,8 +2947,9 @@ async function renderGmDashboard(code){
         const passivePerception = computePassiveScore(c, 'perception');
         const passiveInvestigation = computePassiveScore(c, 'investigation');
         const passiveInsight = computePassiveScore(c, 'insight');
+        const downBadge = c.hp.current<=0 ? `<span class="down-badge">${t('down_badge')}</span>` : '';
         card.innerHTML = `
-          <div class="gcc-name">${c.identity.name || t('default_char_name')}</div>
+          <div class="gcc-name">${c.identity.name || t('default_char_name')} ${downBadge}</div>
           <div class="gcc-meta">${klassLabel ? klassLabel+' · ' : ''}${t('level_option')} ${c.level}</div>
           <div class="gm-hp-row"><span class="cur">${c.hp.current}</span><span class="max">/ ${c.hp.max} HP</span></div>
           <div class="gm-hp-bar-bg"><div class="gm-hp-bar-fill" style="width:${pct}%"></div></div>
@@ -2844,6 +2990,13 @@ async function renderGmDashboard(code){
     gmLastInitSnapshot = initSnapshot;
     renderGmInitiative(initData);
   }
+
+  const lootData = (await sharedGet(sessionLootKey(code))) || [];
+  const lootSnapshot = JSON.stringify(lootData);
+  if(lootSnapshot !== gmLastLootSnapshot){
+    gmLastLootSnapshot = lootSnapshot;
+    renderGmLoot(lootData);
+  }
 }
 
 function renderGmInitiative(data){
@@ -2855,13 +3008,22 @@ function renderGmInitiative(data){
   empty.style.display='none';
   sorted.forEach(e=>{
     const row = document.createElement('div');
-    row.className = 'gm-init-row' + (data.currentTurnId===e.id ? ' current-turn' : '');
+    const defeated = e.isEnemy && e.hp && e.hp.current<=0;
+    row.className = 'gm-init-row' + (data.currentTurnId===e.id ? ' current-turn' : '') + (defeated ? ' defeated' : '');
+    const acHtml = (e.isEnemy && e.ac!=null) ? `<span class="gm-init-ac" title="${t('gm_init_ac_label')}">🛡 ${e.ac}</span>` : '';
+    const hpHtml = (e.isEnemy && e.hp) ? `
+      <div class="gm-init-hp-wrap">
+        <input type="number" class="gm-init-hp-input" data-id="${e.id}" value="${e.hp.current}" min="0" max="${e.hp.max}">
+        <span class="gm-init-hp-max">/ ${e.hp.max} PG</span>
+      </div>` : '';
     row.innerHTML = `
       <div class="gm-init-left">
         <span class="gm-init-value">${e.value}</span>
         <span class="gm-init-type-tag ${e.isEnemy?'enemy':'player'}">${e.isEnemy?t('gm_init_type_enemy'):t('gm_init_type_player')}</span>
         <span class="gm-init-name">${e.name}</span>
+        ${acHtml}
       </div>
+      ${hpHtml}
       <button class="item-btn remove" data-id="${e.id}" title="×">×</button>
     `;
     row.querySelector('.remove').addEventListener('click', async ()=>{
@@ -2872,22 +3034,50 @@ function renderGmInitiative(data){
       await sharedSet(sessionInitiativeKey(sessionCode), fresh);
       renderGmInitiative(fresh);
     });
+    const hpInput = row.querySelector('.gm-init-hp-input');
+    if(hpInput){
+      hpInput.addEventListener('change', async ()=>{
+        let v = parseInt(hpInput.value,10);
+        if(isNaN(v)) v = 0;
+        v = Math.max(0, Math.min(e.hp.max, v));
+        const fresh = (await sharedGet(sessionInitiativeKey(sessionCode))) || { entries:[], currentTurnId:null };
+        const target = fresh.entries.find(x=>x.id===e.id);
+        if(target){ target.hp.current = v; }
+        gmLastInitSnapshot = JSON.stringify(fresh);
+        await sharedSet(sessionInitiativeKey(sessionCode), fresh);
+        renderGmInitiative(fresh);
+      });
+      hpInput.addEventListener('click', ev=>ev.stopPropagation());
+    }
     wrap.appendChild(row);
   });
 }
+document.getElementById('gm-init-type').addEventListener('change', (e)=>{
+  document.getElementById('gm-init-enemy-fields').style.display = e.target.value==='enemy' ? 'grid' : 'none';
+});
 document.getElementById('gm-init-add').addEventListener('click', async ()=>{
   const nameInput = document.getElementById('gm-init-name');
   const valueInput = document.getElementById('gm-init-value');
   const typeSelect = document.getElementById('gm-init-type');
+  const acInput = document.getElementById('gm-init-ac');
+  const hpInput = document.getElementById('gm-init-hp');
   const name = nameInput.value.trim();
   const value = parseInt(valueInput.value,10);
   if(!name || isNaN(value)){ nameInput.focus(); return; }
+  const isEnemy = typeSelect.value==='enemy';
+  const entry = { id:'init_'+Date.now()+'_'+Math.floor(Math.random()*1000), charId:null, name, value, isEnemy };
+  if(isEnemy){
+    const acVal = parseInt(acInput.value,10);
+    const hpVal = parseInt(hpInput.value,10);
+    if(!isNaN(acVal)) entry.ac = acVal;
+    if(!isNaN(hpVal) && hpVal>0) entry.hp = { current: hpVal, max: hpVal };
+  }
   const data = (await sharedGet(sessionInitiativeKey(sessionCode))) || { entries:[], currentTurnId:null };
-  data.entries.push({ id:'init_'+Date.now()+'_'+Math.floor(Math.random()*1000), charId:null, name, value, isEnemy: typeSelect.value==='enemy' });
+  data.entries.push(entry);
   gmLastInitSnapshot = JSON.stringify(data);
   await sharedSet(sessionInitiativeKey(sessionCode), data);
   renderGmInitiative(data);
-  nameInput.value=''; valueInput.value='';
+  nameInput.value=''; valueInput.value=''; acInput.value=''; hpInput.value='';
 });
 document.getElementById('gm-init-next').addEventListener('click', async ()=>{
   const data = (await sharedGet(sessionInitiativeKey(sessionCode))) || { entries:[], currentTurnId:null };
@@ -2905,6 +3095,69 @@ document.getElementById('gm-init-clear').addEventListener('click', async ()=>{
   gmLastInitSnapshot = JSON.stringify(data);
   await sharedSet(sessionInitiativeKey(sessionCode), data);
   renderGmInitiative(data);
+});
+
+// ---------- GM PARTY LOOT ----------
+function renderGmLoot(items){
+  const wrap = document.getElementById('gm-loot-list');
+  const empty = document.getElementById('gm-loot-empty');
+  wrap.innerHTML = '';
+  if(items.length===0){ empty.style.display='block'; return; }
+  empty.style.display='none';
+  items.forEach(item=>{
+    const row = document.createElement('div');
+    row.className = 'item-card';
+    row.innerHTML = `
+      <div class="item-info">
+        <div class="item-name">${item.name} ${item.qty>1 ? '×'+item.qty : ''}</div>
+        ${item.note ? `<div class="item-meta">${item.note}</div>` : ''}
+      </div>
+      <div class="item-actions">
+        <button class="item-btn" data-action="dec" title="−">−</button>
+        <button class="item-btn" data-action="inc" title="+">+</button>
+        <button class="item-btn remove" data-action="remove" title="×">×</button>
+      </div>
+    `;
+    row.querySelector('[data-action="dec"]').addEventListener('click', async ()=>{
+      const fresh = (await sharedGet(sessionLootKey(sessionCode))) || [];
+      const target = fresh.find(x=>x.id===item.id);
+      if(target){ target.qty = Math.max(1, target.qty-1); }
+      gmLastLootSnapshot = JSON.stringify(fresh);
+      await sharedSet(sessionLootKey(sessionCode), fresh);
+      renderGmLoot(fresh);
+    });
+    row.querySelector('[data-action="inc"]').addEventListener('click', async ()=>{
+      const fresh = (await sharedGet(sessionLootKey(sessionCode))) || [];
+      const target = fresh.find(x=>x.id===item.id);
+      if(target){ target.qty = target.qty+1; }
+      gmLastLootSnapshot = JSON.stringify(fresh);
+      await sharedSet(sessionLootKey(sessionCode), fresh);
+      renderGmLoot(fresh);
+    });
+    row.querySelector('[data-action="remove"]').addEventListener('click', async ()=>{
+      const fresh = ((await sharedGet(sessionLootKey(sessionCode))) || []).filter(x=>x.id!==item.id);
+      gmLastLootSnapshot = JSON.stringify(fresh);
+      await sharedSet(sessionLootKey(sessionCode), fresh);
+      renderGmLoot(fresh);
+    });
+    wrap.appendChild(row);
+  });
+}
+document.getElementById('gm-loot-add').addEventListener('click', async ()=>{
+  const nameInput = document.getElementById('gm-loot-name');
+  const qtyInput = document.getElementById('gm-loot-qty');
+  const noteInput = document.getElementById('gm-loot-note');
+  const name = nameInput.value.trim();
+  if(!name){ nameInput.focus(); return; }
+  let qty = parseInt(qtyInput.value,10);
+  if(isNaN(qty) || qty<1) qty = 1;
+  const note = noteInput.value.trim();
+  const items = (await sharedGet(sessionLootKey(sessionCode))) || [];
+  items.push({ id:'loot_'+Date.now()+'_'+Math.floor(Math.random()*1000), name, qty, note });
+  gmLastLootSnapshot = JSON.stringify(items);
+  await sharedSet(sessionLootKey(sessionCode), items);
+  renderGmLoot(items);
+  nameInput.value=''; qtyInput.value='1'; noteInput.value='';
 });
 
 // ---------- GM DICE ROLLER ----------
@@ -2982,6 +3235,63 @@ function renderGmSpellResults(filter=''){
   }
 }
 document.getElementById('gm-spell-search').addEventListener('input', (e)=>{ renderGmSpellResults(e.target.value); });
+
+// ---------- GM MINI BESTIARY ----------
+function renderGmBestiaryResults(filter=''){
+  const results = document.getElementById('gm-bestiary-results');
+  const f = filter.trim().toLowerCase();
+  const filtered = BESTIARY.filter(m=>{
+    const data = m[currentLang];
+    return data.name.toLowerCase().includes(f) || String(m.cr).toLowerCase().includes(f);
+  }).sort((a,b)=>parseCrValue(a.cr)-parseCrValue(b.cr) || a[currentLang].name.localeCompare(b[currentLang].name, currentLang));
+
+  results.innerHTML='';
+  if(filtered.length===0){
+    results.innerHTML = `<div class="spell-no-results">${t('no_results')}</div>`;
+    return;
+  }
+  const BESTIARY_LIMIT = 10;
+  const shown = filtered.slice(0, BESTIARY_LIMIT);
+  shown.forEach(m=>{
+    const data = m[currentLang];
+    const attacksHtml = m.attacks.map(a=>`<div>${a[currentLang]}</div>`).join('');
+    const item = document.createElement('div');
+    item.className='spell-item';
+    item.innerHTML = `
+      <div class="spell-head">
+        <div class="spell-title"><span class="sn">${data.name}</span><span class="sm">${t('bestiary_cr_label')} ${m.cr} · ${t('bestiary_ac_label')} ${m.ac} · ${t('bestiary_hp_label')} ${m.hp} · ${t('bestiary_speed_label')} ${m.speed} ft</span></div>
+      </div>
+      <div class="spell-desc">
+        <div style="margin-bottom:8px;color:var(--parch-dim);">${data.tip}</div>
+        ${attacksHtml}
+        <button class="ghost-btn" style="margin-top:10px;" data-add-monster="${m.id}">${t('bestiary_add_to_init')}</button>
+      </div>
+    `;
+    item.querySelector('.spell-head').addEventListener('click', ()=> item.classList.toggle('open'));
+    item.querySelector('[data-add-monster]').addEventListener('click', (ev)=>{
+      ev.stopPropagation();
+      document.getElementById('gm-init-name').value = data.name;
+      document.getElementById('gm-init-type').value = 'enemy';
+      document.getElementById('gm-init-enemy-fields').style.display = 'grid';
+      document.getElementById('gm-init-ac').value = m.ac;
+      document.getElementById('gm-init-hp').value = m.hp;
+      document.getElementById('gm-init-value').focus();
+    });
+    results.appendChild(item);
+  });
+  if(filtered.length > BESTIARY_LIMIT){
+    const hint = document.createElement('div');
+    hint.className = 'spell-no-results';
+    hint.textContent = t('bestiary_more_hint').replace('{shown}', shown.length).replace('{total}', filtered.length);
+    results.appendChild(hint);
+  }
+}
+function parseCrValue(cr){
+  if(typeof cr === 'number') return cr;
+  if(cr.includes('/')){ const [n,d] = cr.split('/'); return parseInt(n,10)/parseInt(d,10); }
+  return parseFloat(cr);
+}
+document.getElementById('gm-bestiary-search').addEventListener('input', (e)=>{ renderGmBestiaryResults(e.target.value); });
 
 /* ============================================================
    SELECTOR SCREEN
@@ -3092,9 +3402,10 @@ function refreshGmLang(){
   applySessionI18n('screen-gm');
   if(sessionCode) document.getElementById('gm-code-tag').textContent = t('gm_code_label') + ': ' + sessionCode;
   // force a full re-render even if the underlying data snapshot is unchanged, since translated text depends on currentLang
-  gmLastGridSnapshot = null; gmLastFeedSnapshot = null; gmLastInitSnapshot = null;
+  gmLastGridSnapshot = null; gmLastFeedSnapshot = null; gmLastInitSnapshot = null; gmLastLootSnapshot = null;
   if(sessionCode) renderGmDashboard(sessionCode);
   renderGmSpellResults(document.getElementById('gm-spell-search').value);
+  renderGmBestiaryResults(document.getElementById('gm-bestiary-search').value);
 }
 
 document.getElementById('btn-back').addEventListener('click', async ()=>{
@@ -3461,6 +3772,7 @@ function renderHp(){
   hpMaxInput.value = character.hp.max;
   hpTempInput.value = character.hp.temp||0;
   hpBar.style.width = Math.max(0,(character.hp.current/character.hp.max*100))+'%';
+  document.getElementById('hp-down-badge').style.display = character.hp.current<=0 ? 'inline-block' : 'none';
 }
 function healToPositive(){
   // waking back up above 0 clears any death-save progress
@@ -3584,6 +3896,14 @@ function renderConditions(){
     });
     wrap.appendChild(chip);
   });
+  const detailWrap = document.getElementById('conditions-active-detail');
+  const activeConditions = CONDITIONS_LIST.filter(cond=>character.conditions[cond.id]);
+  detailWrap.innerHTML = activeConditions.map(cond=>`
+    <div class="condition-detail-card">
+      <div class="cdc-name">${cond[currentLang]}</div>
+      <div class="cdc-desc">${currentLang==='es' ? cond.descEs : cond.descEn}</div>
+    </div>
+  `).join('');
   document.getElementById('exhaustion-input').value = character.exhaustion||0;
 }
 document.getElementById('exhaustion-input').addEventListener('change', (e)=>{
