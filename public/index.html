@@ -201,6 +201,7 @@ input, select, button, textarea{font-family:inherit;}
 .turn-item .ti-desc{display:none;margin-top:6px;font-size:.78rem;color:var(--parch-dim);line-height:1.45;}
 .turn-item.open .ti-desc{display:block;}
 .turn-empty-hint{font-size:.8rem;color:var(--parch-dim);}
+.turn-section-label{ font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--parch-dim);border-top:1px solid var(--steel);padding-top:10px;margin:10px 0 6px; }
 .turn-status{ font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;padding:2px 10px;border-radius:50px;background:var(--void);border:1px solid var(--gold);color:var(--gold-bright); }
 .turn-status.used{border-color:var(--steel);color:var(--parch-dim);}
 #spell-search{ width:100%;background:var(--void);border:1px solid var(--steel);color:var(--parch);font-family:'Inter',sans-serif;border-radius:8px;padding:10px 14px;font-size:.9rem;margin-bottom:14px; }
@@ -395,6 +396,14 @@ table.eqp tr:last-child td{border-bottom:none;}
   </div>
   <div id="gm-error" class="session-error" style="display:none;" data-i18n="join_error">Esta sesión no existe o ya ha finalizado.</div>
   <div id="gm-content" style="display:none;">
+    <div class="card">
+      <h2 data-i18n="gm_dice_title">Tirador de Dados</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <input type="text" id="gm-dice-expr" data-i18n-ph="gm_dice_ph" placeholder="Ej. 2d10+2" style="flex:1;min-width:140px;background:var(--void);border:1px solid var(--steel);color:var(--parch);border-radius:8px;padding:9px 12px;font-family:'JetBrains Mono',monospace;">
+        <button class="reset-btn" id="gm-dice-roll" data-i18n="gm_dice_roll_btn">Tirar</button>
+      </div>
+      <div id="gm-dice-result" style="margin-top:12px;font-family:'JetBrains Mono',monospace;color:var(--gold-bright);font-size:.95rem;"></div>
+    </div>
     <div class="gm-grid" id="gm-char-grid"></div>
     <div class="card">
       <h2 data-i18n="gm_initiative_title">Iniciativa</h2>
@@ -793,6 +802,7 @@ const I18N = {
     gm_initiative_title:'Iniciativa', gm_initiative_empty:'Nadie en la iniciativa todavía.',
     gm_init_name_ph:'Nombre', gm_init_value_ph:'Iniciativa', gm_init_type_enemy:'Enemigo', gm_init_type_player:'Jugador',
     gm_init_next:'Siguiente turno →', gm_init_clear:'Limpiar iniciativa', gm_code_label:'CÓDIGO',
+    gm_dice_title:'Tirador de Dados', gm_dice_ph:'Ej. 2d10+2', gm_dice_roll_btn:'Tirar', gm_dice_invalid:'Formato no válido. Usa algo como 2d10+2.',
     btn_close_session:'Cerrar sesión', btn_leave_session:'Salir de sesión',
     session_closed_msg:'El GM ha cerrado esta sesión. Tu progreso se ha guardado.',
     h_abilities:'Atributos — toca para tirar', h_skills:'Habilidades — toca para tirar', h_skills_note:'(punto dorado = competente, toca el punto para cambiar)',
@@ -806,7 +816,7 @@ const I18N = {
     wpn_range_ph:'Alcance (ej. 20/60 ft)', wpn_ammo_title:'Munición (dejar vacío si no aplica)', wpn_ammo_label:'Munición',
     h_turn_sim:'Simulador de Turno', btn_new_turn:'Nuevo turno', lab_action:'Acción', lab_bonus:'Acción Adicional', lab_movement:'Movimiento', lab_reaction:'Reacción',
     turn_status_available:'Disponible', turn_status_used:'Usada', turn_empty:'Nada disponible aquí.',
-    turn_attack_label:'Atacar', turn_cast_label:'Lanzar',
+    turn_attack_label:'Atacar', turn_cast_label:'Lanzar', turn_generic_actions_label:'Acciones generales',
     h_smite:'Castigo Divino (Divine Smite)', p_smite:'Siempre preparado gratis. Puedes lanzarlo 1 vez al día sin gastar hueco de conjuro.',
     smite_available:'Uso gratuito diario: disponible', smite_used:'Uso gratuito diario: gastado',
     h_spellcasting:'Lanzamiento de conjuros', lab_dc:'CD de Salvación', lab_spellatk:'Ataque Mágico', lab_pb:'Bono de Competencia',
@@ -855,6 +865,7 @@ const I18N = {
     gm_initiative_title:'Initiative', gm_initiative_empty:'No one on the initiative order yet.',
     gm_init_name_ph:'Name', gm_init_value_ph:'Initiative', gm_init_type_enemy:'Enemy', gm_init_type_player:'Player',
     gm_init_next:'Next turn →', gm_init_clear:'Clear initiative', gm_code_label:'CODE',
+    gm_dice_title:'Dice Roller', gm_dice_ph:'e.g. 2d10+2', gm_dice_roll_btn:'Roll', gm_dice_invalid:'Invalid format. Try something like 2d10+2.',
     btn_close_session:'Close session', btn_leave_session:'Leave session',
     session_closed_msg:'The GM has closed this session. Your progress has been saved.',
     h_abilities:'Ability Scores — tap to roll', h_skills:'Skills — tap to roll', h_skills_note:'(gold dot = proficient, tap dot to change)',
@@ -868,7 +879,7 @@ const I18N = {
     wpn_range_ph:'Range (e.g. 20/60 ft)', wpn_ammo_title:'Ammunition (leave empty if not applicable)', wpn_ammo_label:'Ammo',
     h_turn_sim:'Turn Simulator', btn_new_turn:'New turn', lab_action:'Action', lab_bonus:'Bonus Action', lab_movement:'Movement', lab_reaction:'Reaction',
     turn_status_available:'Available', turn_status_used:'Used', turn_empty:'Nothing available here.',
-    turn_attack_label:'Attack', turn_cast_label:'Cast',
+    turn_attack_label:'Attack', turn_cast_label:'Cast', turn_generic_actions_label:'General actions',
     h_smite:'Divine Smite', p_smite:'Always prepared for free. You can cast it once per day without spending a spell slot.',
     smite_available:'Free daily use: available', smite_used:'Free daily use: used',
     h_spellcasting:'Spellcasting', lab_dc:'Save DC', lab_spellatk:'Spell Attack', lab_pb:'Proficiency Bonus',
@@ -1133,6 +1144,21 @@ const ACTION_TYPE_OPTIONS = [
   {id:'free', es:'Sin acción', en:'No action'},
 ];
 const ACTION_TYPE_LABEL = {}; ACTION_TYPE_OPTIONS.forEach(o=>ACTION_TYPE_LABEL[o.id]=o);
+
+/* ---------- GENERIC ACTIONS (2024 PHB — available to any character) ---------- */
+const GENERIC_ACTIONS = [
+  {id:'dodge', es:{name:'Esquivar (Dodge)', desc:'Hasta el inicio de tu próximo turno, cualquier ataque contra ti tiene desventaja si puedes ver al atacante, y tienes ventaja en salvaciones de Destreza. Pierdes este beneficio si quedas incapacitado o tu velocidad es 0.'}, en:{name:'Dodge', desc:'Until the start of your next turn, attack rolls against you have disadvantage if you can see the attacker, and you make Dexterity saving throws with advantage. You lose this benefit if incapacitated or your speed is 0.'}},
+  {id:'disengage', es:{name:'Desenganchar (Disengage)', desc:'Tu movimiento no provoca ataques de oportunidad durante el resto del turno.'}, en:{name:'Disengage', desc:'Your movement does not provoke opportunity attacks for the rest of the turn.'}},
+  {id:'dash', es:{name:'Correr (Dash)', desc:'Ganas movimiento adicional igual a tu velocidad para este turno.'}, en:{name:'Dash', desc:'You gain extra movement equal to your speed for this turn.'}, special:'dash'},
+  {id:'help', es:{name:'Ayudar (Help)', desc:'Ayudas a otra criatura en una prueba de característica que va a intentar, dándole ventaja; o ayudas a un aliado a atacar a una criatura a 5 pies tuyos, dándole ventaja en su próximo ataque contra ella.'}, en:{name:'Help', desc:'You help another creature with an ability check it is about to make, giving it advantage; or you help an ally attack a creature within 5 feet of you, giving advantage on its next attack against that creature.'}},
+  {id:'hide', es:{name:'Esconderse (Hide)', desc:'Haces una prueba de Destreza (Sigilo) para esconderte de criaturas que no puedan verte.'}, en:{name:'Hide', desc:'You make a Dexterity (Stealth) check to hide from creatures that cannot see you.'}},
+  {id:'search', es:{name:'Buscar (Search)', desc:'Haces una prueba de Sabiduría (Percepción o Investigación) para encontrar algo.'}, en:{name:'Search', desc:'You make a Wisdom (Perception or Investigation) check to find something.'}},
+  {id:'ready', es:{name:'Preparar (Ready)', desc:'Eliges un disparador y una acción o movimiento; los ejecutas usando tu reacción cuando el disparador ocurra antes de tu próximo turno.'}, en:{name:'Ready', desc:'You choose a trigger and an action or movement; you take it with your reaction when the trigger occurs before your next turn.'}},
+  {id:'study', es:{name:'Estudiar (Study)', desc:'Haces una prueba de Inteligencia (Arcanos, Historia, Naturaleza, Religión o Investigación) para recordar o descifrar información.'}, en:{name:'Study', desc:'You make an Intelligence (Arcana, History, Nature, Religion, or Investigation) check to recall or work out information.'}},
+  {id:'utilize', es:{name:'Utilizar (Utilize)', desc:'Usas una propiedad especial de un objeto.'}, en:{name:'Utilize', desc:'You use a special property of an object.'}},
+  {id:'influence', es:{name:'Influir (Influence)', desc:'Interactúas socialmente con una criatura para persuadirla, engañarla o intimidarla, normalmente con una prueba de Carisma.'}, en:{name:'Influence', desc:'You interact socially with a creature to persuade, deceive, or intimidate it, typically with a Charisma check.'}},
+  {id:'disarm', es:{name:'Desarmar (Disarm)', desc:'Acción opcional/improvisada (a discreción del DM): prueba enfrentada (tu Atletismo contra su Atletismo o Acrobacias) para hacer que una criatura suelte un objeto que sostiene.'}, en:{name:'Disarm', desc:'Optional/improvised action (DM adjudicated): a contested check (your Athletics vs. their Athletics or Acrobatics) to force a creature to drop an item it is holding.'}},
+];
 const ALIGNMENT_OPTIONS = [
   {id:'lawful_good', es:'Legal Bueno', en:'Lawful Good'}, {id:'neutral_good', es:'Neutral Bueno', en:'Neutral Good'},
   {id:'chaotic_good', es:'Caótico Bueno', en:'Chaotic Good'}, {id:'lawful_neutral', es:'Legal Neutral', en:'Lawful Neutral'},
@@ -1823,6 +1849,35 @@ document.getElementById('gm-init-clear').addEventListener('click', async ()=>{
   await sharedSet(sessionInitiativeKey(sessionCode), data);
   renderGmInitiative(data);
 });
+
+// ---------- GM DICE ROLLER ----------
+function parseDiceNotation(expr){
+  const m = expr.trim().toLowerCase().replace(/\s+/g,'').match(/^(\d*)d(\d+)([+-]\d+)?$/);
+  if(!m) return null;
+  const count = m[1] ? parseInt(m[1],10) : 1;
+  const sides = parseInt(m[2],10);
+  const mod = m[3] ? parseInt(m[3],10) : 0;
+  if(count<1 || count>100 || sides<2 || sides>1000) return null;
+  const rolls = [];
+  for(let i=0;i<count;i++) rolls.push(Math.floor(Math.random()*sides)+1);
+  const total = rolls.reduce((a,b)=>a+b,0) + mod;
+  return { count, sides, mod, rolls, total };
+}
+function rollGmDice(){
+  const input = document.getElementById('gm-dice-expr');
+  const resultBox = document.getElementById('gm-dice-result');
+  const parsed = parseDiceNotation(input.value);
+  if(!parsed){
+    resultBox.textContent = t('gm_dice_invalid');
+    resultBox.style.color = 'var(--crimson-bright)';
+    return;
+  }
+  resultBox.style.color = 'var(--gold-bright)';
+  const modStr = parsed.mod ? ` ${fmt(parsed.mod)}` : '';
+  resultBox.textContent = `${parsed.total}  (${parsed.count}d${parsed.sides}: ${parsed.rolls.join(', ')}${modStr})`;
+}
+document.getElementById('gm-dice-roll').addEventListener('click', rollGmDice);
+document.getElementById('gm-dice-expr').addEventListener('keydown', (e)=>{ if(e.key==='Enter') rollGmDice(); });
 
 /* ============================================================
    SELECTOR SCREEN
@@ -2860,6 +2915,21 @@ function renderTurnSimulator(){
   if(actionList.children.length===0) actionList.innerHTML = `<p class="turn-empty-hint">${t('turn_empty')}</p>`;
   if(bonusList.children.length===0) bonusList.innerHTML = `<p class="turn-empty-hint">${t('turn_empty')}</p>`;
   if(reactionList.children.length===0) reactionList.innerHTML = `<p class="turn-empty-hint">${t('turn_empty')}</p>`;
+
+  const genLabel = document.createElement('div');
+  genLabel.className = 'turn-section-label';
+  genLabel.textContent = t('turn_generic_actions_label');
+  actionList.appendChild(genLabel);
+  GENERIC_ACTIONS.forEach(ga=>{
+    const data = ga[currentLang];
+    actionList.appendChild(turnItem(data.name, null, data.desc, ts.actionUsed, ()=>{
+      if(ga.special==='dash'){
+        ts.movementUsed = Math.max(0, ts.movementUsed - character.speed);
+      }
+      ts.actionUsed = true;
+      scheduleSave(); renderTurnSimulator();
+    }));
+  });
 }
 document.getElementById('turn-reset').addEventListener('click', ()=>{
   character.turnState = { movementUsed:0, actionUsed:false, bonusUsed:false, reactionUsed:false };
