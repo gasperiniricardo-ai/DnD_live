@@ -406,6 +406,11 @@ table.eqp tr:last-child td{border-bottom:none;}
       </div>
       <div id="gm-dice-result" style="margin-top:12px;font-family:'JetBrains Mono',monospace;color:var(--gold-bright);font-size:.95rem;"></div>
     </div>
+    <div class="card">
+      <h2 data-i18n="gm_spell_search_title">Buscador de Hechizos</h2>
+      <input type="text" id="gm-spell-search" data-i18n-ph="search_placeholder" placeholder="Buscar por nombre, nivel o escuela...">
+      <div id="gm-spell-results"></div>
+    </div>
     <div class="gm-grid" id="gm-char-grid"></div>
     <div class="card">
       <h2 data-i18n="gm_initiative_title">Iniciativa</h2>
@@ -800,6 +805,7 @@ const I18N = {
     gm_init_name_ph:'Nombre', gm_init_value_ph:'Iniciativa', gm_init_type_enemy:'Enemigo', gm_init_type_player:'Jugador',
     gm_init_next:'Siguiente turno →', gm_init_clear:'Limpiar iniciativa', gm_code_label:'CÓDIGO',
     gm_dice_title:'Tirador de Dados', gm_dice_ph:'Ej. 2d10+2', gm_dice_roll_btn:'Tirar', gm_dice_invalid:'Formato no válido. Usa algo como 2d10+2.',
+    gm_spell_search_title:'Buscador de Hechizos',
     btn_close_session:'Cerrar sesión', btn_leave_session:'Salir de sesión',
     session_closed_msg:'El GM ha cerrado esta sesión. Tu progreso se ha guardado.',
     h_abilities:'Atributos — toca para tirar', h_skills:'Habilidades — toca para tirar', h_skills_note:'(punto dorado = competente, toca el punto para cambiar)',
@@ -863,6 +869,7 @@ const I18N = {
     gm_init_name_ph:'Name', gm_init_value_ph:'Initiative', gm_init_type_enemy:'Enemy', gm_init_type_player:'Player',
     gm_init_next:'Next turn →', gm_init_clear:'Clear initiative', gm_code_label:'CODE',
     gm_dice_title:'Dice Roller', gm_dice_ph:'e.g. 2d10+2', gm_dice_roll_btn:'Roll', gm_dice_invalid:'Invalid format. Try something like 2d10+2.',
+    gm_spell_search_title:'Spell Search',
     btn_close_session:'Close session', btn_leave_session:'Leave session',
     session_closed_msg:'The GM has closed this session. Your progress has been saved.',
     h_abilities:'Ability Scores — tap to roll', h_skills:'Skills — tap to roll', h_skills_note:'(gold dot = proficient, tap dot to change)',
@@ -1693,6 +1700,8 @@ async function startGmView(code){
   applySessionI18n('screen-gm');
   document.getElementById('gm-code-tag').textContent = t('gm_code_label') + ': ' + code;
   history.replaceState(null, '', sessionLinks(code).gm);
+  document.getElementById('gm-spell-search').value = '';
+  renderGmSpellResults('');
   await renderGmDashboard(code);
   clearInterval(gmPollTimer);
   gmPollTimer = setInterval(()=>renderGmDashboard(code), 3000);
@@ -1886,6 +1895,45 @@ function rollGmDice(){
 document.getElementById('gm-dice-roll').addEventListener('click', rollGmDice);
 document.getElementById('gm-dice-expr').addEventListener('keydown', (e)=>{ if(e.key==='Enter') rollGmDice(); });
 
+// ---------- GM SPELL SEARCH (all spells, no per-class filtering — reference tool for the GM) ----------
+function renderGmSpellResults(filter=''){
+  const results = document.getElementById('gm-spell-results');
+  const f = filter.trim().toLowerCase();
+  const filtered = spellDB.filter(s=>{
+    const data = s[currentLang];
+    const school = SCHOOL_I18N[s.school][currentLang];
+    return data.name.toLowerCase().includes(f) || school.toLowerCase().includes(f) ||
+      (t('level_option')+' '+s.level).toLowerCase().includes(f) || String(s.level)===f ||
+      s.classes.some(c=>c.toLowerCase().includes(f));
+  }).sort((a,b)=>a.level-b.level || a[currentLang].name.localeCompare(b[currentLang].name, currentLang));
+
+  results.innerHTML='';
+  if(filtered.length===0){
+    results.innerHTML = `<div class="spell-no-results">${t('no_results')}</div>`;
+    return;
+  }
+  filtered.forEach(s=>{
+    const data = s[currentLang];
+    const school = SCHOOL_I18N[s.school][currentLang];
+    const time = s.time[currentLang];
+    const range = s.range[currentLang];
+    const duration = s.duration[currentLang];
+    const classesLabel = s.classes.map(cid=>optionLabel(CLASS_OPTIONS, cid, '')).join(', ');
+    const concBadge = isConcentration(s) ? `<span class="conc-badge">${t('conc_badge')}</span>` : '';
+    const item = document.createElement('div');
+    item.className='spell-item';
+    item.innerHTML = `
+      <div class="spell-head">
+        <div class="spell-title"><span class="sn">${data.name}${concBadge}</span><span class="sm">${t('level_option')} ${s.level} · ${school} · ${time} · ${range} · ${classesLabel}</span></div>
+      </div>
+      <div class="spell-desc">${data.desc}<br><span style="color:var(--parch-dim);font-size:.75rem;">${t('duration_label')} ${duration}</span></div>
+    `;
+    item.querySelector('.spell-head').addEventListener('click', ()=> item.classList.toggle('open'));
+    results.appendChild(item);
+  });
+}
+document.getElementById('gm-spell-search').addEventListener('input', (e)=>{ renderGmSpellResults(e.target.value); });
+
 /* ============================================================
    SELECTOR SCREEN
    ============================================================ */
@@ -1997,6 +2045,7 @@ function refreshGmLang(){
   // force a full re-render even if the underlying data snapshot is unchanged, since translated text depends on currentLang
   gmLastGridSnapshot = null; gmLastFeedSnapshot = null; gmLastInitSnapshot = null;
   if(sessionCode) renderGmDashboard(sessionCode);
+  renderGmSpellResults(document.getElementById('gm-spell-search').value);
 }
 
 document.getElementById('btn-back').addEventListener('click', async ()=>{
