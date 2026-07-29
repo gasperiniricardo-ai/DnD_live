@@ -1465,16 +1465,16 @@ const spellDB = [
   {id:'detect_good_evil', level:1, classes:['cleric','paladin'], school:'divination', time:{es:'Acción',en:'Action'}, range:{es:'Personal',en:'Self'}, duration:{es:'Concentración, 10 minutos',en:'Concentration, 10 minutes'}, concentration:true,
     es:{name:'Detectar el Bien y el Mal', desc:'Sabes la ubicación de celestiales, fiendes y no-muertos, así como de lugares u objetos consagrados o profanados, a 30 pies.'},
     en:{name:'Detect Good and Evil', desc:'You know the location of celestials, fiends, and undead, as well as consecrated or desecrated places or objects, within 30 feet.'}},
-  {id:'protection_good_evil', level:1, classes:['cleric','paladin','wizard'], school:'abjuration', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'Concentración, 10 minutos',en:'Concentration, 10 minutes'}, concentration:true,
+  {id:'protection_good_evil', level:1, classes:['cleric','druid','paladin','warlock','wizard'], school:'abjuration', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'Concentración, 10 minutos',en:'Concentration, 10 minutes'}, concentration:true,
     es:{name:'Protección contra el Bien y el Mal', desc:'La criatura tocada queda protegida contra ciertos tipos de criaturas: desventaja para atacarla, y no puede ser encantada, asustada ni poseída por ellas.'},
     en:{name:'Protection from Good and Evil', desc:'The touched creature is protected against certain creature types: disadvantage to attack it, and it cannot be charmed, frightened, or possessed by them.'}},
   {id:'sanctuary', level:1, classes:['cleric'], school:'abjuration', time:{es:'Acción Bonus',en:'Bonus Action'}, range:{es:'30 pies',en:'30 feet'}, duration:{es:'1 minuto',en:'1 minute'}, concentration:false,
     es:{name:'Santuario', desc:'Cualquier criatura que ataque al objetivo protegido debe superar una salvación de Sabiduría o elegir otro objetivo.'},
     en:{name:'Sanctuary', desc:'Any creature that attacks the protected target must succeed on a Wisdom save or choose a different target.'}},
-  {id:'command', level:1, classes:['cleric','paladin'], school:'enchantment', time:{es:'Acción',en:'Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'1 asalto',en:'1 round'}, concentration:false,
+  {id:'command', level:1, classes:['bard','cleric','paladin'], school:'enchantment', time:{es:'Acción',en:'Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'1 asalto',en:'1 round'}, concentration:false,
     es:{name:'Orden', desc:'Das una orden de una palabra (huir, caer, soltar, quieto, rendirse) a una criatura que falle su salvación de Sabiduría.'},
     en:{name:'Command', desc:'You give a one-word order (flee, drop, fall, halt, surrender) to a creature that fails its Wisdom save.'}},
-  {id:'bane', level:1, classes:['bard','cleric'], school:'enchantment', time:{es:'Acción',en:'Action'}, range:{es:'30 pies',en:'30 feet'}, duration:{es:'Concentración, 1 minuto',en:'Concentration, 1 minute'}, concentration:true,
+  {id:'bane', level:1, classes:['bard','cleric','warlock'], school:'enchantment', time:{es:'Acción',en:'Action'}, range:{es:'30 pies',en:'30 feet'}, duration:{es:'Concentración, 1 minuto',en:'Concentration, 1 minute'}, concentration:true,
     es:{name:'Maldición', desc:'Hasta tres criaturas restan 1d4 a sus tiradas de ataque y salvaciones mientras dure el efecto.'},
     en:{name:'Bane', desc:'Up to three creatures subtract 1d4 from their attack rolls and saving throws for the duration.'}},
   {id:'guiding_bolt', level:1, classes:['cleric'], school:'evocation', time:{es:'Acción',en:'Action'}, range:{es:'120 pies',en:'120 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
@@ -1483,13 +1483,13 @@ const spellDB = [
   {id:'healing_word', level:1, classes:['bard','cleric','druid'], school:'evocation', time:{es:'Acción Bonus',en:'Bonus Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Palabra de Curación', desc:'Una criatura que puedas ver a distancia recupera 1d4 más tu modificador de característica de conjuros en puntos de golpe.'},
     en:{name:'Healing Word', desc:'A creature you can see at a distance regains 1d4 plus your spellcasting ability modifier in hit points.'}},
-  {id:'aid', level:2, classes:['cleric','paladin'], school:'abjuration', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'8 horas',en:'8 hours'}, concentration:false,
+  {id:'aid', level:2, classes:['cleric','paladin','ranger'], school:'abjuration', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'8 horas',en:'8 hours'}, concentration:false,
     es:{name:'Ayuda', desc:'Hasta tres criaturas aumentan su máximo de puntos de golpe y sus puntos de golpe actuales en 5 durante la duración.'},
     en:{name:'Aid', desc:'Up to three creatures increase their hit point maximum and current hit points by 5 for the duration.'}},
   {id:'lesser_restoration', level:2, classes:['bard','cleric','druid','paladin','ranger'], school:'abjuration', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Restablecimiento Menor', desc:'Termina con una enfermedad o con una de las siguientes condiciones que afecte a la criatura tocada: cegado, ensordecido, paralizado o envenenado.'},
     en:{name:'Lesser Restoration', desc:'Ends a disease or one of the following conditions affecting the touched creature: blinded, deafened, paralyzed, or poisoned.'}},
-  {id:'zone_of_truth', level:2, classes:['bard','cleric'], school:'enchantment', time:{es:'Acción',en:'Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'10 minutos',en:'10 minutes'}, concentration:false,
+  {id:'zone_of_truth', level:2, classes:['bard','cleric','paladin'], school:'enchantment', time:{es:'Acción',en:'Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'10 minutos',en:'10 minutes'}, concentration:false,
     es:{name:'Zona de Verdad', desc:'Crea un área mágica; las criaturas dentro que fallen su salvación no pueden decir mentiras deliberadas mientras permanezcan en la zona.'},
     en:{name:'Zone of Truth', desc:'You create a magical area; creatures inside that fail their save cannot speak deliberate lies while remaining in the zone.'}},
   {id:'magic_weapon', level:2, classes:['paladin','ranger','sorcerer','wizard'], school:'transmutation', time:{es:'Acción Bonus',en:'Bonus Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'1 hora',en:'1 hour'}, concentration:false,
@@ -1498,7 +1498,7 @@ const spellDB = [
   {id:'find_steed', level:2, classes:['paladin'], school:'conjuration', time:{es:'10 minutos',en:'10 minutes'}, range:{es:'30 pies',en:'30 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Buscar Corcel', desc:'Invocas a un espíritu que toma la forma de una montura leal e inteligente para servirte como compañera.'},
     en:{name:'Find Steed', desc:'You summon a spirit that takes the form of a loyal, intelligent mount to serve you.'}},
-  {id:'warding_bond', level:2, classes:['cleric'], school:'abjuration', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'1 hora',en:'1 hour'}, concentration:false,
+  {id:'warding_bond', level:2, classes:['cleric','paladin'], school:'abjuration', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'1 hora',en:'1 hour'}, concentration:false,
     es:{name:'Vínculo Protector', desc:'Vinculas a dos criaturas dispuestas; cuando una recibe daño, parte de ese daño se transfiere a la otra.'},
     en:{name:'Warding Bond', desc:'You link two willing creatures; when one takes damage, some of that damage is transferred to the other.'}},
   {id:'wrathful_smite', level:1, classes:['paladin'], school:'evocation', time:{es:'Acción Bonus',en:'Bonus Action'}, range:{es:'Personal',en:'Self'}, duration:{es:'Concentración, 1 minuto',en:'Concentration, 1 minute'}, concentration:true,
@@ -1527,7 +1527,7 @@ const spellDB = [
   {id:'toll_the_dead', level:0, classes:['bard','cleric','druid','warlock','wizard'], school:'necromancy', time:{es:'Acción',en:'Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Toque de los Muertos', desc:'El tañido de una campana fúnebre resuena junto a una criatura que veas a distancia. Sufre daño necrótico: mayor si ya ha perdido puntos de golpe desde el inicio de tu último turno, menor si no.'},
     en:{name:'Toll the Dead', desc:'The mournful toll of a phantom bell sounds beside a creature you can see within range. It takes necrotic damage: more if it has already lost hit points since the start of your last turn, less if not.'}},
-  {id:'spare_the_dying', level:0, classes:['cleric'], school:'necromancy', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
+  {id:'spare_the_dying', level:0, classes:['cleric','druid'], school:'necromancy', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Aliviar Agonía', desc:'Tocas a una criatura con 0 puntos de golpe; queda estable. Cualquier criatura inmune al daño necrótico es inmune a este conjuro.'},
     en:{name:'Spare the Dying', desc:'You touch a creature with 0 hit points and it becomes stable. Any creature immune to necrotic damage is immune to this spell.'}},
   {id:'eldritch_blast', level:0, classes:['warlock'], school:'evocation', time:{es:'Acción',en:'Action'}, range:{es:'120 pies',en:'120 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
@@ -2237,6 +2237,9 @@ const spellDB = [
   {id:'mind_blank', level:8, classes:['bard','wizard'], school:'abjuration', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'24 horas',en:'24 hours'}, concentration:false,
     es:{name:'Mente en Blanco', desc:'Haces inmune a una criatura dispuesta tocada al daño psíquico y a efectos de encantamiento, protegiéndola de detección remota, lectura de mente y adivinación durante un día entero.'},
     en:{name:'Mind Blank', desc:'Makes a willing touched creature immune to psychic damage and charm effects and shields it from remote sensing, mind-reading, and divination for a full day.'}},
+  {id:'feeblemind', level:8, classes:['bard','druid','sorcerer','warlock','wizard'], school:'enchantment', time:{es:'Acción',en:'Action'}, range:{es:'150 pies',en:'150 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
+    es:{name:'Debilidad Mental', desc:'Abrasas la mente de una criatura que veas causando 4d6 de daño psíquico; si falla una salvación de Inteligencia, su Inteligencia y Carisma caen a 1, incapaz de lanzar conjuros, activar objetos mágicos o comunicarse con coherencia hasta ser curada con magia restaurativa potente.'},
+    en:{name:'Feeblemind', desc:'You blast the mind of a creature you can see for 4d6 psychic damage; on a failed Intelligence save, its Intelligence and Charisma drop to 1, unable to cast spells, activate magic items, or communicate coherently until cured by powerful restorative magic.'}},
   {id:'power_word_stun', level:8, classes:['bard','sorcerer','warlock','wizard'], school:'enchantment', time:{es:'Acción',en:'Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Palabra de Poder: Aturdir', desc:'Aturdes instantáneamente a una criatura con 150 puntos de golpe o menos (o detienes la velocidad de una más resistente) hasta que supere una salvación de Constitución en un turno posterior.'},
     en:{name:'Power Word Stun', desc:'Instantly stuns a creature with 150 or fewer hit points (or halts a tougher one\'s speed) until it succeeds a Constitution save on a later turn.'}},
@@ -4590,9 +4593,15 @@ function renderPreparedList(){
     const domainEntry = (character.domainSpellIds||[]).find(d=>d.id===id);
     const domainBadge = domainEntry ? `<span class="conc-badge">${t('domain_free_badge')} — ${domainEntry.source[currentLang]}</span>` : '';
     const div = document.createElement('div');
-    div.className='feat';
-    div.innerHTML = `<div class="ft-name">${data.name}${concBadge}${domainBadge} <span style="color:var(--parch-dim);font-weight:400;font-size:.78rem;">(${t('level_option')} ${sp.level} · ${school} · ${time} · ${range})</span></div><p>${data.desc}<br><span style="color:var(--parch-dim);font-size:.75rem;">${t('duration_label')} ${duration}</span></p>
-      ${isConcentration(sp) ? `<button class="ghost-btn concentrate-btn" data-name="${data.name}" style="margin-top:8px;font-size:.68rem;padding:6px 12px;">${t('btn_concentrate')}</button>` : ''}`;
+    div.className='spell-item';
+    div.innerHTML = `
+      <div class="spell-head">
+        <div class="spell-title"><span class="sn">${data.name}${concBadge}${domainBadge}</span><span class="sm">${t('level_option')} ${sp.level} · ${school} · ${time} · ${range}</span></div>
+      </div>
+      <div class="spell-desc">${data.desc}<br><span style="color:var(--parch-dim);font-size:.75rem;">${t('duration_label')} ${duration}</span>
+      ${isConcentration(sp) ? `<button class="ghost-btn concentrate-btn" data-name="${data.name}" style="margin-top:8px;font-size:.68rem;padding:6px 12px;">${t('btn_concentrate')}</button>` : ''}</div>
+    `;
+    div.querySelector('.spell-head').addEventListener('click', ()=> div.classList.toggle('open'));
     const concBtn = div.querySelector('.concentrate-btn');
     if(concBtn) concBtn.addEventListener('click', ()=>{
       character.concentration = { active:true, spell:concBtn.dataset.name };
