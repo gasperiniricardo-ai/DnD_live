@@ -691,6 +691,7 @@ table.eqp tr:last-child td{border-bottom:none;}
     </div>
     <div class="card">
       <h2><span data-i18n="h_prepared">Conjuros preparados</span> <span id="prep-counter" style="font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--gold-bright);"></span></h2>
+      <div id="cantrip-counter-row" style="display:none;font-size:.8rem;color:var(--parch-dim);margin-top:-8px;margin-bottom:10px;"><span data-i18n="lbl_cantrips_known">Trucos conocidos:</span> <span id="cantrip-counter" style="font-family:'JetBrains Mono',monospace;color:var(--gold-bright);"></span></div>
       <div class="feat" id="smite-prepared-note"><div class="ft-name" data-i18n="smite_feat_name">Castigo Divino (Divine Smite)</div><p data-i18n="smite_feat_desc">Siempre preparado gratis por el rasgo Lanzador de Castigos — no ocupa espacio de preparación.</p></div>
       <div id="prepared-list"></div>
       <p id="prepared-empty" style="font-size:.83rem;color:var(--parch-dim);" data-i18n="p_prepared_empty">Aún no has elegido conjuros preparados. Búscalos abajo y toca la estrella para prepararlos.</p>
@@ -887,6 +888,7 @@ const I18N = {
     conc_badge:'Concentración', btn_concentrate:'Concentrarme', concentrate_toast:'Ahora estás concentrado',
     domain_free_badge:'Siempre preparado (gratis)',
     prep_limit_toast:'Ya tienes {n} conjuros preparados', prep_limit_detail:'quita uno antes de añadir otro',
+    cantrip_limit_toast:'Ya conoces {n} trucos', lbl_cantrips_known:'Trucos conocidos:',
     check_label:'Prueba', save_label:'Salvación', level_label:'Nivel de Personaje', level_option:'Nivel', xp_label:'Experiencia (PX)',
     btn_header_expand:'▼ Detalles', btn_header_collapse:'▲ Detalles',
     h_loh:'Imposición de Manos (Lay on Hands)', p_loh:'Reserva de 5 PV al día. Acción bonus para curar; gasta 5 PV para curar enfermedad o eliminar Envenenado.',
@@ -964,6 +966,7 @@ const I18N = {
     conc_badge:'Concentration', btn_concentrate:'Concentrate', concentrate_toast:'You are now concentrating',
     domain_free_badge:'Always prepared (free)',
     prep_limit_toast:'You already have {n} spells prepared', prep_limit_detail:'remove one before adding another',
+    cantrip_limit_toast:'You already know {n} cantrips', lbl_cantrips_known:'Cantrips known:',
     check_label:'Check', save_label:'Save', level_label:'Character Level', level_option:'Level', xp_label:'Experience (XP)',
     btn_header_expand:'▼ Details', btn_header_collapse:'▲ Details',
     h_loh:'Lay on Hands', p_loh:'5 HP pool per day. Bonus action to heal; spend 5 HP to cure a disease or remove the Poisoned condition.',
@@ -1426,12 +1429,30 @@ const slotTable = {
 const PREP_TABLE_CLERIC_DRUID = {1:4,2:5,3:6,4:7,5:9,6:10,7:11,8:12,9:14,10:15,11:16,12:16,13:17,14:17,15:18,16:18,17:19,18:20,19:21,20:22};
 const PREP_TABLE_WIZARD =       {1:4,2:5,3:6,4:7,5:9,6:10,7:11,8:12,9:14,10:15,11:16,12:16,13:17,14:18,15:19,16:21,17:22,18:23,19:24,20:25};
 const PREP_TABLE_HALF_CASTER =  {1:2,2:2,3:4,4:5,5:6,6:6,7:7,8:7,9:9,10:9,11:10,12:10,13:11,14:11,15:12,16:12,17:14,18:14,19:15,20:15};
+// Official 2024 PHB "Cantrips Known" / "Spells Known" tables for classes that know a fixed number of spells rather than preparing from their full class list
+const KNOWN_CASTER_TABLES = {
+  bard:     { cantrips: {1:2,2:2,3:2,4:3,5:3,6:3,7:3,8:3,9:3,10:4,11:4,12:4,13:4,14:4,15:4,16:4,17:4,18:4,19:4,20:4},
+              spells:   {1:4,2:5,3:6,4:7,5:9,6:10,7:11,8:12,9:14,10:15,11:16,12:16,13:17,14:17,15:18,16:18,17:19,18:20,19:21,20:22} },
+  ranger:   { cantrips: null,
+              spells:   {1:2,2:3,3:4,4:5,5:6,6:6,7:7,8:7,9:8,10:8,11:10,12:10,13:11,14:11,15:12,16:12,17:14,18:14,19:15,20:15} },
+  sorcerer: { cantrips: {1:4,2:4,3:4,4:5,5:5,6:5,7:5,8:5,9:5,10:6,11:6,12:6,13:6,14:6,15:6,16:6,17:6,18:6,19:6,20:6},
+              spells:   {1:2,2:4,3:6,4:7,5:9,6:10,7:11,8:12,9:14,10:15,11:16,12:16,13:17,14:17,15:18,16:18,17:19,18:20,19:21,20:22} },
+  warlock:  { cantrips: {1:2,2:2,3:2,4:3,5:3,6:3,7:3,8:3,9:3,10:4,11:4,12:4,13:4,14:4,15:4,16:4,17:4,18:4,19:4,20:4},
+              spells:   {1:2,2:3,3:4,4:5,5:6,6:7,7:8,8:9,9:10,10:10,11:11,12:11,13:12,14:12,15:13,16:13,17:14,18:14,19:15,20:15} },
+};
 function preparedLimitForLevel(lvl, klass){
   const l = Math.max(1, Math.min(20, lvl));
   if(klass==='wizard') return PREP_TABLE_WIZARD[l];
   if(klass==='cleric' || klass==='druid') return PREP_TABLE_CLERIC_DRUID[l];
   if(klass==='paladin' || klass==='artificer') return PREP_TABLE_HALF_CASTER[l];
-  return l+1; // known-spell classes (bard, ranger, sorcerer, warlock, etc.): approximation, spells-known tables not modeled
+  if(KNOWN_CASTER_TABLES[klass]) return KNOWN_CASTER_TABLES[klass].spells[l];
+  return l+1; // custom/other class fallback
+}
+function cantripLimitForClass(lvl, klass){
+  const table = KNOWN_CASTER_TABLES[klass];
+  if(!table || !table.cantrips) return null; // unlimited (prepared casters) or N/A (Ranger gets no cantrips)
+  const l = Math.max(1, Math.min(20, lvl));
+  return table.cantrips[l];
 }
 function currentPreparedLimit(){
   return preparedLimitForLevel(character.level, character.identity.klass) + (character.bonusPreparedSlots||0);
@@ -1448,6 +1469,7 @@ function countsAgainstPrepLimit(spellId){
 function modOf(score){ return Math.floor((score-10)/2); }
 function isConcentration(sp){ return !!sp.concentration; }
 function fmt(n){return n>=0?`+${n}`:`${n}`;}
+function normalizeText(str){ return String(str).normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase(); }
 
 const spellDB = [
   {id:'cure_wounds', level:1, classes:['bard','cleric','druid','paladin','ranger'], school:'evocation', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
@@ -3261,13 +3283,13 @@ document.getElementById('gm-dice-expr').addEventListener('keydown', (e)=>{ if(e.
 // ---------- GM SPELL SEARCH (all spells, no per-class filtering — reference tool for the GM) ----------
 function renderGmSpellResults(filter=''){
   const results = document.getElementById('gm-spell-results');
-  const f = filter.trim().toLowerCase();
+  const f = normalizeText(filter.trim());
   const filtered = spellDB.filter(s=>{
     const data = s[currentLang];
     const school = SCHOOL_I18N[s.school][currentLang];
-    return data.name.toLowerCase().includes(f) || school.toLowerCase().includes(f) ||
-      (t('level_option')+' '+s.level).toLowerCase().includes(f) || String(s.level)===f ||
-      s.classes.some(c=>c.toLowerCase().includes(f));
+    return normalizeText(data.name).includes(f) || normalizeText(school).includes(f) ||
+      normalizeText(t('level_option')+' '+s.level).includes(f) || String(s.level)===f ||
+      s.classes.some(c=>normalizeText(c).includes(f));
   }).sort((a,b)=>a.level-b.level || a[currentLang].name.localeCompare(b[currentLang].name, currentLang));
 
   results.innerHTML='';
@@ -3308,10 +3330,10 @@ document.getElementById('gm-spell-search').addEventListener('input', (e)=>{ rend
 // ---------- GM MINI BESTIARY ----------
 function renderGmBestiaryResults(filter=''){
   const results = document.getElementById('gm-bestiary-results');
-  const f = filter.trim().toLowerCase();
+  const f = normalizeText(filter.trim());
   const filtered = BESTIARY.filter(m=>{
     const data = m[currentLang];
-    return data.name.toLowerCase().includes(f) || String(m.cr).toLowerCase().includes(f);
+    return normalizeText(data.name).includes(f) || String(m.cr).toLowerCase().includes(f);
   }).sort((a,b)=>parseCrValue(a.cr)-parseCrValue(b.cr) || a[currentLang].name.localeCompare(b[currentLang].name, currentLang));
 
   results.innerHTML='';
@@ -4590,6 +4612,15 @@ function renderPreparedList(){
   const limit = currentPreparedLimit();
   const countedPrepared = character.preparedSpellIds.filter(countsAgainstPrepLimit).length;
   counter.textContent = `(${countedPrepared}/${limit})`;
+  const cantripLimit = cantripLimitForClass(character.level, character.identity.klass);
+  const cantripRow = document.getElementById('cantrip-counter-row');
+  if(cantripLimit!=null){
+    const countedCantrips = character.preparedSpellIds.filter(id=>{ const s2=spellDB.find(s=>s.id===id); return s2 && s2.level===0; }).length;
+    document.getElementById('cantrip-counter').textContent = `(${countedCantrips}/${cantripLimit})`;
+    cantripRow.style.display = 'block';
+  } else {
+    cantripRow.style.display = 'none';
+  }
   wrap.innerHTML = '';
   if(character.preparedSpellIds.length===0){ empty.style.display='block'; return; }
   empty.style.display='none';
@@ -4634,15 +4665,22 @@ function classAllowsSpell(s){
   if(!klass || klass==='other') return true; // no class chosen yet / homebrew class: don't hide anything
   return s.classes.includes(klass);
 }
+function showPrepLimitToast(html){
+  const toast = document.getElementById('toast');
+  toast.innerHTML = html;
+  toast.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>toast.classList.remove('show'), 2600);
+}
 function renderSpellResults(filter=''){
   const results = document.getElementById('spell-results');
-  const f = filter.trim().toLowerCase();
+  const f = normalizeText(filter.trim());
   const filtered = spellDB.filter(s=>{
     if(!classAllowsSpell(s)) return false;
     const data = s[currentLang];
     const school = SCHOOL_I18N[s.school][currentLang];
-    return data.name.toLowerCase().includes(f) || school.toLowerCase().includes(f) ||
-      (t('level_option')+' '+s.level).toLowerCase().includes(f) || String(s.level)===f;
+    return normalizeText(data.name).includes(f) || normalizeText(school).includes(f) ||
+      normalizeText(t('level_option')+' '+s.level).includes(f) || String(s.level)===f;
   }).sort((a,b)=>a.level-b.level || a[currentLang].name.localeCompare(b[currentLang].name, currentLang));
 
   results.innerHTML='';
@@ -4677,14 +4715,18 @@ function renderSpellResults(filter=''){
       const id = e.currentTarget.dataset.id;
       if(character.preparedSpellIds.includes(id)){
         character.preparedSpellIds = character.preparedSpellIds.filter(x=>x!==id);
+      } else if(s.level===0){
+        const cantripLimit = cantripLimitForClass(character.level, character.identity.klass);
+        const countedCantrips = character.preparedSpellIds.filter(x=>{ const s2=spellDB.find(y=>y.id===x); return s2 && s2.level===0; }).length;
+        if(cantripLimit!=null && countedCantrips >= cantripLimit){
+          showPrepLimitToast(t('cantrip_limit_toast').replace('{n}', cantripLimit));
+          return;
+        }
+        character.preparedSpellIds.push(id);
       } else {
         const countedPrepared = character.preparedSpellIds.filter(countsAgainstPrepLimit).length;
         if(countsAgainstPrepLimit(id) && countedPrepared >= limit){
-          const toast = document.getElementById('toast');
-          toast.innerHTML = `${t('prep_limit_toast').replace('{n}', limit)} <span class="roll-detail">${t('prep_limit_detail')}</span>`;
-          toast.classList.add('show');
-          clearTimeout(window._toastTimer);
-          window._toastTimer = setTimeout(()=>toast.classList.remove('show'), 2600);
+          showPrepLimitToast(`${t('prep_limit_toast').replace('{n}', limit)} <span class="roll-detail">${t('prep_limit_detail')}</span>`);
           return;
         }
         character.preparedSpellIds.push(id);
