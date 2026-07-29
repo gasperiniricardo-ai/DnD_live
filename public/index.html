@@ -553,6 +553,10 @@ table.eqp tr:last-child td{border-bottom:none;}
         <div class="statbox"><div class="big" id="passive-insight">10</div><div class="lab" data-i18n="lab_passive_insight">Perspicacia Pasiva</div></div>
       </div>
     </div>
+    <div class="card">
+      <h2 data-i18n="h_session_notes">Notas de Sesión/Campaña</h2>
+      <textarea id="session-notes-input" rows="10" data-i18n-ph="session_notes_ph" placeholder="NPCs, pistas, misiones activas, botín pendiente de repartir..." style="width:100%;background:var(--void);border:1px solid var(--steel);color:var(--parch);border-radius:8px;padding:10px;font-family:inherit;font-size:.9rem;line-height:1.5;"></textarea>
+    </div>
   </div>
 
   <!-- ================= COMBATE ================= -->
@@ -894,6 +898,7 @@ const I18N = {
     h_proficiencies:'Competencias', prof_note_ph:'Escribe aquí...', btn_add_prof:'Añadir competencia',
     h_damage_notes:'Resistencias, inmunidades y vulnerabilidades', damage_note_ph:'Escribe aquí...', btn_add_damage:'Añadir resistencia/inmunidad',
     h_passives:'Pasivas', lab_passive_perception:'Percepción Pasiva', lab_passive_investigation:'Investigación Pasiva', lab_passive_insight:'Perspicacia Pasiva',
+    h_session_notes:'Notas de Sesión/Campaña', session_notes_ph:'NPCs, pistas, misiones activas, botín pendiente de repartir...',
     btn_inspiration:'⭐ Inspiración',
     btn_restore_backup:'↺ Restaurar copia', btn_restore_backup_title:'Restaura el personaje a como estaba al abrirlo por última vez',
     btn_restore_backup_confirm:'¿Restaurar? toca de nuevo', restore_no_backup_toast:'No hay copia de seguridad disponible todavía',
@@ -970,6 +975,7 @@ const I18N = {
     h_proficiencies:'Proficiencies', prof_note_ph:'Type here...', btn_add_prof:'Add proficiency',
     h_damage_notes:'Resistances, immunities & vulnerabilities', damage_note_ph:'Type here...', btn_add_damage:'Add resistance/immunity',
     h_passives:'Passives', lab_passive_perception:'Passive Perception', lab_passive_investigation:'Passive Investigation', lab_passive_insight:'Passive Insight',
+    h_session_notes:'Session/Campaign Notes', session_notes_ph:'NPCs, clues, active quests, loot to be divided...',
     btn_inspiration:'⭐ Inspiration',
     btn_restore_backup:'↺ Restore backup', btn_restore_backup_title:'Restores the character to how it was when last opened',
     btn_restore_backup_confirm:'Restore? tap again', restore_no_backup_toast:'No backup available yet',
@@ -3447,6 +3453,7 @@ function migrateCharacter(c){
   if(!c.conditions) c.conditions = {};
   if(c.exhaustion===undefined) c.exhaustion = 0;
   if(!c.notes) c.notes = {personality:'',ideals:'',bonds:'',flaws:'',free:''};
+  if(c.sessionNotes===undefined) c.sessionNotes = '';
   if(!c.skillExpertise) c.skillExpertise = {};
   if(!c.size) c.size = 'medium';
   if(c.senses===undefined) c.senses = '';
@@ -4099,12 +4106,17 @@ CURRENCY_KEYS.forEach(k=>{
 const NOTE_FIELDS = [['note-personality','personality'],['note-ideals','ideals'],['note-bonds','bonds'],['note-flaws','flaws'],['note-free','free']];
 function renderNotes(){
   NOTE_FIELDS.forEach(([elId,key])=>{ document.getElementById(elId).value = character.notes[key]||''; });
+  document.getElementById('session-notes-input').value = character.sessionNotes||'';
 }
 NOTE_FIELDS.forEach(([elId,key])=>{
   document.getElementById(elId).addEventListener('input', (e)=>{
     character.notes[key] = e.target.value;
     scheduleSave();
   });
+});
+document.getElementById('session-notes-input').addEventListener('input', (e)=>{
+  character.sessionNotes = e.target.value;
+  scheduleSave();
 });
 
 // ---------- SMITE ----------
