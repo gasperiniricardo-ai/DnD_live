@@ -731,7 +731,13 @@ table.eqp tr:last-child td{border-bottom:none;}
       </div>
       <div style="margin-top:12px;">
         <label class="pool-label" data-i18n="lbl_senses">Sentidos (visión en la oscuridad, etc.)</label>
-        <input type="text" id="senses-input" style="width:100%;margin-top:6px;background:var(--void);border:1px solid var(--steel);color:var(--parch);border-radius:8px;padding:8px 10px;font-family:inherit;">
+        <div id="senses-list" style="font-size:.87rem;color:var(--parch);line-height:1.8;margin-top:6px;"></div>
+        <p id="senses-empty" style="font-size:.83rem;color:var(--parch-dim);display:none;">—</p>
+        <div style="margin-top:10px;">
+          <select id="senses-select" style="width:100%;background:var(--void);border:1px solid var(--steel);color:var(--parch);border-radius:8px;padding:9px 10px;font-family:inherit;font-size:.85rem;"></select>
+          <input type="text" id="senses-custom" data-i18n-ph="senses_custom_ph" placeholder="Escribe aquí..." style="display:none;width:100%;margin-top:10px;background:var(--void);border:1px solid var(--steel);color:var(--parch);border-radius:8px;padding:9px 10px;font-family:inherit;">
+          <button class="reset-btn" id="senses-add" data-i18n="btn_add_sense" style="margin-top:10px;">Añadir sentido</button>
+        </div>
       </div>
     </div>
     <div class="card">
@@ -896,6 +902,7 @@ const I18N = {
     h_divine_sense:'Sentido Divino (Divine Sense)', p_divine_sense:'Detecta celestiales, fiendes o no-muertos a 60 ft. 3 usos/día (= Mod. Carisma).',
     ds_remaining:'Usos restantes:', btn_ds_reset:'Descanso largo (restaurar usos)',
     h_size_senses:'Tamaño y Sentidos', lbl_size:'Tamaño', lbl_senses:'Sentidos (visión en la oscuridad, etc.)',
+    senses_custom_ph:'Escribe aquí...', btn_add_sense:'Añadir sentido',
     h_traits:'Rasgos raciales y dotes', trait_name_ph:'Nombre del rasgo', trait_desc_ph:'Descripción', btn_add_trait:'Añadir rasgo',
     h_proficiencies:'Competencias', prof_note_ph:'Escribe aquí...', btn_add_prof:'Añadir competencia',
     h_damage_notes:'Resistencias, inmunidades y vulnerabilidades', damage_note_ph:'Escribe aquí...', btn_add_damage:'Añadir resistencia/inmunidad',
@@ -974,6 +981,7 @@ const I18N = {
     h_divine_sense:'Divine Sense', p_divine_sense:'Detects celestials, fiends, or undead within 60 ft. 3 uses/day (= Charisma modifier).',
     ds_remaining:'Remaining uses:', btn_ds_reset:'Long rest (restore uses)',
     h_size_senses:'Size & Senses', lbl_size:'Size', lbl_senses:'Senses (darkvision, etc.)',
+    senses_custom_ph:'Type here...', btn_add_sense:'Add sense',
     h_traits:'Racial Traits & Feats', trait_name_ph:'Trait name', trait_desc_ph:'Description', btn_add_trait:'Add trait',
     h_proficiencies:'Proficiencies', prof_note_ph:'Type here...', btn_add_prof:'Add proficiency',
     h_damage_notes:'Resistances, immunities & vulnerabilities', damage_note_ph:'Type here...', btn_add_damage:'Add resistance/immunity',
@@ -1235,6 +1243,18 @@ const SIZE_OPTIONS = [
   {id:'medium', es:'Mediano', en:'Medium'}, {id:'large', es:'Grande', en:'Large'},
   {id:'huge', es:'Enorme', en:'Huge'},
 ];
+
+/* ---------- SENSES CATALOG ---------- */
+const SENSES_OPTIONS = [
+  {id:'darkvision_60', group:'senses', es:'Visión en la oscuridad 60 pies', en:'Darkvision 60 ft'},
+  {id:'darkvision_120', group:'senses', es:'Visión en la oscuridad 120 pies', en:'Darkvision 120 ft'},
+  {id:'blindsight_10', group:'senses', es:'Sentido ciego 10 pies', en:'Blindsight 10 ft'},
+  {id:'blindsight_30', group:'senses', es:'Sentido ciego 30 pies', en:'Blindsight 30 ft'},
+  {id:'tremorsense_30', group:'senses', es:'Sentido sísmico 30 pies', en:'Tremorsense 30 ft'},
+  {id:'tremorsense_60', group:'senses', es:'Sentido sísmico 60 pies', en:'Tremorsense 60 ft'},
+  {id:'truesight_120', group:'senses', es:'Visión veraz 120 pies', en:'Truesight 120 ft'},
+];
+const SENSES_GROUP_LABEL = { senses: {es:'Sentidos', en:'Senses'} };
 
 /* ---------- PROFICIENCY CATALOG (armor / weapons / tools / languages) ---------- */
 const PROFICIENCY_OPTIONS = [
@@ -3479,6 +3499,9 @@ function migrateCharacter(c){
   if(!c.skillExpertise) c.skillExpertise = {};
   if(!c.size) c.size = 'medium';
   if(c.senses===undefined) c.senses = '';
+  if(!c.sensesList){
+    c.sensesList = c.senses ? [{es:c.senses, en:c.senses}] : [];
+  }
   if(!c.damageNotes) c.damageNotes = [];
   if(!c.turnState) c.turnState = { movementUsed:0, actionUsed:false, bonusUsed:false, reactionUsed:false };
   if(!c.domainSpellIds) c.domainSpellIds = [];
@@ -4211,15 +4234,34 @@ function renderSizeSenses(){
   const sel = document.getElementById('size-select');
   sel.innerHTML = SIZE_OPTIONS.map(o=>`<option value="${o.id}">${o[currentLang]}</option>`).join('');
   sel.value = character.size || 'medium';
-  document.getElementById('senses-input').value = character.senses || '';
+  renderSenses();
 }
 document.getElementById('size-select').addEventListener('change', (e)=>{
   character.size = e.target.value;
   scheduleSave();
 });
-document.getElementById('senses-input').addEventListener('input', (e)=>{
-  character.senses = e.target.value;
+function renderSenses(){
+  populateCatalogSelect(document.getElementById('senses-select'), SENSES_OPTIONS, SENSES_GROUP_LABEL, o=>o[currentLang]);
+  renderNoteList('senses-list','senses-empty', character.sensesList||[]);
+}
+document.getElementById('senses-select').addEventListener('change', (e)=>{
+  document.getElementById('senses-custom').style.display = e.target.value==='other' ? 'block' : 'none';
+});
+document.getElementById('senses-add').addEventListener('click', ()=>{
+  const sel = document.getElementById('senses-select');
+  if(sel.value==='other'){
+    const input = document.getElementById('senses-custom');
+    const text = input.value.trim();
+    if(!text) return;
+    character.sensesList.push({es:text, en:text});
+    input.value=''; input.style.display='none';
+  } else {
+    const opt = SENSES_OPTIONS.find(o=>o.id===sel.value);
+    if(!opt) return;
+    character.sensesList.push({es:opt.es, en:opt.en});
+  }
   scheduleSave();
+  renderSenses();
 });
 // ---------- CATALOG SELECT HELPER (grouped official list + "Otra..." custom entry) ----------
 function populateCatalogSelect(selectEl, catalog, groupLabels, labelFn){
@@ -4284,6 +4326,7 @@ function renderNoteList(containerId, emptyId, list){
       scheduleSave();
       renderProficiencyNotes();
       renderDamageNotes();
+      renderSenses();
     });
     wrap.appendChild(row);
   });
