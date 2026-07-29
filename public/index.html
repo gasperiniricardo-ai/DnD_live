@@ -881,6 +881,7 @@ const I18N = {
     no_results:'No se encontraron hechizos con ese criterio.', duration_label:'Duración:',
     gm_spell_more_hint:'Mostrando {shown} de {total}. Sigue escribiendo para afinar la búsqueda.',
     conc_badge:'Concentración', btn_concentrate:'Concentrarme', concentrate_toast:'Ahora estás concentrado',
+    domain_free_badge:'Siempre preparado (gratis)',
     prep_limit_toast:'Ya tienes {n} conjuros preparados', prep_limit_detail:'quita uno antes de añadir otro',
     check_label:'Prueba', save_label:'Salvación', level_label:'Nivel de Personaje', level_option:'Nivel', xp_label:'Experiencia (PX)',
     btn_header_expand:'▼ Detalles', btn_header_collapse:'▲ Detalles',
@@ -956,6 +957,7 @@ const I18N = {
     no_results:'No spells found matching that search.', duration_label:'Duration:',
     gm_spell_more_hint:'Showing {shown} of {total}. Keep typing to narrow the search.',
     conc_badge:'Concentration', btn_concentrate:'Concentrate', concentrate_toast:'You are now concentrating',
+    domain_free_badge:'Always prepared (free)',
     prep_limit_toast:'You already have {n} spells prepared', prep_limit_detail:'remove one before adding another',
     check_label:'Check', save_label:'Save', level_label:'Character Level', level_option:'Level', xp_label:'Experience (XP)',
     btn_header_expand:'▼ Details', btn_header_collapse:'▲ Details',
@@ -1415,9 +1417,14 @@ const slotTable = {
   17:[4,3,3,3,1],18:[4,3,3,3,1], 19:[4,3,3,3,2], 20:[4,3,3,3,2],
 };
 function preparedLimitForLevel(lvl){ return lvl+1; }
+function isFreePreparedSpell(spellId){
+  return !!(character.domainSpellIds && character.domainSpellIds.some(d=>d.id===spellId));
+}
 function countsAgainstPrepLimit(spellId){
   const sp = spellDB.find(s=>s.id===spellId);
-  return !!sp && sp.level>0;
+  if(!sp || sp.level===0) return false;
+  if(isFreePreparedSpell(spellId)) return false;
+  return true;
 }
 function modOf(score){ return Math.floor((score-10)/2); }
 function isConcentration(sp){ return !!sp.concentration; }
@@ -3429,6 +3436,7 @@ function migrateCharacter(c){
   if(c.senses===undefined) c.senses = '';
   if(!c.damageNotes) c.damageNotes = [];
   if(!c.turnState) c.turnState = { movementUsed:0, actionUsed:false, bonusUsed:false, reactionUsed:false };
+  if(!c.domainSpellIds) c.domainSpellIds = [];
   migrateIdentity(c);
 }
 async function openCharacter(id){
@@ -4566,9 +4574,11 @@ function renderPreparedList(){
     const range = sp.range[currentLang];
     const duration = sp.duration[currentLang];
     const concBadge = isConcentration(sp) ? `<span class="conc-badge">${t('conc_badge')}</span>` : '';
+    const domainEntry = (character.domainSpellIds||[]).find(d=>d.id===id);
+    const domainBadge = domainEntry ? `<span class="conc-badge">${t('domain_free_badge')} — ${domainEntry.source[currentLang]}</span>` : '';
     const div = document.createElement('div');
     div.className='feat';
-    div.innerHTML = `<div class="ft-name">${data.name}${concBadge} <span style="color:var(--parch-dim);font-weight:400;font-size:.78rem;">(${t('level_option')} ${sp.level} · ${school} · ${time} · ${range})</span></div><p>${data.desc}<br><span style="color:var(--parch-dim);font-size:.75rem;">${t('duration_label')} ${duration}</span></p>
+    div.innerHTML = `<div class="ft-name">${data.name}${concBadge}${domainBadge} <span style="color:var(--parch-dim);font-weight:400;font-size:.78rem;">(${t('level_option')} ${sp.level} · ${school} · ${time} · ${range})</span></div><p>${data.desc}<br><span style="color:var(--parch-dim);font-size:.75rem;">${t('duration_label')} ${duration}</span></p>
       ${isConcentration(sp) ? `<button class="ghost-btn concentrate-btn" data-name="${data.name}" style="margin-top:8px;font-size:.68rem;padding:6px 12px;">${t('btn_concentrate')}</button>` : ''}`;
     const concBtn = div.querySelector('.concentrate-btn');
     if(concBtn) concBtn.addEventListener('click', ()=>{
@@ -4669,7 +4679,11 @@ const PRESET_CHARACTERS = [
     hp:{current:12, max:12},
     weapons:[], equipment:[],
     preparedSpellIds:['guidance','thaumaturgy','sacred_flame','spare_the_dying','bless','healing_word','divine_favor','shield_of_faith'],
-    spellSlotsUsed:{}, smiteUsed:false, divineSenseUsed:0, layOnHandsCurrent:5, bonusPreparedSlots:2,
+    domainSpellIds:[
+      {id:'divine_favor', source:{es:'Dominio de la Guerra', en:'War Domain'}},
+      {id:'shield_of_faith', source:{es:'Dominio de la Guerra', en:'War Domain'}},
+    ],
+    spellSlotsUsed:{}, smiteUsed:false, divineSenseUsed:0, layOnHandsCurrent:5, bonusPreparedSlots:0,
     traits:[
       {es:{name:'Orden Divina — Taumaturgia (Divine Order: Thaumaturgy)', desc:'Conoces un cantrip adicional y sumas tu modificador de Sabiduría a las pruebas de Arcanos o Religión.'},
        en:{name:'Divine Order — Thaumaturgy', desc:'You know one extra cantrip, and you add your Wisdom modifier to Arcana or Religion checks.'}},
