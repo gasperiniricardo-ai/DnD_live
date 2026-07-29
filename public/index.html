@@ -893,7 +893,7 @@ const I18N = {
     wpn_range_ph:'Alcance (ej. 20/60 ft)', wpn_ammo_title:'Munición (dejar vacío si no aplica)', wpn_ammo_label:'Munición',
     h_turn_sim:'Simulador de Turno', btn_new_turn:'Nuevo turno', lab_action:'Acción', lab_bonus:'Acción Bonus', lab_movement:'Movimiento', lab_reaction:'Reacción',
     turn_status_available:'Disponible', turn_status_used:'Usada', turn_empty:'Nada disponible aquí.',
-    turn_attack_label:'Atacar', turn_cast_label:'Lanzar', turn_generic_actions_label:'Acciones generales',
+    turn_attack_label:'Atacar', turn_cast_label:'Lanzar', turn_generic_actions_label:'Acciones generales', turn_spell_atk_tag:'tira ataque',
     h_smite:'Castigo Divino (Divine Smite)', p_smite:'Siempre preparado gratis. Puedes lanzarlo 1 vez al día sin gastar hueco de conjuro.',
     smite_available:'Uso gratuito diario: disponible', smite_used:'Uso gratuito diario: gastado',
     h_spellcasting:'Lanzamiento de conjuros', lab_dc:'CD de Salvación', lab_spellatk:'Ataque Mágico', lab_pb:'Bono de Competencia',
@@ -975,7 +975,7 @@ const I18N = {
     wpn_range_ph:'Range (e.g. 20/60 ft)', wpn_ammo_title:'Ammunition (leave empty if not applicable)', wpn_ammo_label:'Ammo',
     h_turn_sim:'Turn Simulator', btn_new_turn:'New turn', lab_action:'Action', lab_bonus:'Bonus Action', lab_movement:'Movement', lab_reaction:'Reaction',
     turn_status_available:'Available', turn_status_used:'Used', turn_empty:'Nothing available here.',
-    turn_attack_label:'Attack', turn_cast_label:'Cast', turn_generic_actions_label:'General actions',
+    turn_attack_label:'Attack', turn_cast_label:'Cast', turn_generic_actions_label:'General actions', turn_spell_atk_tag:'rolls attack',
     h_smite:'Divine Smite', p_smite:'Always prepared for free. You can cast it once per day without spending a spell slot.',
     smite_available:'Free daily use: available', smite_used:'Free daily use: used',
     h_spellcasting:'Spellcasting', lab_dc:'Save DC', lab_spellatk:'Spell Attack', lab_pb:'Proficiency Bonus',
@@ -1592,7 +1592,7 @@ const spellDB = [
   {id:'bane', level:1, classes:['bard','cleric','warlock'], school:'enchantment', time:{es:'Acción',en:'Action'}, range:{es:'30 pies',en:'30 feet'}, duration:{es:'Concentración, 1 minuto',en:'Concentration, 1 minute'}, concentration:true,
     es:{name:'Maldición', desc:'Hasta tres criaturas restan 1d4 a sus tiradas de ataque y salvaciones mientras dure el efecto.'},
     en:{name:'Bane', desc:'Up to three creatures subtract 1d4 from their attack rolls and saving throws for the duration.'}},
-  {id:'guiding_bolt', level:1, classes:['cleric'], school:'evocation', time:{es:'Acción',en:'Action'}, range:{es:'120 pies',en:'120 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
+  {id:'guiding_bolt', level:1, classes:['cleric'], school:'evocation', atk:true, time:{es:'Acción',en:'Action'}, range:{es:'120 pies',en:'120 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Destello Guiador', desc:'Un destello de luz golpea a una criatura causando daño radiante, y el siguiente ataque contra ella antes de tu próximo turno tiene ventaja.'},
     en:{name:'Guiding Bolt', desc:'A flash of light strikes a creature for radiant damage, and the next attack against it before your next turn has advantage.'}},
   {id:'healing_word', level:1, classes:['bard','cleric','druid'], school:'evocation', time:{es:'Acción Bonus',en:'Bonus Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
@@ -1645,7 +1645,7 @@ const spellDB = [
   {id:'spare_the_dying', level:0, classes:['cleric','druid'], school:'necromancy', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Aliviar Agonía', desc:'Tocas a una criatura con 0 puntos de golpe; queda estable. Cualquier criatura inmune al daño necrótico es inmune a este conjuro.'},
     en:{name:'Spare the Dying', desc:'You touch a creature with 0 hit points and it becomes stable. Any creature immune to necrotic damage is immune to this spell.'}},
-  {id:'eldritch_blast', level:0, classes:['warlock'], school:'evocation', time:{es:'Acción',en:'Action'}, range:{es:'120 pies',en:'120 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
+  {id:'eldritch_blast', level:0, classes:['warlock'], school:'evocation', atk:true, time:{es:'Acción',en:'Action'}, range:{es:'120 pies',en:'120 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Descarga Eldritch', desc:'Un haz crepitante de energía se dispara hacia una criatura. Realiza un ataque de conjuro cuerpo a distancia; si impacta, la criatura sufre 1d10 de daño de fuerza.'},
     en:{name:'Eldritch Blast', desc:'A beam of crackling energy streaks toward a creature. Make a ranged spell attack; on a hit, the target takes 1d10 force damage.'}},
   {id:'minor_illusion', level:0, classes:['bard','sorcerer','warlock','wizard'], school:'illusion', time:{es:'Acción',en:'Action'}, range:{es:'30 pies',en:'30 feet'}, duration:{es:'1 minuto',en:'1 minute'}, concentration:false,
@@ -1654,7 +1654,7 @@ const spellDB = [
   {id:'fire_bolt', level:0, classes:['sorcerer','wizard'], school:'evocation', time:{es:'Acción',en:'Action'}, range:{es:'120 pies',en:'120 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Vela de Fuego', desc:'Lanzas un dardo de fuego contra una criatura u objeto. Con un ataque de conjuro a distancia, causa 1d10 de daño de fuego; puede prender fuego a objetos inflamables.'},
     en:{name:'Fire Bolt', desc:'You hurl a mote of fire at a creature or object. With a ranged spell attack, it deals 1d10 fire damage and may ignite flammable objects.'}},
-  {id:'sorcerous_burst', level:0, classes:['sorcerer'], school:'evocation', time:{es:'Acción',en:'Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
+  {id:'sorcerous_burst', level:0, classes:['sorcerer'], school:'evocation', atk:true, time:{es:'Acción',en:'Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Estallido Hechiceril', desc:'Un proyectil de energía mágica de tu elección (ácido, frío, fuego, rayo, veneno o trueno) golpea a un objetivo con un ataque de conjuro, causando 1d8 de daño.'},
     en:{name:'Sorcerous Burst', desc:'A bolt of energy of your choice (acid, cold, fire, lightning, poison, or thunder) strikes a target with a spell attack, dealing 1d8 damage.'}},
   {id:'mage_hand', level:0, classes:['bard','sorcerer','warlock','wizard'], school:'conjuration', time:{es:'Acción',en:'Action'}, range:{es:'30 pies',en:'30 feet'}, duration:{es:'1 minuto',en:'1 minute'}, concentration:false,
@@ -1677,7 +1677,7 @@ const spellDB = [
   {id:'expeditious_retreat', level:1, classes:['sorcerer','warlock','wizard'], school:'transmutation', time:{es:'Acción Bonus',en:'Bonus Action'}, range:{es:'Personal',en:'Self'}, duration:{es:'Concentración, 10 minutos',en:'Concentration, 10 minutes'}, concentration:true,
     es:{name:'Retirada Expedita', desc:'Tu velocidad aumenta y puedes usar la acción Correr como acción adicional en cada uno de tus turnos mientras dure el conjuro.'},
     en:{name:'Expeditious Retreat', desc:'Your speed increases and you can take the Dash action as a bonus action on each of your turns for the duration.'}},
-  {id:'ray_of_frost', level:0, classes:['sorcerer','wizard'], school:'evocation', time:{es:'Acción',en:'Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
+  {id:'ray_of_frost', level:0, classes:['sorcerer','wizard'], school:'evocation', atk:true, time:{es:'Acción',en:'Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Chispa de Escarcha', desc:'Un rayo de luz azul-blanco golpea a una criatura. Con un ataque de conjuro a distancia, causa 1d8 de daño de frío y reduce su velocidad en 10 pies hasta el inicio de tu siguiente turno.'},
     en:{name:'Ray of Frost', desc:'A beam of blue-white light streaks toward a creature. With a ranged spell attack, it deals 1d8 cold damage and reduces its speed by 10 feet until the start of your next turn.'}},
   {id:'acid_splash', level:0, classes:['sorcerer','wizard'], school:'evocation', time:{es:'Acción',en:'Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
@@ -2385,7 +2385,7 @@ const spellDB = [
   {id:'charm_person', level:1, classes:['bard','druid','sorcerer','warlock','wizard'], school:'enchantment', time:{es:'Acción',en:'Action'}, range:{es:'30 pies',en:'30 feet'}, duration:{es:'1 hora',en:'1 hour'}, concentration:false,
     es:{name:'Encantar Persona', desc:'Obligas a un humanoide a hacer una salvación de Sabiduría (con ventaja si está luchando contigo) o quedar encantado y amistoso contigo durante una hora.'},
     en:{name:'Charm Person', desc:'Forces a humanoid to make a Wisdom save (with advantage if you\'re fighting it) or become charmed and friendly toward you for an hour.'}},
-  {id:'chromatic_orb', level:1, classes:['sorcerer','wizard'], school:'evocation', time:{es:'Acción',en:'Action'}, range:{es:'90 pies',en:'90 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
+  {id:'chromatic_orb', level:1, classes:['sorcerer','wizard'], school:'evocation', atk:true, time:{es:'Acción',en:'Action'}, range:{es:'90 pies',en:'90 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Orbe Cromático', desc:'Realizas un ataque de conjuro a distancia con un orbe de un tipo de daño elegido por 3d8, que puede saltar a un nuevo objetivo si sacas dobles en los dados.'},
     en:{name:'Chromatic Orb', desc:'Makes a ranged spell attack with an orb of a chosen damage type for 3d8 damage that can leap to a new target if doubles come up on the dice.'}},
   {id:'color_spray', level:1, classes:['bard','sorcerer','wizard'], school:'illusion', time:{es:'Acción',en:'Action'}, range:{es:'Personal',en:'Self'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
@@ -2637,7 +2637,7 @@ const spellDB = [
   {id:'rope_trick', level:2, classes:['wizard'], school:'transmutation', time:{es:'Acción',en:'Action'}, range:{es:'Toque',en:'Touch'}, duration:{es:'1 hora',en:'1 hour'}, concentration:false,
     es:{name:'Truco de la Cuerda', desc:'Creas un espacio extradimensional oculto accesible mediante un tramo de cuerda encantada al que solo tú puedes trepar.'},
     en:{name:'Rope Trick', desc:'Creates a hidden extradimensional space accessible via an enchanted length of rope that only you can climb into.'}},
-  {id:'scorching_ray', level:2, classes:['sorcerer','wizard'], school:'evocation', time:{es:'Acción',en:'Action'}, range:{es:'120 pies',en:'120 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
+  {id:'scorching_ray', level:2, classes:['sorcerer','wizard'], school:'evocation', atk:true, time:{es:'Acción',en:'Action'}, range:{es:'120 pies',en:'120 feet'}, duration:{es:'Instantáneo',en:'Instantaneous'}, concentration:false,
     es:{name:'Rayo Abrasador', desc:'Lanzas tres rayos de fuego separados, cada uno con su propia tirada de ataque de conjuro para causar daño de fuego.'},
     en:{name:'Scorching Ray', desc:'Hurls three separate rays of fire, each requiring its own spell attack roll to deal fire damage.'}},
   {id:'see_invisibility', level:2, classes:['bard','sorcerer','wizard'], school:'divination', time:{es:'Acción',en:'Action'}, range:{es:'Personal',en:'Self'}, duration:{es:'1 hora',en:'1 hour'}, concentration:false,
@@ -2658,7 +2658,7 @@ const spellDB = [
   {id:'spike_growth', level:2, classes:['druid','ranger'], school:'transmutation', time:{es:'Acción',en:'Action'}, range:{es:'150 pies',en:'150 feet'}, duration:{es:'Concentración, 10 minutos',en:'Concentration, 10 minutes'}, concentration:true,
     es:{name:'Crecimiento de Púas', desc:'Conviertes el suelo del área en peligroso, causando daño perforante a las criaturas que se muevan a través de él.'},
     en:{name:'Spike Growth', desc:'Turns the ground in the area hazardous, dealing piercing damage to creatures that move through it.'}},
-  {id:'spiritual_weapon', level:2, classes:['cleric'], school:'evocation', time:{es:'Acción Bonus',en:'Bonus Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'Concentración, 1 minuto',en:'Concentration, 1 minute'}, concentration:true,
+  {id:'spiritual_weapon', level:2, classes:['cleric'], school:'evocation', atk:true, time:{es:'Acción Bonus',en:'Bonus Action'}, range:{es:'60 pies',en:'60 feet'}, duration:{es:'Concentración, 1 minuto',en:'Concentration, 1 minute'}, concentration:true,
     es:{name:'Arma Espiritual', desc:'Creas un arma espectral con la que puedes golpear como acción adicional, causando daño de fuerza.'},
     en:{name:'Spiritual Weapon', desc:'Creates a spectral weapon you can strike with as a bonus action, dealing force damage.'}},
   {id:'suggestion', level:2, classes:['bard','sorcerer','warlock','wizard'], school:'enchantment', time:{es:'Acción',en:'Action'}, range:{es:'30 pies',en:'30 feet'}, duration:{es:'Concentración, 8 horas',en:'Concentration, 8 hours'}, concentration:true,
@@ -4653,16 +4653,22 @@ function renderTurnSimulator(){
       ts.actionUsed = true; scheduleSave(); renderTurnSimulator();
     }));
   });
+  const PB_atk = pbForLevel(character.level);
+  const spellAtkBonus = PB_atk + modOf(character.abilities[spellAbilityFor(character.identity.klass)]);
   character.preparedSpellIds.forEach(id=>{
     const sp = spellDB.find(s=>s.id===id);
     if(!sp) return;
     const data = sp[currentLang];
-    if(sp.time!=='action' && sp.time!=='bonus_action') return;
-    const targetList = sp.time==='action' ? actionList : bonusList;
-    const usedFlag = sp.time==='action' ? ts.actionUsed : ts.bonusUsed;
+    const isAction = sp.time.en==='Action' || sp.time.en==='Action or 8 hours';
+    const isBonus = sp.time.en==='Bonus Action';
+    if(!isAction && !isBonus) return;
+    const targetList = isAction ? actionList : bonusList;
+    const usedFlag = isAction ? ts.actionUsed : ts.bonusUsed;
     const concTag = isConcentration(sp) ? ` · ${t('conc_badge')}` : '';
-    targetList.appendChild(turnItem(`${t('turn_cast_label')}: ${data.name}`, `${t('level_option')} ${sp.level}${concTag}`, data.desc, usedFlag, ()=>{
-      if(sp.time==='action'){ ts.actionUsed = true; } else { ts.bonusUsed = true; }
+    const atkTag = sp.atk ? ` · ${t('turn_spell_atk_tag')}` : '';
+    targetList.appendChild(turnItem(`${t('turn_cast_label')}: ${data.name}`, `${t('level_option')} ${sp.level}${concTag}${atkTag}`, data.desc, usedFlag, ()=>{
+      if(isAction){ ts.actionUsed = true; } else { ts.bonusUsed = true; }
+      if(sp.atk) roll(spellAtkBonus, `${t('turn_cast_label')}: ${data.name}`);
       scheduleSave(); renderTurnSimulator();
     }));
   });
