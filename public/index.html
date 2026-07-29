@@ -1416,18 +1416,19 @@ const slotTable = {
   13:[4,3,3,1,0],14:[4,3,3,1,0], 15:[4,3,3,2,0], 16:[4,3,3,2,0],
   17:[4,3,3,3,1],18:[4,3,3,3,1], 19:[4,3,3,3,2], 20:[4,3,3,3,2],
 };
-const HALF_LEVEL_PREP_CLASSES = ['paladin','artificer'];
-const FULL_LEVEL_PREP_CLASSES = ['cleric','druid','wizard'];
-function preparedLimitForLevel(lvl, klass, abilityMod){
-  if(FULL_LEVEL_PREP_CLASSES.includes(klass)) return Math.max(1, lvl + abilityMod);
-  if(HALF_LEVEL_PREP_CLASSES.includes(klass)) return Math.max(1, Math.floor(lvl/2) + abilityMod);
-  return lvl+1; // known-spell classes (bard, ranger, sorcerer, warlock, etc.): approximation, spells-known tables not modeled
+// Official 2024 PHB "Prepared Spells" class-feature tables (fixed per level, no ability-modifier math)
+const PREP_TABLE_CLERIC_DRUID = {1:4,2:5,3:6,4:7,5:9,6:10,7:11,8:12,9:14,10:15,11:16,12:16,13:17,14:17,15:18,16:18,17:19,18:20,19:21,20:22};
+const PREP_TABLE_WIZARD =       {1:4,2:5,3:6,4:7,5:9,6:10,7:11,8:12,9:14,10:15,11:16,12:16,13:17,14:18,15:19,16:21,17:22,18:23,19:24,20:25};
+const PREP_TABLE_HALF_CASTER =  {1:2,2:2,3:4,4:5,5:6,6:6,7:7,8:7,9:9,10:9,11:10,12:10,13:11,14:11,15:12,16:12,17:14,18:14,19:15,20:15};
+function preparedLimitForLevel(lvl, klass){
+  const l = Math.max(1, Math.min(20, lvl));
+  if(klass==='wizard') return PREP_TABLE_WIZARD[l];
+  if(klass==='cleric' || klass==='druid') return PREP_TABLE_CLERIC_DRUID[l];
+  if(klass==='paladin' || klass==='artificer') return PREP_TABLE_HALF_CASTER[l];
+  return l+1; // known-spell classes (bard, ranger, sorcerer, warlock, etc.): approximation, spells-known tables not modeled
 }
 function currentPreparedLimit(){
-  const klass = character.identity.klass;
-  const abilKey = spellAbilityFor(klass);
-  const abilityMod = modOf(character.abilities[abilKey]);
-  return preparedLimitForLevel(character.level, klass, abilityMod) + (character.bonusPreparedSlots||0);
+  return preparedLimitForLevel(character.level, character.identity.klass) + (character.bonusPreparedSlots||0);
 }
 function isFreePreparedSpell(spellId){
   return !!(character.domainSpellIds && character.domainSpellIds.some(d=>d.id===spellId));
