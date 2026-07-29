@@ -587,21 +587,6 @@ table.eqp tr:last-child td{border-bottom:none;}
       <div style="text-align:center;"><button class="reset-btn" id="hp-reset" data-i18n="btn_hp_reset">Descanso largo (restaurar PV)</button></div>
     </div>
 
-    <div class="card" id="death-saves-card">
-      <h2 data-i18n="h_death_saves">Salvaciones contra la Muerte</h2>
-      <div style="display:flex;gap:36px;flex-wrap:wrap;justify-content:center;">
-        <div style="text-align:center;">
-          <div class="pool-label" data-i18n="lbl_death_success" style="margin-bottom:8px;">Éxitos</div>
-          <div id="death-success-pips"></div>
-        </div>
-        <div style="text-align:center;">
-          <div class="pool-label" data-i18n="lbl_death_failure" style="margin-bottom:8px;">Fallos</div>
-          <div id="death-fail-pips"></div>
-        </div>
-      </div>
-      <div style="text-align:center;margin-top:14px;"><button class="reset-btn" id="death-reset" data-i18n="btn_death_reset">Reiniciar salvaciones</button></div>
-    </div>
-
     <div class="card">
       <h2 data-i18n="h_weapons">Armas</h2>
       <div id="weapons-list"></div>
@@ -618,8 +603,7 @@ table.eqp tr:last-child td{border-bottom:none;}
 
     <div class="card" id="turn-simulator-card">
       <h2 data-i18n="h_turn_sim">Simulador de Turno</h2>
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
-        <div id="turn-movement-display" style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--gold-bright);"></div>
+      <div style="display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
         <button class="reset-btn" id="turn-reset" data-i18n="btn_new_turn">Nuevo turno</button>
       </div>
       <div class="turn-grid">
@@ -628,11 +612,12 @@ table.eqp tr:last-child td{border-bottom:none;}
           <div id="turn-action-list"></div>
         </div>
         <div>
-          <h3 id="turn-bonus-header" data-i18n="lab_bonus">Acción Adicional</h3>
+          <h3 id="turn-bonus-header" data-i18n="lab_bonus">Acción Bonus</h3>
           <div id="turn-bonus-list"></div>
         </div>
         <div>
           <h3 data-i18n="lab_movement">Movimiento</h3>
+          <div id="turn-movement-display" style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--gold-bright);margin-bottom:8px;"></div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
             <button class="item-btn" id="turn-move-minus" title="-5 ft">−5</button>
             <button class="item-btn" id="turn-move-plus" title="+5 ft">+5</button>
@@ -643,6 +628,21 @@ table.eqp tr:last-child td{border-bottom:none;}
           <div id="turn-reaction-list"></div>
         </div>
       </div>
+    </div>
+
+    <div class="card" id="death-saves-card">
+      <h2 data-i18n="h_death_saves">Salvaciones contra la Muerte</h2>
+      <div style="display:flex;gap:36px;flex-wrap:wrap;justify-content:center;">
+        <div style="text-align:center;">
+          <div class="pool-label" data-i18n="lbl_death_success" style="margin-bottom:8px;">Éxitos</div>
+          <div id="death-success-pips"></div>
+        </div>
+        <div style="text-align:center;">
+          <div class="pool-label" data-i18n="lbl_death_failure" style="margin-bottom:8px;">Fallos</div>
+          <div id="death-fail-pips"></div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:14px;"><button class="reset-btn" id="death-reset" data-i18n="btn_death_reset">Reiniciar salvaciones</button></div>
     </div>
 
     <div class="card" id="smite-card">
@@ -867,7 +867,7 @@ const I18N = {
     btn_short_rest:'Descanso corto', short_rest_toast:'Descanso corto', short_rest_detail:'huecos de Pacto restaurados',
     h_weapons:'Armas', wpn_name_ph:'Nombre del arma', wpn_damage_ph:'Daño (ej. 1d8 cortante)', btn_add_weapon:'Añadir arma', wpn_tohit:'para golpear', wpn_bonus_title:'Bono extra',
     wpn_range_ph:'Alcance (ej. 20/60 ft)', wpn_ammo_title:'Munición (dejar vacío si no aplica)', wpn_ammo_label:'Munición',
-    h_turn_sim:'Simulador de Turno', btn_new_turn:'Nuevo turno', lab_action:'Acción', lab_bonus:'Acción Adicional', lab_movement:'Movimiento', lab_reaction:'Reacción',
+    h_turn_sim:'Simulador de Turno', btn_new_turn:'Nuevo turno', lab_action:'Acción', lab_bonus:'Acción Bonus', lab_movement:'Movimiento', lab_reaction:'Reacción',
     turn_status_available:'Disponible', turn_status_used:'Usada', turn_empty:'Nada disponible aquí.',
     turn_attack_label:'Atacar', turn_cast_label:'Lanzar', turn_generic_actions_label:'Acciones generales',
     h_smite:'Castigo Divino (Divine Smite)', p_smite:'Siempre preparado gratis. Puedes lanzarlo 1 vez al día sin gastar hueco de conjuro.',
@@ -1345,7 +1345,7 @@ const FEATS_CATALOG = [
 const FEAT_GROUP_LABEL = { origin:{es:'Dotes de Origen', en:'Origin Feats'}, general:{es:'Dotes Generales', en:'General Feats'} };
 const ACTION_TYPE_OPTIONS = [
   {id:'passive', es:'Pasivo', en:'Passive'}, {id:'action', es:'Acción', en:'Action'},
-  {id:'bonus', es:'Acción Adicional', en:'Bonus Action'}, {id:'reaction', es:'Reacción', en:'Reaction'},
+  {id:'bonus', es:'Acción Bonus', en:'Bonus Action'}, {id:'reaction', es:'Reacción', en:'Reaction'},
   {id:'free', es:'Sin acción', en:'No action'},
 ];
 const ACTION_TYPE_LABEL = {}; ACTION_TYPE_OPTIONS.forEach(o=>ACTION_TYPE_LABEL[o.id]=o);
