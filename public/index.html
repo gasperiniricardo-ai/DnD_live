@@ -1416,7 +1416,19 @@ const slotTable = {
   13:[4,3,3,1,0],14:[4,3,3,1,0], 15:[4,3,3,2,0], 16:[4,3,3,2,0],
   17:[4,3,3,3,1],18:[4,3,3,3,1], 19:[4,3,3,3,2], 20:[4,3,3,3,2],
 };
-function preparedLimitForLevel(lvl){ return lvl+1; }
+const HALF_LEVEL_PREP_CLASSES = ['paladin','artificer'];
+const FULL_LEVEL_PREP_CLASSES = ['cleric','druid','wizard'];
+function preparedLimitForLevel(lvl, klass, abilityMod){
+  if(FULL_LEVEL_PREP_CLASSES.includes(klass)) return Math.max(1, lvl + abilityMod);
+  if(HALF_LEVEL_PREP_CLASSES.includes(klass)) return Math.max(1, Math.floor(lvl/2) + abilityMod);
+  return lvl+1; // known-spell classes (bard, ranger, sorcerer, warlock, etc.): approximation, spells-known tables not modeled
+}
+function currentPreparedLimit(){
+  const klass = character.identity.klass;
+  const abilKey = spellAbilityFor(klass);
+  const abilityMod = modOf(character.abilities[abilKey]);
+  return preparedLimitForLevel(character.level, klass, abilityMod) + (character.bonusPreparedSlots||0);
+}
 function isFreePreparedSpell(spellId){
   return !!(character.domainSpellIds && character.domainSpellIds.some(d=>d.id===spellId));
 }
@@ -3729,7 +3741,7 @@ function renderLevelOptions(){
 }
 levelSelect.addEventListener('change', ()=>{
   character.level = parseInt(levelSelect.value,10);
-  const limit = preparedLimitForLevel(character.level) + (character.bonusPreparedSlots||0);
+  const limit = currentPreparedLimit();
   while(character.preparedSpellIds.filter(countsAgainstPrepLimit).length > limit){
     const idx = character.preparedSpellIds.map(countsAgainstPrepLimit).lastIndexOf(true);
     if(idx<0) break;
@@ -4559,7 +4571,7 @@ function renderPreparedList(){
   const wrap = document.getElementById('prepared-list');
   const empty = document.getElementById('prepared-empty');
   const counter = document.getElementById('prep-counter');
-  const limit = preparedLimitForLevel(character.level) + (character.bonusPreparedSlots||0);
+  const limit = currentPreparedLimit();
   const countedPrepared = character.preparedSpellIds.filter(countsAgainstPrepLimit).length;
   counter.textContent = `(${countedPrepared}/${limit})`;
   wrap.innerHTML = '';
@@ -4616,7 +4628,7 @@ function renderSpellResults(filter=''){
     results.innerHTML = `<div class="spell-no-results">${t('no_results')}</div>`;
     return;
   }
-  const limit = preparedLimitForLevel(character.level) + (character.bonusPreparedSlots||0);
+  const limit = currentPreparedLimit();
   filtered.forEach(s=>{
     const data = s[currentLang];
     const school = SCHOOL_I18N[s.school][currentLang];
