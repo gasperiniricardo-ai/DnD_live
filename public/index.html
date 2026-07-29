@@ -689,6 +689,16 @@ table.eqp tr:last-child td{border-bottom:none;}
         <input type="text" id="concentration-spell" data-i18n-ph="concentration_spell_ph" placeholder="¿En qué conjuro estás concentrado?" style="flex:1;min-width:180px;background:var(--void);border:1px solid var(--steel);color:var(--parch);border-radius:8px;padding:8px 10px;font-family:inherit;">
       </div>
     </div>
+    <div class="card" id="channel-divinity-card" style="display:none;">
+      <h2 data-i18n="h_channel_divinity">Conjurar la Divinidad (Channel Divinity)</h2>
+      <p style="font-size:.85rem;color:var(--parch-dim);" data-i18n="p_channel_divinity">Gasta un uso para activar una de las opciones de abajo. Recuperas 1 uso tras un descanso corto, y todos tras un descanso largo.</p>
+      <div id="channel-divinity-options" style="margin-bottom:12px;"></div>
+      <div class="pool-row" id="channel-divinity-pips"></div>
+      <div style="text-align:center;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px;">
+        <button class="reset-btn" id="cd-short-rest" data-i18n="btn_cd_short_rest">Descanso corto (+1 uso)</button>
+        <button class="reset-btn" id="cd-long-rest" data-i18n="btn_cd_long_rest">Descanso largo (restaurar usos)</button>
+      </div>
+    </div>
     <div class="card">
       <h2><span data-i18n="h_prepared">Conjuros preparados</span> <span id="prep-counter" style="font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--gold-bright);"></span></h2>
       <div id="cantrip-counter-row" style="display:none;font-size:.8rem;color:var(--parch-dim);margin-top:-8px;margin-bottom:10px;"><span data-i18n="lbl_cantrips_known">Trucos conocidos:</span> <span id="cantrip-counter" style="font-family:'JetBrains Mono',monospace;color:var(--gold-bright);"></span></div>
@@ -715,7 +725,7 @@ table.eqp tr:last-child td{border-bottom:none;}
       </div>
       <button class="reset-btn" id="loh-reset" data-i18n="btn_loh_reset">Descanso largo (restaurar reserva)</button>
     </div>
-    <div class="card" id="divine-sense-card">
+    <div class="card" id="divine-sense-card" style="display:none;">
       <h2 data-i18n="h_divine_sense">Sentido Divino (Divine Sense)</h2>
       <p style="font-size:.85rem;color:var(--parch-dim);" data-i18n="p_divine_sense">Detecta celestiales, fiendes o no-muertos a 60 ft. 3 usos/día (= Mod. Carisma).</p>
       <div class="pool-row" id="divine-sense-pips"></div>
@@ -901,6 +911,9 @@ const I18N = {
     lbl_loh_available:'Reserva disponible:', unit_slash:'/ 5 PV', btn_loh_reset:'Descanso largo (restaurar reserva)',
     h_divine_sense:'Sentido Divino (Divine Sense)', p_divine_sense:'Detecta celestiales, fiendes o no-muertos a 60 ft. 3 usos/día (= Mod. Carisma).',
     ds_remaining:'Usos restantes:', btn_ds_reset:'Descanso largo (restaurar usos)',
+    h_channel_divinity:'Conjurar la Divinidad (Channel Divinity)',
+    p_channel_divinity:'Gasta un uso para activar una de las opciones de abajo. Recuperas 1 uso tras un descanso corto, y todos tras un descanso largo.',
+    cd_remaining:'Usos restantes:', btn_cd_short_rest:'Descanso corto (+1 uso)', btn_cd_long_rest:'Descanso largo (restaurar usos)',
     h_size_senses:'Tamaño y Sentidos', lbl_size:'Tamaño', lbl_senses:'Sentidos (visión en la oscuridad, etc.)',
     senses_custom_ph:'Escribe aquí...', btn_add_sense:'Añadir sentido',
     h_traits:'Rasgos raciales y dotes', trait_name_ph:'Nombre del rasgo', trait_desc_ph:'Descripción', btn_add_trait:'Añadir rasgo',
@@ -980,6 +993,9 @@ const I18N = {
     lbl_loh_available:'Available pool:', unit_slash:'/ 5 HP', btn_loh_reset:'Long rest (restore pool)',
     h_divine_sense:'Divine Sense', p_divine_sense:'Detects celestials, fiends, or undead within 60 ft. 3 uses/day (= Charisma modifier).',
     ds_remaining:'Remaining uses:', btn_ds_reset:'Long rest (restore uses)',
+    h_channel_divinity:'Channel Divinity',
+    p_channel_divinity:'Spend a use to activate one of the options below. You regain 1 use after a short rest, and all uses after a long rest.',
+    cd_remaining:'Remaining uses:', btn_cd_short_rest:'Short rest (+1 use)', btn_cd_long_rest:'Long rest (restore uses)',
     h_size_senses:'Size & Senses', lbl_size:'Size', lbl_senses:'Senses (darkvision, etc.)',
     senses_custom_ph:'Type here...', btn_add_sense:'Add sense',
     h_traits:'Racial Traits & Feats', trait_name_ph:'Trait name', trait_desc_ph:'Description', btn_add_trait:'Add trait',
@@ -1476,6 +1492,36 @@ function cantripLimitForClass(lvl, klass){
 }
 function currentPreparedLimit(){
   return preparedLimitForLevel(character.level, character.identity.klass) + (character.bonusPreparedSlots||0);
+}
+
+// Official 2024 PHB "Channel Divinity" uses-per-rest tables (Cleric unlocks at level 2, Paladin at level 3)
+const CD_TABLE_CLERIC =  {2:2,3:2,4:2,5:2,6:3,7:3,8:3,9:3,10:3,11:3,12:3,13:3,14:3,15:3,16:3,17:3,18:4,19:4,20:4};
+const CD_TABLE_PALADIN = {3:2,4:2,5:2,6:2,7:2,8:2,9:2,10:2,11:3,12:3,13:3,14:3,15:3,16:3,17:3,18:3,19:3,20:3};
+function channelDivinityMax(){
+  const klass = character.identity.klass;
+  if(klass==='cleric') return CD_TABLE_CLERIC[character.level] || 0;
+  if(klass==='paladin') return CD_TABLE_PALADIN[character.level] || 0;
+  return 0;
+}
+// Universal Channel Divinity options every Cleric/Paladin gets regardless of subclass; domain/oath-specific
+// options are auto-discovered from any trait whose name starts with the "Conjurar la Divinidad:" prefix.
+const CD_UNIVERSAL_OPTIONS = {
+  cleric: [
+    {es:{name:'Chispa Divina (Divine Spark)', desc:'Como acción de magia, apuntas tu símbolo sagrado a una criatura a 30 pies: cura 1d8 + tu modificador de Sabiduría en PG, o le exiges una salvación de Constitución y le causas ese mismo total en daño necrótico o radiante (mitad si la supera). Un dado extra a nivel 7, 13 y 18.'},
+     en:{name:'Divine Spark', desc:'As a Magic action, you point your Holy Symbol at a creature within 30 feet: heal 1d8 plus your Wisdom modifier in HP, or force a Constitution save and deal that same total as necrotic or radiant damage (half on a success). An extra die at level 7, 13, and 18.'}},
+    {es:{name:'Reprender a los No-Muertos (Turn Undead)', desc:'Como acción de magia, cada no-muerto que elijas a 30 pies debe superar una salvación de Sabiduría o queda ahuyentado; además puedes causarle daño radiante tirando 1d8 por punto de modificador de Sabiduría.'},
+     en:{name:'Turn Undead', desc:'As a Magic action, each undead you choose within 30 feet makes a Wisdom save or is turned; you can also deal radiant damage by rolling d8s equal to your Wisdom modifier.'}},
+  ],
+  paladin: [
+    {es:{name:'Sentido Divino (Divine Sense)', desc:'Como acción adicional, detectas celestiales, demonios y no-muertos a 60 pies durante 10 minutos o hasta quedar incapacitado.'},
+     en:{name:'Divine Sense', desc:'As a bonus action, detect celestials, fiends, and undead within 60 feet for 10 minutes or until you have the Incapacitated condition.'}},
+  ],
+};
+function channelDivinityOptions(){
+  const klass = character.identity.klass;
+  const universal = CD_UNIVERSAL_OPTIONS[klass] || [];
+  const fromTraits = (character.traits||[]).filter(tr=>tr.es.name.startsWith('Conjurar la Divinidad:'));
+  return [...universal, ...fromTraits];
 }
 function isFreePreparedSpell(spellId){
   return !!(character.domainSpellIds && character.domainSpellIds.some(d=>d.id===spellId));
@@ -3502,6 +3548,7 @@ function migrateCharacter(c){
   if(!c.sensesList){
     c.sensesList = c.senses ? [{es:c.senses, en:c.senses}] : [];
   }
+  if(c.channelDivinityUsed===undefined) c.channelDivinityUsed = 0;
   if(!c.damageNotes) c.damageNotes = [];
   if(!c.turnState) c.turnState = { movementUsed:0, actionUsed:false, bonusUsed:false, reactionUsed:false };
   if(!c.domainSpellIds) c.domainSpellIds = [];
@@ -3861,6 +3908,7 @@ function renderAll(){
   document.getElementById('loh-current').value = character.layOnHandsCurrent;
   renderClassConditionalCards();
   renderTraits();
+  renderChannelDivinity();
   renderProficiencyNotes();
   renderCombatStats();
   renderDeathSaves();
@@ -4194,10 +4242,44 @@ document.getElementById('ds-reset').addEventListener('click', ()=>{
   renderDivineSensePips();
 });
 
+// ---------- CHANNEL DIVINITY (Cleric & Paladin) ----------
+function renderChannelDivinity(){
+  const card = document.getElementById('channel-divinity-card');
+  const max = channelDivinityMax();
+  if(max<=0){ card.style.display='none'; return; }
+  card.style.display='block';
+  if(character.channelDivinityUsed > max) character.channelDivinityUsed = max;
+  const optWrap = document.getElementById('channel-divinity-options');
+  const options = channelDivinityOptions();
+  optWrap.innerHTML = options.map(o=>`<div class="feat"><div class="ft-name">${o[currentLang].name}</div><p>${o[currentLang].desc}</p></div>`).join('');
+  const wrap = document.getElementById('channel-divinity-pips');
+  wrap.innerHTML = `<span class="pool-label">${t('cd_remaining')}</span>`;
+  for(let i=0;i<max;i++){
+    const p = document.createElement('span');
+    p.className='pip' + (i<character.channelDivinityUsed ? ' used':'');
+    p.addEventListener('click', ()=>{
+      p.classList.toggle('used');
+      character.channelDivinityUsed = wrap.querySelectorAll('.pip.used').length;
+      scheduleSave();
+    });
+    wrap.appendChild(p);
+  }
+}
+document.getElementById('cd-short-rest').addEventListener('click', ()=>{
+  character.channelDivinityUsed = Math.max(0, character.channelDivinityUsed-1);
+  scheduleSave();
+  renderChannelDivinity();
+});
+document.getElementById('cd-long-rest').addEventListener('click', ()=>{
+  character.channelDivinityUsed = 0;
+  scheduleSave();
+  renderChannelDivinity();
+});
+
 // ---------- CLASS-CONDITIONAL CARDS (Paladin-only features) ----------
 function renderClassConditionalCards(){
   const isPaladin = character.identity.klass === 'paladin';
-  ['smite-card','loh-card','divine-sense-card','smite-prepared-note'].forEach(id=>{
+  ['smite-card','loh-card','smite-prepared-note'].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.style.display = isPaladin ? '' : 'none';
   });
@@ -4732,7 +4814,9 @@ function renderSpellResults(filter=''){
     return;
   }
   const limit = currentPreparedLimit();
-  filtered.forEach(s=>{
+  const SPELL_RESULT_LIMIT = 10;
+  const shown = filtered.slice(0, SPELL_RESULT_LIMIT);
+  shown.forEach(s=>{
     const data = s[currentLang];
     const school = SCHOOL_I18N[s.school][currentLang];
     const time = s.time[currentLang];
@@ -4780,6 +4864,12 @@ function renderSpellResults(filter=''){
     });
     results.appendChild(item);
   });
+  if(filtered.length > SPELL_RESULT_LIMIT){
+    const hint = document.createElement('div');
+    hint.className = 'spell-no-results';
+    hint.textContent = t('gm_spell_more_hint').replace('{shown}', shown.length).replace('{total}', filtered.length);
+    results.appendChild(hint);
+  }
 }
 document.getElementById('spell-search').addEventListener('input', (e)=>{ renderSpellResults(e.target.value); });
 
