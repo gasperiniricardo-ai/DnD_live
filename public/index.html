@@ -194,8 +194,10 @@ input, select, button, textarea{font-family:inherit;}
 .conc-badge{ display:inline-block;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;background:var(--void);border:1px solid var(--gold);color:var(--gold-bright);border-radius:50px;padding:2px 8px;margin-left:6px;vertical-align:middle; }
 
 /* ---------- TURN SIMULATOR ---------- */
-.turn-grid{ display:grid;grid-template-columns:repeat(3,1fr);gap:16px; }
-@media(max-width:640px){ .turn-grid{ grid-template-columns:1fr; } }
+.turn-grid{ display:grid;grid-template-columns:repeat(4,1fr);gap:16px; }
+@media(max-width:900px){ .turn-grid{ grid-template-columns:repeat(2,1fr); } }
+@media(max-width:480px){ .turn-grid{ grid-template-columns:1fr; } }
+.turn-tooltip{ position:fixed;z-index:9999;display:none;background:var(--void);border:1px solid var(--gold);border-radius:8px;padding:10px 12px;font-size:.8rem;line-height:1.45;color:var(--parch);box-shadow:0 4px 18px rgba(0,0,0,.5);pointer-events:none; }
 #turn-simulator-card h3{ display:flex;align-items:center;gap:8px;flex-wrap:wrap; }
 .turn-item{ background:var(--panel-2);border:1px solid var(--steel);border-radius:8px;padding:9px 11px;margin-bottom:8px;cursor:pointer;font-size:.82rem;transition:border-color .2s;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none; }
 .turn-item:hover{border-color:var(--gold);}
@@ -636,10 +638,10 @@ table.eqp tr:last-child td{border-bottom:none;}
             <button class="item-btn" id="turn-move-plus" title="+5 ft">+5</button>
           </div>
         </div>
-      </div>
-      <div style="margin-top:16px;">
-        <h3 id="turn-reaction-header" data-i18n="lab_reaction">Reacción</h3>
-        <div id="turn-reaction-list"></div>
+        <div>
+          <h3 id="turn-reaction-header" data-i18n="lab_reaction">Reacción</h3>
+          <div id="turn-reaction-list"></div>
+        </div>
       </div>
     </div>
 
@@ -4354,11 +4356,63 @@ document.getElementById('wpn-add').addEventListener('click', ()=>{
 });
 
 // ---------- TURN SIMULATOR ----------
+let turnTooltipEl = null;
+function ensureTurnTooltip(){
+  if(!turnTooltipEl){
+    turnTooltipEl = document.createElement('div');
+    turnTooltipEl.className = 'turn-tooltip';
+    document.body.appendChild(turnTooltipEl);
+  }
+  return turnTooltipEl;
+}
+function showTurnTooltip(target, text){
+  const el = ensureTurnTooltip();
+  el.textContent = text;
+  el.style.visibility = 'hidden';
+  el.style.display = 'block';
+  const rect = target.getBoundingClientRect();
+  const maxWidth = Math.min(280, window.innerWidth - 24);
+  el.style.maxWidth = maxWidth + 'px';
+  let left = rect.left;
+  if(left + maxWidth > window.innerWidth - 12) left = window.innerWidth - maxWidth - 12;
+  if(left < 12) left = 12;
+  el.style.left = left + 'px';
+  let top = rect.bottom + 8;
+  el.style.top = top + 'px';
+  requestAnimationFrame(()=>{
+    const th = el.offsetHeight;
+    if(top + th > window.innerHeight - 12){
+      el.style.top = Math.max(12, rect.top - th - 8) + 'px';
+    }
+    el.style.visibility = 'visible';
+  });
+}
+function hideTurnTooltip(){
+  if(turnTooltipEl) turnTooltipEl.style.display = 'none';
+}
 function turnItem(name, meta, desc, statusUsed, onClick){
   const div = document.createElement('div');
   div.className = 'turn-item' + (statusUsed ? ' turn-used' : '');
   div.innerHTML = `<div class="ti-name">${name}</div>${meta?`<div class="ti-meta">${meta}</div>`:''}${desc?`<div class="ti-desc">${desc}</div>`:''}`;
+  let longPressTimer = null;
+  let suppressClick = false;
+  if(desc){
+    div.addEventListener('mouseenter', ()=> showTurnTooltip(div, desc));
+    div.addEventListener('mouseleave', hideTurnTooltip);
+    div.addEventListener('touchstart', ()=>{
+      clearTimeout(longPressTimer);
+      suppressClick = false;
+      longPressTimer = setTimeout(()=>{
+        showTurnTooltip(div, desc);
+        suppressClick = true;
+      }, 500);
+    }, {passive:true});
+    div.addEventListener('touchmove', ()=>{ clearTimeout(longPressTimer); }, {passive:true});
+    div.addEventListener('touchend', ()=>{ clearTimeout(longPressTimer); hideTurnTooltip(); });
+    div.addEventListener('touchcancel', ()=>{ clearTimeout(longPressTimer); hideTurnTooltip(); });
+  }
   div.addEventListener('click', ()=>{
+    if(suppressClick){ suppressClick = false; return; }
     if(desc) div.classList.toggle('open');
     if(onClick) onClick();
   });
