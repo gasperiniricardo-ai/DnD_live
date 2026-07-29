@@ -174,9 +174,12 @@ input, select, button, textarea{font-family:inherit;}
 .smite-toggle.used{color:var(--parch-dim);border-color:var(--steel);background:var(--void);text-decoration:line-through;}
 
 /* ---------- SPELL SLOTS ---------- */
-.slot{ width:28px;height:28px;border:2px solid var(--gold);border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;margin-right:8px;margin-bottom:6px;background:var(--panel-2);transition:all .2s;font-size:.95rem;color:transparent; }
+/* flex wrapper keeps every box on a consistent line; an empty inline-flex box baselines
+   off its bottom edge while a filled one baselines off its text, which misaligned them */
+.slots-wrap{ display:flex;flex-wrap:wrap;align-items:center;gap:8px 8px; }
+.slot{ width:28px;height:28px;flex:0 0 auto;box-sizing:border-box;border:2px solid var(--gold);border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;background:var(--panel-2);transition:all .2s;font-size:.95rem;line-height:1;color:transparent; }
 .slot.used{background:var(--gold);border-color:var(--gold-bright);color:#1b1400;}
-.slot.used::after{content:'✓';font-weight:700;}
+.slot.used::after{content:'✓';font-weight:700;line-height:1;}
 
 /* ---------- SPELL SEARCH ---------- */
 .spell-item{ border:1px solid var(--steel);border-radius:8px;margin-bottom:8px;overflow:hidden;background:var(--panel-2); }
@@ -1454,6 +1457,7 @@ const DEITY_OPTIONS = [
   {id:'onatar', pantheon:'eberron', es:'Onatar', en:'Onatar'}, {id:'the_traveler', pantheon:'eberron', es:'El Viajero', en:'The Traveler'},
   {id:'the_shadow', pantheon:'eberron', es:'La Sombra', en:'The Shadow'}, {id:'the_devourer', pantheon:'eberron', es:'El Devorador', en:'The Devourer'},
 ];
+// Half-caster slot progression (Paladin / Ranger). Kept as `slotTable` for back-compat.
 const slotTable = {
   1:[2,0,0,0,0],  2:[2,0,0,0,0],  3:[3,0,0,0,0],  4:[3,0,0,0,0],
   5:[4,2,0,0,0],  6:[4,2,0,0,0],  7:[4,3,0,0,0],  8:[4,3,0,0,0],
@@ -1461,6 +1465,23 @@ const slotTable = {
   13:[4,3,3,1,0],14:[4,3,3,1,0], 15:[4,3,3,2,0], 16:[4,3,3,2,0],
   17:[4,3,3,3,1],18:[4,3,3,3,1], 19:[4,3,3,3,2], 20:[4,3,3,3,2],
 };
+// Full-caster slot progression (Bard / Cleric / Druid / Sorcerer / Wizard), spell levels 1-9.
+const FULL_CASTER_SLOT_TABLE = {
+  1:[2,0,0,0,0,0,0,0,0],  2:[3,0,0,0,0,0,0,0,0],  3:[4,2,0,0,0,0,0,0,0],  4:[4,3,0,0,0,0,0,0,0],
+  5:[4,3,2,0,0,0,0,0,0],  6:[4,3,3,0,0,0,0,0,0],  7:[4,3,3,1,0,0,0,0,0],  8:[4,3,3,2,0,0,0,0,0],
+  9:[4,3,3,3,1,0,0,0,0], 10:[4,3,3,3,2,0,0,0,0], 11:[4,3,3,3,2,1,0,0,0], 12:[4,3,3,3,2,1,0,0,0],
+  13:[4,3,3,3,2,1,1,0,0],14:[4,3,3,3,2,1,1,0,0], 15:[4,3,3,3,2,1,1,1,0], 16:[4,3,3,3,2,1,1,1,0],
+  17:[4,3,3,3,2,1,1,1,1],18:[4,3,3,3,3,1,1,1,1], 19:[4,3,3,3,3,2,1,1,1], 20:[4,3,3,3,3,2,2,1,1],
+};
+const FULL_CASTER_CLASSES = ['bard','cleric','druid','sorcerer','wizard'];
+const HALF_CASTER_CLASSES = ['paladin','ranger','artificer'];
+function slotCountsForCharacter(){
+  const klass = character.identity.klass;
+  const lvl = Math.max(1, Math.min(20, character.level));
+  if(FULL_CASTER_CLASSES.includes(klass)) return FULL_CASTER_SLOT_TABLE[lvl].slice();
+  if(HALF_CASTER_CLASSES.includes(klass)) return slotTable[lvl].slice();
+  return null; // non-caster or custom class: no slot grid
+}
 // Official 2024 PHB "Prepared Spells" class-feature tables (fixed per level, no ability-modifier math)
 const PREP_TABLE_CLERIC_DRUID = {1:4,2:5,3:6,4:7,5:9,6:10,7:11,8:12,9:14,10:15,11:16,12:16,13:17,14:17,15:18,16:18,17:19,18:20,19:21,20:22};
 const PREP_TABLE_WIZARD =       {1:4,2:5,3:6,4:7,5:9,6:10,7:11,8:12,9:14,10:15,11:16,12:16,13:17,14:18,15:19,16:21,17:22,18:23,19:24,20:25};
@@ -3784,7 +3805,7 @@ function renderSpellSlots(){
     counts = [0,0,0,0,0];
     if(num>0) counts[lvl-1] = num;
   } else {
-    counts = slotTable[character.level] || [0,0,0,0,0];
+    counts = slotCountsForCharacter() || [0,0,0,0,0];
   }
   counts.forEach((count, idx)=>{
     if(count<=0) return;
@@ -3795,6 +3816,7 @@ function renderSpellSlots(){
     label.textContent = t('slots_label').replace('{n}', spellLevel).replace('{count}', count);
     row.appendChild(label);
     const slotsWrap = document.createElement('div');
+    slotsWrap.className = 'slots-wrap';
     for(let i=0;i<count;i++){
       const key = spellLevel+'_'+i;
       const s = document.createElement('span');
