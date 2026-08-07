@@ -318,10 +318,14 @@ table.eqp tr:last-child td{border-bottom:none;}
 .gm-roll-total{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--parch);}
 .gm-roll-detail{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--parch-dim);}
 .gm-footer-actions{display:flex;justify-content:center;gap:10px;margin:10px 0 30px;}
-.gm-init-row{ display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border-radius:8px;background:var(--panel-2);border:1px solid var(--steel);margin-bottom:8px;flex-wrap:wrap; }
+.gm-init-row{ padding:9px 12px;border-radius:8px;background:var(--panel-2);border:1px solid var(--steel);margin-bottom:8px; }
 .gm-init-row.current-turn{ border-color:var(--gold);box-shadow:0 0 0 1px var(--gold); }
 .gm-init-row.defeated{ opacity:.5; }
 .gm-init-row.defeated .gm-init-name{ text-decoration:line-through; }
+.gm-init-head{ display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;width:100%; }
+.gm-init-head.clickable{ cursor:pointer;margin:-9px -12px;padding:9px 12px;width:calc(100% + 24px); }
+.gm-init-head.clickable:hover{ background:rgba(240,207,126,.06); }
+.gm-init-desc{ margin-top:4px; }
 .gm-init-left{display:flex;align-items:center;gap:10px;min-width:0;}
 .gm-init-value{ font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold-bright);background:var(--void);border-radius:6px;padding:2px 10px;flex:0 0 auto; }
 .gm-init-name{color:var(--parch);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -3200,24 +3204,37 @@ function renderGmInitiative(data){
   sorted.forEach(e=>{
     const row = document.createElement('div');
     const defeated = e.isEnemy && e.hp && e.hp.current<=0;
-    row.className = 'gm-init-row' + (data.currentTurnId===e.id ? ' current-turn' : '') + (defeated ? ' defeated' : '');
+    const mon = e.bestiaryId ? BESTIARY.find(m=>m.id===e.bestiaryId) : null;
+    row.className = 'gm-init-row' + (mon ? ' spell-item' : '') + (data.currentTurnId===e.id ? ' current-turn' : '') + (defeated ? ' defeated' : '');
     const acHtml = (e.isEnemy && e.ac!=null) ? `<span class="gm-init-ac" title="${t('gm_init_ac_label')}">🛡 ${e.ac}</span>` : '';
     const hpHtml = (e.isEnemy && e.hp) ? `
       <div class="gm-init-hp-wrap">
         <input type="number" class="gm-init-hp-input" data-id="${e.id}" value="${e.hp.current}" min="0" max="${e.hp.max}">
         <span class="gm-init-hp-max">/ ${e.hp.max} PG</span>
       </div>` : '';
+    const descHtml = mon ? `
+      <div class="spell-desc gm-init-desc">
+        <div style="margin-bottom:8px;color:var(--parch-dim);">${mon[currentLang].tip}</div>
+        ${mon.attacks.map(a=>`<div>${a[currentLang]}</div>`).join('')}
+      </div>` : '';
     row.innerHTML = `
-      <div class="gm-init-left">
-        <span class="gm-init-value">${e.value}</span>
-        <span class="gm-init-type-tag ${e.isEnemy?'enemy':'player'}">${e.isEnemy?t('gm_init_type_enemy'):t('gm_init_type_player')}</span>
-        <span class="gm-init-name">${e.name}</span>
-        ${acHtml}
+      <div class="gm-init-head${mon ? ' clickable' : ''}">
+        <div class="gm-init-left">
+          <span class="gm-init-value">${e.value}</span>
+          <span class="gm-init-type-tag ${e.isEnemy?'enemy':'player'}">${e.isEnemy?t('gm_init_type_enemy'):t('gm_init_type_player')}</span>
+          <span class="gm-init-name">${e.name}${mon ? ` <span class="bestiary-icon">${mon.icon||''}</span>` : ''}</span>
+          ${acHtml}
+        </div>
+        ${hpHtml}
+        <button class="item-btn remove" data-id="${e.id}" title="×">×</button>
       </div>
-      ${hpHtml}
-      <button class="item-btn remove" data-id="${e.id}" title="×">×</button>
+      ${descHtml}
     `;
-    row.querySelector('.remove').addEventListener('click', async ()=>{
+    if(mon){
+      row.querySelector('.gm-init-head').addEventListener('click', ()=> row.classList.toggle('open'));
+    }
+    row.querySelector('.remove').addEventListener('click', async (ev)=>{
+      ev.stopPropagation();
       const fresh = (await sharedGet(sessionInitiativeKey(sessionCode))) || { entries:[], currentTurnId:null };
       fresh.entries = fresh.entries.filter(x=>x.id!==e.id);
       if(fresh.currentTurnId===e.id) fresh.currentTurnId = null;
@@ -3246,6 +3263,8 @@ function renderGmInitiative(data){
 document.getElementById('gm-init-type').addEventListener('change', (e)=>{
   document.getElementById('gm-init-enemy-fields').style.display = e.target.value==='enemy' ? 'grid' : 'none';
 });
+let pendingInitBestiaryId = null;
+document.getElementById('gm-init-name').addEventListener('input', ()=>{ pendingInitBestiaryId = null; });
 document.getElementById('gm-init-add').addEventListener('click', async ()=>{
   const nameInput = document.getElementById('gm-init-name');
   const valueInput = document.getElementById('gm-init-value');
@@ -3262,7 +3281,9 @@ document.getElementById('gm-init-add').addEventListener('click', async ()=>{
     const hpVal = parseInt(hpInput.value,10);
     if(!isNaN(acVal)) entry.ac = acVal;
     if(!isNaN(hpVal) && hpVal>0) entry.hp = { current: hpVal, max: hpVal };
+    if(pendingInitBestiaryId) entry.bestiaryId = pendingInitBestiaryId;
   }
+  pendingInitBestiaryId = null;
   const data = (await sharedGet(sessionInitiativeKey(sessionCode))) || { entries:[], currentTurnId:null };
   data.entries.push(entry);
   gmLastInitSnapshot = JSON.stringify(data);
@@ -3465,6 +3486,7 @@ function renderGmBestiaryResults(filter=''){
       const initMod = m.init||0;
       const d20 = Math.floor(Math.random()*20)+1;
       const total = d20 + initMod;
+      pendingInitBestiaryId = m.id;
       document.getElementById('gm-init-name').value = data.name;
       document.getElementById('gm-init-type').value = 'enemy';
       document.getElementById('gm-init-enemy-fields').style.display = 'grid';
