@@ -4769,8 +4769,13 @@ function renderEquipment(){
   character.equipment.forEach(it=>{
     const data = it[currentLang];
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${data.name}</td><td style="color:var(--parch-dim)">${data.detail||''}</td><td style="color:var(--parch-dim);text-align:right;">${it.weight?it.weight+' lb':''}</td>`;
+    tr.innerHTML = `<td>${data.name}</td><td style="color:var(--parch-dim)">${data.detail||''}</td><td style="color:var(--parch-dim);text-align:right;">${it.weight?it.weight+' lb':''}</td><td style="text-align:right;"><button class="item-btn remove" data-remove-eqp="${it.id}" title="×">×</button></td>`;
     table.appendChild(tr);
+    tr.querySelector('[data-remove-eqp]').addEventListener('click', ()=>{
+      character.equipment = character.equipment.filter(x=>x.id!==it.id);
+      scheduleSave();
+      renderEquipment();
+    });
   });
   const totalWeight = character.equipment.reduce((sum,it)=>sum+(it.weight||0),0);
   const capacity = character.abilities.FUE*15;
