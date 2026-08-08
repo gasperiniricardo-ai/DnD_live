@@ -200,7 +200,7 @@ input, select, button, textarea{font-family:inherit;}
 .turn-grid{ display:grid;grid-template-columns:repeat(4,1fr);gap:16px; }
 @media(max-width:900px){ .turn-grid{ grid-template-columns:repeat(2,1fr); } }
 @media(max-width:480px){ .turn-grid{ grid-template-columns:1fr; } }
-.turn-tooltip{ position:fixed;z-index:9999;display:none;background:var(--void);border:1px solid var(--gold);border-radius:8px;padding:10px 12px;font-size:.8rem;line-height:1.45;color:var(--parch);box-shadow:0 4px 18px rgba(0,0,0,.5);pointer-events:none; }
+.turn-tooltip{ position:fixed;z-index:9999;display:none;background:var(--void);border:1px solid var(--gold);border-radius:8px;padding:10px 12px;font-size:.8rem;line-height:1.45;color:var(--parch);box-shadow:0 4px 18px rgba(0,0,0,.5);pointer-events:none;white-space:pre-line; }
 #turn-simulator-card h3{ display:flex;align-items:center;gap:8px;flex-wrap:wrap; }
 .turn-item{ background:var(--panel-2);border:1px solid var(--steel);border-radius:8px;padding:9px 11px;margin-bottom:8px;cursor:pointer;font-size:.82rem;transition:border-color .2s;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none; }
 .turn-item:hover{border-color:var(--gold);}
@@ -308,7 +308,8 @@ table.eqp tr:last-child td{border-bottom:none;}
 .gm-sub-label{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--parch-dim);margin:8px 0 4px;}
 .gm-passives-row{display:flex;gap:6px;flex-wrap:wrap;}
 .gm-passive-chip{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--parch);background:var(--void);border:1px solid var(--steel);border-radius:6px;padding:2px 8px;}
-.gm-spell-chip{ display:inline-block;background:var(--panel-2);border:1px solid var(--steel);border-radius:50px;font-size:.72rem;padding:3px 10px;margin:0 4px 4px 0;color:var(--parch); }
+.gm-spell-chip{ display:inline-block;background:var(--panel-2);border:1px solid var(--steel);border-radius:50px;font-size:.72rem;padding:3px 10px;margin:0 4px 4px 0;color:var(--parch);cursor:pointer;transition:all .15s; }
+.gm-spell-chip:hover{ border-color:var(--gold);color:var(--gold-bright); }
 .gm-empty-hint{color:var(--parch-dim);font-size:.85rem;}
 .gm-feed{max-height:360px;overflow-y:auto;}
 .gm-roll-row{ display:flex;justify-content:space-between;gap:10px;padding:8px 4px;border-bottom:1px solid var(--steel);font-size:.85rem; }
@@ -3136,7 +3137,7 @@ async function renderGmDashboard(code){
           preparedHtml = c.preparedSpellIds.map(sid=>{
             const sp = spellDB.find(s=>s.id===sid);
             if(!sp) return '';
-            return `<span class="gm-spell-chip">${sp[currentLang].name}</span>`;
+            return `<span class="gm-spell-chip" data-spell-id="${sp.id}">${sp[currentLang].name}</span>`;
           }).join('');
         }
         const passivePerception = computePassiveScore(c, 'perception');
@@ -3157,6 +3158,15 @@ async function renderGmDashboard(code){
           <div class="gm-sub-label">${t('gm_prepared_label')}</div>
           <div>${preparedHtml}</div>
         `;
+        card.querySelectorAll('.gm-spell-chip[data-spell-id]').forEach(chip=>{
+          chip.addEventListener('click', (ev)=>{
+            ev.stopPropagation();
+            const sp = spellDB.find(s=>s.id===chip.dataset.spellId);
+            if(!sp) return;
+            const d = sp[currentLang];
+            showTurnTooltip(chip, `${d.name} — ${t('level_option')} ${sp.level}${isConcentration(sp)?` · ${t('conc_badge')}`:''}\n${d.desc}`);
+          });
+        });
         grid.appendChild(card);
       });
     }
@@ -4633,6 +4643,7 @@ function showTurnTooltip(target, text){
 function hideTurnTooltip(){
   if(turnTooltipEl) turnTooltipEl.style.display = 'none';
 }
+document.addEventListener('click', hideTurnTooltip);
 function turnItem(name, meta, desc, statusUsed, onClick){
   const div = document.createElement('div');
   div.className = 'turn-item' + (statusUsed ? ' turn-used' : '');
