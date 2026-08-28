@@ -69,10 +69,15 @@ All **385 spells** in `spellDB` were enriched with concrete 2024 mechanics (dama
 
 **Infra note**: GitHub Actions occasionally failed to trigger at all for a push to `main` (no workflow run appeared, not even a failed one) despite the commit landing fine on `origin/main` — a transient GitHub-side anomaly, not a config issue (the workflow trigger is plain `on: push: branches: [main]`, no path filters). Fallback when this happens: SSH in and run `bash /home/ec2-user/aster-app/deploy/redeploy.sh` directly — it's the exact same script the Action would have run remotely.
 
+## GM mini-bestiary (`BESTIARY` array, added to over several sessions)
+
+`BESTIARY` (in `public/index.html`) now holds 42 entries: real D&D monsters (stats verified against aidedd.org/roll20.net, following the same "never trust memory" discipline as the spell project) mixed with clearly-labeled homebrew stat blocks (e.g. the "Scourge" raider trio, a celestial/undead trio, and an Orcus-cultist duo) balanced to fit alongside the real monsters at a similar CR. Entry shape: `{id, icon, init, cr, ac, hp, speed, es:{name,tip}, en:{name,tip}, attacks:[{es,en}]}` — `init` is the creature's DEX modifier, `tip` carries flavor text plus any passive traits, `attacks` lists mechanical attack-option strings (including limited-use/recharge abilities). New entries always go right before the array's closing `];`. When a request names a specific real monster, verify its actual stat block before adding it — CRs can be very different from what memory suggests (e.g. Nabassu is CR 15, not the CR 6 that seemed intuitive for a "mid-tier demon").
+
+**Current campaign context**: the group is heading into Act 5 — Orcus's forces assaulting Neverwinter — hence the demon (Manes/Dretch/Quasit/Babau) and undead (Specter/Wraith/Bone Naga) entries added 2026-08-28, plus two homebrew Orcus cultists (Death Priest, Bone-Wand Fanatic).
+
 ## Things NOT yet implemented (discussed with the user, not requested yet)
 
 - Combat round counter on the GM dashboard.
-- Custom/homebrew monster entries in the GM's mini-bestiary (currently a fixed 27-entry catalog).
 - Backup/undo for GM session data itself (initiative tracker, party loot) — currently only character sheets have the restore-backup safety net.
 - Multiclass support (spell slots / prepared limits currently assume a single class).
 - Mass damage/heal application across multiple initiative-tracker entries at once (for AoE spells).
