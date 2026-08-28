@@ -2825,7 +2825,7 @@ async function sharedSet(key, value){
 function sessionKey(code){ return 'session_'+code; }
 function sessionCharKey(code, id){ return 'session_char_'+code+'_'+id; }
 function sessionRollsKey(code){ return 'session_rolls_'+code; }
-function sessionLootKey(code){ return 'session_loot_'+code; }
+function partyLootKey(){ return 'campaign_loot'; } // global, not session-scoped: loot must survive a brand-new GM session code
 function genSessionCode(){
   const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no ambiguous chars
   let s='';
@@ -3249,7 +3249,7 @@ async function renderGmDashboard(code){
     renderGmInitiative(initData);
   }
 
-  const lootData = (await sharedGet(sessionLootKey(code))) || [];
+  const lootData = (await sharedGet(partyLootKey())) || [];
   const lootSnapshot = JSON.stringify(lootData);
   if(lootSnapshot !== gmLastLootSnapshot){
     gmLastLootSnapshot = lootSnapshot;
@@ -3394,25 +3394,25 @@ function renderGmLoot(items){
       </div>
     `;
     row.querySelector('[data-action="dec"]').addEventListener('click', async ()=>{
-      const fresh = (await sharedGet(sessionLootKey(sessionCode))) || [];
+      const fresh = (await sharedGet(partyLootKey())) || [];
       const target = fresh.find(x=>x.id===item.id);
       if(target){ target.qty = Math.max(1, target.qty-1); }
       gmLastLootSnapshot = JSON.stringify(fresh);
-      await sharedSet(sessionLootKey(sessionCode), fresh);
+      await sharedSet(partyLootKey(), fresh);
       renderGmLoot(fresh);
     });
     row.querySelector('[data-action="inc"]').addEventListener('click', async ()=>{
-      const fresh = (await sharedGet(sessionLootKey(sessionCode))) || [];
+      const fresh = (await sharedGet(partyLootKey())) || [];
       const target = fresh.find(x=>x.id===item.id);
       if(target){ target.qty = target.qty+1; }
       gmLastLootSnapshot = JSON.stringify(fresh);
-      await sharedSet(sessionLootKey(sessionCode), fresh);
+      await sharedSet(partyLootKey(), fresh);
       renderGmLoot(fresh);
     });
     row.querySelector('[data-action="remove"]').addEventListener('click', async ()=>{
-      const fresh = ((await sharedGet(sessionLootKey(sessionCode))) || []).filter(x=>x.id!==item.id);
+      const fresh = ((await sharedGet(partyLootKey())) || []).filter(x=>x.id!==item.id);
       gmLastLootSnapshot = JSON.stringify(fresh);
-      await sharedSet(sessionLootKey(sessionCode), fresh);
+      await sharedSet(partyLootKey(), fresh);
       renderGmLoot(fresh);
     });
     wrap.appendChild(row);
@@ -3427,10 +3427,10 @@ document.getElementById('gm-loot-add').addEventListener('click', async ()=>{
   let qty = parseInt(qtyInput.value,10);
   if(isNaN(qty) || qty<1) qty = 1;
   const note = noteInput.value.trim();
-  const items = (await sharedGet(sessionLootKey(sessionCode))) || [];
+  const items = (await sharedGet(partyLootKey())) || [];
   items.push({ id:'loot_'+Date.now()+'_'+Math.floor(Math.random()*1000), name, qty, note });
   gmLastLootSnapshot = JSON.stringify(items);
-  await sharedSet(sessionLootKey(sessionCode), items);
+  await sharedSet(partyLootKey(), items);
   renderGmLoot(items);
   nameInput.value=''; qtyInput.value='1'; noteInput.value='';
 });
