@@ -75,6 +75,8 @@ All **385 spells** in `spellDB` were enriched with concrete 2024 mechanics (dama
 
 **Current campaign context**: the group is heading into Act 5 — Orcus's forces assaulting Neverwinter — hence the demon (Manes/Dretch/Quasit/Babau) and undead (Specter/Wraith/Bone Naga) entries added 2026-08-28, plus two homebrew Orcus cultists (Death Priest, Bone-Wand Fanatic).
 
+**DC audit (2026-08-28)**: the original ~34-entry legacy roster (built before the DC-inclusion convention was established) had several save-or-X mechanics with no DC at all (Ghast's Stench wasn't even listed as its own ability — only mentioned in flavor text). Fixed via the same aidedd.org/roll20.net/dndbeyond.com verification as always, and it surfaced a non-obvious trap: **several attacks that had a save in the 2014 Monster Manual have NO save at all in the 2024 revision** — the effect just happens automatically on a hit. Confirmed cases: Wolf's knock-prone, Giant Spider's poison damage, and Shadow's Strength Drain. If a monster's attack looks like it "should" have a DC based on 2014-era memory but a verified 2024 source shows none, trust the source — don't add one back in.
+
 ## Things NOT yet implemented (discussed with the user, not requested yet)
 
 - Combat round counter on the GM dashboard.
