@@ -308,6 +308,10 @@ table.eqp tr:last-child td{border-bottom:none;}
 .gm-sub-label{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--parch-dim);margin:8px 0 4px;}
 .gm-passives-row{display:flex;gap:6px;flex-wrap:wrap;}
 .gm-passive-chip{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--parch);background:var(--void);border:1px solid var(--steel);border-radius:6px;padding:2px 8px;}
+.gm-slot-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;}
+.gm-slot-label{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--parch-dim);white-space:nowrap;}
+.gm-slots-wrap{gap:5px 5px;}
+.gm-slots-wrap .slot{width:20px;height:20px;border-radius:5px;font-size:.68rem;}
 .gm-spell-chip{ display:inline-block;background:var(--panel-2);border:1px solid var(--steel);border-radius:50px;font-size:.72rem;padding:3px 10px;margin:0 4px 4px 0;color:var(--parch);cursor:pointer;transition:all .15s; }
 .gm-spell-chip:hover{ border-color:var(--gold);color:var(--gold-bright); }
 .gm-empty-hint{color:var(--parch-dim);font-size:.85rem;}
@@ -873,6 +877,7 @@ const I18N = {
     join_pick_existing:'Continúa con uno de tus personajes:', join_or:'o', join_new:'Crear personaje nuevo',
     gm_title:'Mesa del Game Master', gm_feed_title:'Tiradas en vivo', gm_feed_empty:'Aún no se han hecho tiradas.',
     gm_no_players:'Esperando a que se unan jugadores…', gm_prepared_label:'Hechizos preparados', gm_no_prepared:'Ninguno preparado', gm_passives_label:'Pasivas (Percepción / Investigación / Perspicacia)',
+    gm_slots_label:'Huecos de Conjuro', gm_slots_row_label:'Nivel {n}: {used}/{total} usados',
     gm_initiative_title:'Iniciativa', gm_initiative_empty:'Nadie en la iniciativa todavía.',
     gm_init_name_ph:'Nombre', gm_init_value_ph:'Iniciativa', gm_init_type_enemy:'Enemigo', gm_init_type_player:'Jugador',
     gm_init_ac_ph:'CA (opcional)', gm_init_hp_ph:'PG máx. (opcional)', gm_init_ac_label:'Clase de Armadura', btn_add:'Añadir',
@@ -955,6 +960,7 @@ const I18N = {
     join_pick_existing:'Continue with one of your characters:', join_or:'or', join_new:'Create new character',
     gm_title:'Game Master Table', gm_feed_title:'Live rolls', gm_feed_empty:'No rolls yet.',
     gm_no_players:'Waiting for players to join…', gm_prepared_label:'Prepared spells', gm_no_prepared:'None prepared', gm_passives_label:'Passives (Perception / Investigation / Insight)',
+    gm_slots_label:'Spell Slots', gm_slots_row_label:'Level {n}: {used}/{total} used',
     gm_initiative_title:'Initiative', gm_initiative_empty:'No one on the initiative order yet.',
     gm_init_name_ph:'Name', gm_init_value_ph:'Initiative', gm_init_type_enemy:'Enemy', gm_init_type_player:'Player',
     gm_init_ac_ph:'AC (optional)', gm_init_hp_ph:'Max HP (optional)', gm_init_ac_label:'Armor Class', btn_add:'Add',
@@ -1555,13 +1561,20 @@ const FULL_CASTER_SLOT_TABLE = {
 };
 const FULL_CASTER_CLASSES = ['bard','cleric','druid','sorcerer','wizard'];
 const HALF_CASTER_CLASSES = ['paladin','ranger','artificer'];
-function slotCountsForCharacter(){
-  const klass = character.identity.klass;
-  const lvl = Math.max(1, Math.min(20, character.level));
+function slotCountsFor(c){
+  const klass = c.identity.klass;
+  const lvl = Math.max(1, Math.min(20, c.level));
+  if(klass==='warlock'){
+    const [num, slotLvl] = PACT_SLOT_TABLE[lvl] || [0,1];
+    const counts = [0,0,0,0,0];
+    if(num>0) counts[slotLvl-1] = num;
+    return counts;
+  }
   if(FULL_CASTER_CLASSES.includes(klass)) return FULL_CASTER_SLOT_TABLE[lvl].slice();
   if(HALF_CASTER_CLASSES.includes(klass)) return slotTable[lvl].slice();
   return null; // non-caster or custom class: no slot grid
 }
+function slotCountsForCharacter(){ return slotCountsFor(character); }
 // Official 2024 PHB "Prepared Spells" class-feature tables (fixed per level, no ability-modifier math)
 const PREP_TABLE_CLERIC_DRUID = {1:4,2:5,3:6,4:7,5:9,6:10,7:11,8:12,9:14,10:15,11:16,12:16,13:17,14:17,15:18,16:18,17:19,18:20,19:21,20:22};
 const PREP_TABLE_WIZARD =       {1:4,2:5,3:6,4:7,5:9,6:10,7:11,8:12,9:14,10:15,11:16,12:16,13:17,14:18,15:19,16:21,17:22,18:23,19:24,20:25};
@@ -3179,7 +3192,7 @@ async function renderGmDashboard(code){
   // (even with identical data) causes a visible flicker/reflow every few seconds.
   const gridSnapshot = JSON.stringify(charsData.map(c=>({
     id:c.id, name:c.identity.name, klass:c.identity.klass, klassCustom:c.identity.klassCustom,
-    level:c.level, hp:c.hp, prepared:c.preparedSpellIds,
+    level:c.level, hp:c.hp, prepared:c.preparedSpellIds, slotsUsed:c.spellSlotsUsed,
     abilities:c.abilities, skillProf:c.skillProf, skillExpertise:c.skillExpertise,
   })));
   if(gridSnapshot !== gmLastGridSnapshot){
@@ -3206,6 +3219,28 @@ async function renderGmDashboard(code){
         const passiveInvestigation = computePassiveScore(c, 'investigation');
         const passiveInsight = computePassiveScore(c, 'insight');
         const downBadge = c.hp.current<=0 ? `<span class="down-badge">${t('down_badge')}</span>` : '';
+        if(!c.spellSlotsUsed) c.spellSlotsUsed = {};
+        const slotCounts = slotCountsFor(c);
+        let slotsHtml = '';
+        if(slotCounts){
+          slotCounts.forEach((count, idx)=>{
+            if(count<=0) return;
+            const spellLevel = idx+1;
+            let usedCount = 0;
+            let dots = '';
+            for(let i=0;i<count;i++){
+              const key = spellLevel+'_'+i;
+              const used = !!c.spellSlotsUsed[key];
+              if(used) usedCount++;
+              dots += `<span class="slot${used?' used':''}" data-char-id="${c.id}" data-slot-key="${key}"></span>`;
+            }
+            slotsHtml += `
+              <div class="gm-slot-row">
+                <span class="gm-slot-label">${t('gm_slots_row_label').replace('{n}', spellLevel).replace('{used}', usedCount).replace('{total}', count)}</span>
+                <div class="slots-wrap gm-slots-wrap">${dots}</div>
+              </div>`;
+          });
+        }
         card.innerHTML = `
           <div class="gcc-name">${c.identity.name || t('default_char_name')} ${downBadge}</div>
           <div class="gcc-meta">${klassLabel ? klassLabel+' · ' : ''}${t('level_option')} ${c.level}</div>
@@ -3217,6 +3252,7 @@ async function renderGmDashboard(code){
             <span class="gm-passive-chip" title="${t('lab_passive_investigation')}">🔍 ${passiveInvestigation}</span>
             <span class="gm-passive-chip" title="${t('lab_passive_insight')}">🧠 ${passiveInsight}</span>
           </div>
+          ${slotsHtml ? `<div class="gm-sub-label">${t('gm_slots_label')}</div>${slotsHtml}` : ''}
           <div class="gm-sub-label">${t('gm_prepared_label')}</div>
           <div>${preparedHtml}</div>
         `;
@@ -3227,6 +3263,12 @@ async function renderGmDashboard(code){
             if(!sp) return;
             const d = sp[currentLang];
             showTurnTooltip(chip, `${d.name} — ${t('level_option')} ${sp.level}${isConcentration(sp)?` · ${t('conc_badge')}`:''}\n${d.desc}`);
+          });
+        });
+        card.querySelectorAll('.slot[data-slot-key]').forEach(dot=>{
+          dot.addEventListener('click', (ev)=>{
+            ev.stopPropagation();
+            gmToggleSpellSlot(code, c.id, dot.dataset.slotKey);
           });
         });
         grid.appendChild(card);
@@ -3264,6 +3306,20 @@ async function renderGmDashboard(code){
     gmLastLootSnapshot = lootSnapshot;
     renderGmLoot(lootData);
   }
+}
+
+// GM toggling a player's spell slot: writes straight to that character's live data
+// (both the session-mirrored copy the dashboard polls and the canonical char_data_<id>
+// record the player's own sheet loads from) so it's reflected on their sheet too.
+async function gmToggleSpellSlot(code, charId, slotKey){
+  const c = await sharedGet(sessionCharKey(code, charId));
+  if(!c) return;
+  if(!c.spellSlotsUsed) c.spellSlotsUsed = {};
+  c.spellSlotsUsed[slotKey] = !c.spellSlotsUsed[slotKey];
+  await sharedSet(sessionCharKey(code, charId), c);
+  await sharedSet('char_data_'+charId, c);
+  gmLastGridSnapshot = null;
+  renderGmDashboard(code);
 }
 
 function renderGmInitiative(data){
@@ -3906,14 +3962,7 @@ function renderSpellStats(){
 function renderSpellSlots(){
   const container = document.getElementById('spell-slots-container');
   container.innerHTML = '';
-  let counts;
-  if(character.identity.klass==='warlock'){
-    const [num, lvl] = PACT_SLOT_TABLE[character.level] || [0,1];
-    counts = [0,0,0,0,0];
-    if(num>0) counts[lvl-1] = num;
-  } else {
-    counts = slotCountsForCharacter() || [0,0,0,0,0];
-  }
+  const counts = slotCountsForCharacter() || [0,0,0,0,0];
   counts.forEach((count, idx)=>{
     if(count<=0) return;
     const spellLevel = idx+1;
