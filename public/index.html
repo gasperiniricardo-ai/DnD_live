@@ -4930,7 +4930,7 @@ function renderPreparedList(){
   const cantripLimit = cantripLimitForClass(character.level, character.identity.klass);
   const cantripRow = document.getElementById('cantrip-counter-row');
   if(cantripLimit!=null){
-    const countedCantrips = character.preparedSpellIds.filter(id=>{ const s2=spellDB.find(s=>s.id===id); return s2 && s2.level===0; }).length;
+    const countedCantrips = character.preparedSpellIds.filter(id=>{ const s2=spellDB.find(s=>s.id===id); return s2 && s2.level===0 && !isFreePreparedSpell(id); }).length;
     document.getElementById('cantrip-counter').textContent = `(${countedCantrips}/${cantripLimit})`;
     cantripRow.style.display = 'block';
   } else {
@@ -5034,7 +5034,7 @@ function renderSpellResults(filter=''){
         character.preparedSpellIds = character.preparedSpellIds.filter(x=>x!==id);
       } else if(s.level===0){
         const cantripLimit = cantripLimitForClass(character.level, character.identity.klass);
-        const countedCantrips = character.preparedSpellIds.filter(x=>{ const s2=spellDB.find(y=>y.id===x); return s2 && s2.level===0; }).length;
+        const countedCantrips = character.preparedSpellIds.filter(x=>{ const s2=spellDB.find(y=>y.id===x); return s2 && s2.level===0 && !isFreePreparedSpell(x); }).length;
         if(cantripLimit!=null && countedCantrips >= cantripLimit){
           showPrepLimitToast(t('cantrip_limit_toast').replace('{n}', cantripLimit));
           return;
