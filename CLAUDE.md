@@ -81,6 +81,8 @@ All **385 spells** in `spellDB` were enriched with concrete 2024 mechanics (dama
 
 `Bandit`, `Ogre Zombie` (aside from adding the Undead Fortitude DC formula), and the homebrew entries (`cultist_vanguard`, `pit_ghoul`, `skeletal_minotaur`, the Scourge/celestial/Orcus-cultist sets) needed no correction.
 
+**Two-phase boss pattern** (`orcus_necromancer`, added 2026-09-05): the first homebrew entry with a mid-fight transformation (triggers at 30 HP or less). Modeled as one long `attacks` list rather than a separate data structure — phase 1 abilities, a clearly marked `— FASE 2: ... —` transition entry describing what's gained/lost, then phase 2's replacement/new abilities (including an upgraded version of its phase-1 ranged attack), so the GM can run the whole fight off one card without flipping between two stat blocks. Reuse this same list-based approach for any future multi-phase boss rather than inventing a new field.
+
 ## Things NOT yet implemented (discussed with the user, not requested yet)
 
 - Combat round counter on the GM dashboard.
