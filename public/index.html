@@ -303,6 +303,11 @@ table.eqp tr:last-child td{border-bottom:none;}
 .gm-hp-row{display:flex;align-items:baseline;gap:6px;margin-bottom:6px;}
 .gm-hp-row .cur{font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:700;color:var(--gold-bright);}
 .gm-hp-row .max{font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--parch-dim);}
+.gm-hp-editable{align-items:center;}
+.gm-hp-btn{width:24px;height:24px;flex:0 0 auto;border-radius:50%;border:1px solid var(--steel);background:var(--panel-2);color:var(--parch);font-size:.9rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.gm-hp-btn:hover{border-color:var(--gold);color:var(--gold-bright);}
+.gm-hp-current-input{width:52px;background:var(--void);border:1px solid var(--steel);color:var(--gold-bright);font-family:'JetBrains Mono',monospace;font-size:1.2rem;font-weight:700;border-radius:6px;padding:2px 4px;text-align:center;}
+.gm-hp-max-input{width:42px;background:var(--void);border:1px solid var(--steel);color:var(--parch-dim);font-family:'JetBrains Mono',monospace;font-size:.85rem;border-radius:6px;padding:2px 4px;text-align:center;}
 .gm-hp-bar-bg{height:8px;border-radius:5px;background:var(--void);overflow:hidden;border:1px solid var(--steel);margin-bottom:10px;}
 .gm-hp-bar-fill{height:100%;background:linear-gradient(90deg,var(--crimson),var(--gold));transition:width .3s;}
 .gm-sub-label{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--parch-dim);margin:8px 0 4px;}
@@ -3258,7 +3263,12 @@ async function renderGmDashboard(code){
         card.innerHTML = `
           <div class="gcc-name">${c.identity.name || t('default_char_name')} ${downBadge}</div>
           <div class="gcc-meta">${klassLabel ? klassLabel+' · ' : ''}${t('level_option')} ${c.level}</div>
-          <div class="gm-hp-row"><span class="cur">${c.hp.current}</span><span class="max">/ ${c.hp.max} HP</span></div>
+          <div class="gm-hp-row gm-hp-editable">
+            <button class="gm-hp-btn" data-hp-action="dec" title="−1">−</button>
+            <input type="number" class="gm-hp-current-input" data-char-id="${c.id}" value="${c.hp.current}" min="0">
+            <span class="max">/ <input type="number" class="gm-hp-max-input" data-char-id="${c.id}" value="${c.hp.max}" min="1"> HP</span>
+            <button class="gm-hp-btn" data-hp-action="inc" title="+1">+</button>
+          </div>
           <div class="gm-hp-bar-bg"><div class="gm-hp-bar-fill" style="width:${pct}%"></div></div>
           <div class="gm-sub-label">${t('gm_passives_label')}</div>
           <div class="gm-passives-row">
@@ -3284,6 +3294,22 @@ async function renderGmDashboard(code){
             ev.stopPropagation();
             gmToggleSpellSlot(code, c.id, dot.dataset.slotKey);
           });
+        });
+        card.querySelectorAll('.gm-hp-btn[data-hp-action]').forEach(btn=>{
+          btn.addEventListener('click', (ev)=>{
+            ev.stopPropagation();
+            gmAdjustHp(code, c.id, btn.dataset.hpAction==='inc' ? 1 : -1);
+          });
+        });
+        const hpCurInput = card.querySelector('.gm-hp-current-input');
+        if(hpCurInput) hpCurInput.addEventListener('change', (ev)=>{
+          ev.stopPropagation();
+          gmSetHpCurrent(code, c.id, hpCurInput.value);
+        });
+        const hpMaxInputEl = card.querySelector('.gm-hp-max-input');
+        if(hpMaxInputEl) hpMaxInputEl.addEventListener('change', (ev)=>{
+          ev.stopPropagation();
+          gmSetHpMax(code, c.id, hpMaxInputEl.value);
         });
         grid.appendChild(card);
       });
@@ -3325,15 +3351,44 @@ async function renderGmDashboard(code){
 // GM toggling a player's spell slot: writes straight to that character's live data
 // (both the session-mirrored copy the dashboard polls and the canonical char_data_<id>
 // record the player's own sheet loads from) so it's reflected on their sheet too.
-async function gmToggleSpellSlot(code, charId, slotKey){
+// Shared helper for any GM-side edit to a live player character: re-fetches the
+// freshest copy, applies the mutation, writes it back to both the session-mirrored
+// key the dashboard polls and the canonical char_data_<id> record the player's own
+// sheet loads from, then re-renders.
+async function gmUpdateCharacter(code, charId, mutateFn){
   const c = await sharedGet(sessionCharKey(code, charId));
   if(!c) return;
-  if(!c.spellSlotsUsed) c.spellSlotsUsed = {};
-  c.spellSlotsUsed[slotKey] = !c.spellSlotsUsed[slotKey];
+  mutateFn(c);
   await sharedSet(sessionCharKey(code, charId), c);
   await sharedSet('char_data_'+charId, c);
   gmLastGridSnapshot = null;
   renderGmDashboard(code);
+}
+async function gmToggleSpellSlot(code, charId, slotKey){
+  await gmUpdateCharacter(code, charId, c=>{
+    if(!c.spellSlotsUsed) c.spellSlotsUsed = {};
+    c.spellSlotsUsed[slotKey] = !c.spellSlotsUsed[slotKey];
+  });
+}
+async function gmAdjustHp(code, charId, delta){
+  await gmUpdateCharacter(code, charId, c=>{
+    c.hp.current = Math.max(0, Math.min(c.hp.max, c.hp.current + delta));
+  });
+}
+async function gmSetHpCurrent(code, charId, rawValue){
+  await gmUpdateCharacter(code, charId, c=>{
+    let v = parseInt(rawValue, 10);
+    if(isNaN(v)) v = 0;
+    c.hp.current = Math.max(0, Math.min(c.hp.max, v));
+  });
+}
+async function gmSetHpMax(code, charId, rawValue){
+  await gmUpdateCharacter(code, charId, c=>{
+    let v = parseInt(rawValue, 10);
+    if(isNaN(v) || v<1) v = 1;
+    c.hp.max = v;
+    c.hp.current = Math.min(c.hp.current, v);
+  });
 }
 
 function renderGmInitiative(data){
