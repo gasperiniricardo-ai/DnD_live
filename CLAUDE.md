@@ -17,7 +17,7 @@ Character-sheet + GM-tool web app for a live D&D 2024 (5.5e) tabletop group, dep
 Before every `git push` to `main`, validate JS syntax remotely (this repo has no local Node install to check with):
 
 ```bash
-scp -i "/c/Users/peopl/Downloads/dnd_live.pem" "/c/Users/peopl/Downloads/aster-app/aster-app/public/index.html" ec2-user@13.60.18.160:~/index_check.html
+scp -i "/c/Users/peopl/Downloads/dnd_live.pem" "/c/Users/peopl/Downloads/AI Projects/aster-app/public/index.html" ec2-user@13.60.18.160:~/index_check.html
 ssh -i "/c/Users/peopl/Downloads/dnd_live.pem" ec2-user@13.60.18.160 "node -e \"const fs=require('fs'); const c=fs.readFileSync('index_check.html','utf8'); const m=c.match(/<script>([\s\S]*)<\/script>/); fs.writeFileSync('extracted.js', m[1]);\" && node --check extracted.js && echo SYNTAX_OK"
 ```
 Only commit/push after `SYNTAX_OK`. After pushing, poll `ssh ... "cd ~/aster-app && git log --oneline -1"` until it shows the new commit, then verify the actual feature in-browser (not just syntax) — this app has no automated test suite.
