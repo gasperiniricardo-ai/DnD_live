@@ -128,6 +128,7 @@ input, select, button, textarea{font-family:inherit;}
 .skill .dot{width:11px;height:11px;border-radius:50%;background:var(--gold);margin-right:8px;display:inline-block;flex:0 0 auto;cursor:pointer;}
 .skill .name{display:flex;align-items:center;color:var(--parch);min-width:0;}
 .skill .name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.skill-bonus-badge{flex:0 0 auto;margin-left:2px;color:var(--gold-bright);cursor:help;font-size:.72rem;}
 .skill .val{font-family:'JetBrains Mono',monospace;color:var(--gold-bright);font-weight:700;flex:0 0 auto;}
 
 /* ---------- HP / COMBAT ---------- */
@@ -3810,6 +3811,7 @@ function migrateCharacter(c){
   if(!c.damageNotes) c.damageNotes = [];
   if(!c.turnState) c.turnState = { movementUsed:0, actionUsed:false, bonusUsed:false, reactionUsed:false };
   if(!c.domainSpellIds) c.domainSpellIds = [];
+  if(!c.skillBonuses) c.skillBonuses = [];
   migrateIdentity(c);
 }
 async function openCharacter(id){
@@ -3991,6 +3993,16 @@ function renderAbilities(){
 }
 
 // ---------- SKILLS ----------
+// character.skillBonuses: [{skillId, abilityKey, source:{es,en}, amount?, min?}] - a flat extra
+// bonus applied on top of the normal ability-mod + proficiency skill formula, for features like
+// Cleric's Divine Order: Thaumaturgy ("+ your Wisdom modifier, minimum +1, to Arcana/Religion checks").
+// `amount` overrides with a fixed number instead of deriving from `abilityKey`; `min` floors the
+// ability-mod-derived amount (ignored when `amount` is set).
+function skillBonusAmount(b){
+  if(b.amount!=null) return b.amount;
+  const raw = modOf(character.abilities[b.abilityKey]);
+  return b.min!=null ? Math.max(b.min, raw) : raw;
+}
 const skillsList = document.getElementById('skills-list');
 function renderSkills(){
   skillsList.innerHTML = '';
@@ -3999,13 +4011,18 @@ function renderSkills(){
   sorted.forEach(s=>{
     const prof = !!character.skillProf[s.id];
     const expertise = !!character.skillExpertise[s.id];
-    const mod = modOf(character.abilities[s.key]) + (prof?PB:0) + (expertise?PB:0);
+    const bonuses = (character.skillBonuses||[]).filter(b=>b.skillId===s.id);
+    const bonusTotal = bonuses.reduce((sum,b)=> sum + skillBonusAmount(b), 0);
+    const mod = modOf(character.abilities[s.key]) + (prof?PB:0) + (expertise?PB:0) + bonusTotal;
     const name = s[currentLang];
     const dotColor = expertise ? 'var(--crimson-bright)' : (prof ? 'var(--gold)' : 'var(--steel-light)');
     const dotTitle = expertise ? t('expertise_title') : (prof ? t('proficient_title') : t('untrained_title'));
+    const bonusBadge = bonuses.length>0
+      ? `<span class="skill-bonus-badge" title="${bonuses.map(b=>`${b.source[currentLang]} (${fmt(skillBonusAmount(b))})`).join(' · ')}">✦</span>`
+      : '';
     const div = document.createElement('div');
     div.className='skill';
-    div.innerHTML = `<span class="name"><span class="dot" style="background:${dotColor}" title="${dotTitle}" data-id="${s.id}"></span><span>${name} (${ABILITY_LABEL[currentLang][s.key]})</span></span><span class="val">${fmt(mod)}</span>`;
+    div.innerHTML = `<span class="name"><span class="dot" style="background:${dotColor}" title="${dotTitle}" data-id="${s.id}"></span><span>${name} (${ABILITY_LABEL[currentLang][s.key]})</span>${bonusBadge}</span><span class="val">${fmt(mod)}</span>`;
     div.querySelector('.dot').addEventListener('click', (e)=>{
       e.stopPropagation();
       // cycle: untrained -> proficient -> expertise -> untrained
