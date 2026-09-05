@@ -3228,7 +3228,12 @@ async function renderGmDashboard(code){
         const klassLabel = optionLabel(CLASS_OPTIONS, c.identity.klass, c.identity.klassCustom);
         let preparedHtml = `<span class="gm-empty-hint">${t('gm_no_prepared')}</span>`;
         if(c.preparedSpellIds && c.preparedSpellIds.length>0){
-          preparedHtml = c.preparedSpellIds.map(sid=>{
+          const sortedPrepared = c.preparedSpellIds.slice().sort((a,b)=>{
+            const sa = spellDB.find(s=>s.id===a), sb = spellDB.find(s=>s.id===b);
+            if(!sa || !sb) return 0;
+            return sa.level - sb.level || sa[currentLang].name.localeCompare(sb[currentLang].name, currentLang);
+          });
+          preparedHtml = sortedPrepared.map(sid=>{
             const sp = spellDB.find(s=>s.id===sid);
             if(!sp) return '';
             return `<span class="gm-spell-chip" data-spell-id="${sp.id}">${sp[currentLang].name}</span>`;
@@ -5008,7 +5013,15 @@ function renderPreparedList(){
   wrap.innerHTML = '';
   if(character.preparedSpellIds.length===0){ empty.style.display='block'; return; }
   empty.style.display='none';
-  character.preparedSpellIds.forEach(id=>{
+  // Sort a display copy only (by spell level, then alphabetically) - the underlying
+  // preparedSpellIds array keeps its own insertion order, which the level-downgrade
+  // auto-trim logic above relies on to decide which spell gets dropped first.
+  const sortedForDisplay = character.preparedSpellIds.slice().sort((a,b)=>{
+    const sa = spellDB.find(s=>s.id===a), sb = spellDB.find(s=>s.id===b);
+    if(!sa || !sb) return 0;
+    return sa.level - sb.level || sa[currentLang].name.localeCompare(sb[currentLang].name, currentLang);
+  });
+  sortedForDisplay.forEach(id=>{
     const sp = spellDB.find(s=>s.id===id);
     if(!sp) return;
     const data = sp[currentLang];
