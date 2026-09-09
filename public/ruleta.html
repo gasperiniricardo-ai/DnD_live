@@ -1,0 +1,700 @@
+<title>Roulette 26-27/A</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Literata:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --bg:#eef1e6;
+    --surface:#ffffff;
+    --surface-line:#dfe4d3;
+    --ink:#20291f;
+    --ink-soft:#5b6656;
+    --rule:#c9d0bd;
+    --accent:#c2871f;
+    --accent-ink:#4a3208;
+    --danger:#a8402b;
+    --danger-ink:#ffffff;
+    --shadow: 0 18px 40px -18px rgba(32,41,31,0.35);
+    --pointer: #a8402b;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#152a1e;
+      --surface:#1c3527;
+      --surface-line:#2f4c3a;
+      --ink:#edf1e4;
+      --ink-soft:#aebda3;
+      --rule:#3a5643;
+      --accent:#e2b34a;
+      --accent-ink:#241a02;
+      --danger:#e2795f;
+      --danger-ink:#241206;
+      --shadow: 0 18px 44px -16px rgba(0,0,0,0.55);
+      --pointer:#e2b34a;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#152a1e;
+    --surface:#1c3527;
+    --surface-line:#2f4c3a;
+    --ink:#edf1e4;
+    --ink-soft:#aebda3;
+    --rule:#3a5643;
+    --accent:#e2b34a;
+    --accent-ink:#241a02;
+    --danger:#e2795f;
+    --danger-ink:#241206;
+    --shadow: 0 18px 44px -16px rgba(0,0,0,0.55);
+    --pointer:#e2b34a;
+    color-scheme: dark;
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Literata", Georgia, "Times New Roman", serif;
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:36px 20px 56px;
+  }
+
+  .page{
+    width:100%;
+    max-width:960px;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+
+  header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+    border-bottom:2px solid var(--rule);
+    padding-bottom:14px;
+  }
+  header h1{
+    font-family:"Caveat", "Segoe Script", cursive;
+    font-weight:700;
+    font-size:clamp(2.4rem, 5vw, 3.4rem);
+    margin:0;
+    line-height:1;
+    color:var(--ink);
+    text-wrap:balance;
+  }
+  header .tag{
+    font-family:"IBM Plex Mono", ui-monospace, monospace;
+    font-size:0.72rem;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    border:1px solid var(--rule);
+    border-radius:999px;
+    padding:5px 12px;
+    white-space:nowrap;
+  }
+
+  main{
+    display:grid;
+    grid-template-columns:minmax(320px, 460px) 1fr;
+    gap:28px;
+    align-items:start;
+  }
+  @media (max-width: 760px){
+    main{ grid-template-columns:1fr; }
+  }
+
+  .wheel-card{
+    background:var(--surface);
+    border:1px solid var(--surface-line);
+    border-radius:22px;
+    box-shadow:var(--shadow);
+    padding:28px 24px 26px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:18px;
+  }
+
+  .wheel-wrap{
+    position:relative;
+    width:min(400px, 78vw);
+    aspect-ratio:1/1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .wheel-pointer{
+    position:absolute;
+    top:-6px;
+    left:50%;
+    transform:translateX(-50%);
+    width:34px;
+    height:40px;
+    z-index:3;
+    filter:drop-shadow(0 3px 4px rgba(0,0,0,0.35));
+  }
+  .wheel-pointer svg{ display:block; }
+
+  .wheel-hub-ring{
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    border:6px solid var(--surface);
+    box-shadow:0 0 0 2px var(--rule), inset 0 0 26px rgba(0,0,0,0.18);
+    pointer-events:none;
+  }
+
+  canvas#wheel{
+    width:100%;
+    height:100%;
+    border-radius:50%;
+    transform:rotate(0deg);
+    display:block;
+  }
+
+  .wheel-hub{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+    width:15%;
+    height:15%;
+    border-radius:50%;
+    background:var(--accent);
+    border:3px solid var(--surface);
+    box-shadow:0 2px 8px rgba(0,0,0,0.3);
+    z-index:2;
+  }
+
+  .controls{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+
+  button{
+    font-family:"Literata", Georgia, serif;
+    font-weight:600;
+    font-size:1rem;
+    border-radius:12px;
+    border:1px solid transparent;
+    padding:12px 22px;
+    cursor:pointer;
+    transition:transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  }
+  button:focus-visible{
+    outline:3px solid var(--accent);
+    outline-offset:2px;
+  }
+  button:disabled{
+    opacity:0.5;
+    cursor:not-allowed;
+  }
+  button:not(:disabled):hover{ transform:translateY(-1px); }
+  button:not(:disabled):active{ transform:translateY(0); }
+
+  .btn-spin{
+    background:var(--accent);
+    color:var(--accent-ink);
+    font-size:1.1rem;
+    padding:13px 30px;
+    box-shadow:0 8px 20px -8px color-mix(in srgb, var(--accent) 70%, transparent);
+  }
+  .btn-reset{
+    background:transparent;
+    color:var(--ink-soft);
+    border-color:var(--rule);
+  }
+  .btn-reset:not(:disabled):hover{ color:var(--ink); border-color:var(--ink-soft); }
+
+  .status{
+    font-family:"IBM Plex Mono", ui-monospace, monospace;
+    font-size:0.78rem;
+    letter-spacing:0.04em;
+    color:var(--ink-soft);
+    text-align:center;
+  }
+  .status strong{ color:var(--ink); font-variant-numeric:tabular-nums; }
+
+  .list-card{
+    background:var(--surface);
+    border:1px solid var(--surface-line);
+    border-radius:22px;
+    box-shadow:var(--shadow);
+    padding:22px 22px 20px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    max-height:560px;
+  }
+  .list-card h2{
+    margin:0;
+    font-family:"Caveat", cursive;
+    font-weight:700;
+    font-size:1.7rem;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .list-card h2 span{
+    font-family:"IBM Plex Mono", ui-monospace, monospace;
+    font-size:0.72rem;
+    font-weight:600;
+    color:var(--ink-soft);
+    letter-spacing:0.04em;
+  }
+
+  ul.roster{
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    overflow-y:auto;
+    padding-right:4px;
+  }
+  ul.roster li{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:10px 12px;
+    border:1px solid var(--surface-line);
+    border-radius:10px;
+    background:color-mix(in srgb, var(--surface) 100%, transparent);
+  }
+  ul.roster li .swatch{
+    width:9px;
+    height:9px;
+    border-radius:50%;
+    flex-shrink:0;
+  }
+  ul.roster li .name{
+    flex:1;
+    font-size:0.94rem;
+  }
+  ul.roster li button.remove{
+    padding:3px 9px;
+    font-size:0.75rem;
+    background:transparent;
+    border:1px solid var(--rule);
+    color:var(--ink-soft);
+    border-radius:8px;
+  }
+  ul.roster li button.remove:hover{
+    border-color:var(--danger);
+    color:var(--danger);
+  }
+  ul.roster li.empty-note{
+    font-size:0.9rem;
+    color:var(--ink-soft);
+    padding:18px 4px;
+    text-align:center;
+  }
+
+  /* result overlay */
+  .overlay{
+    position:fixed;
+    inset:0;
+    background:color-mix(in srgb, var(--ink) 55%, transparent);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:10;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.25s ease;
+  }
+  .overlay.show{ opacity:1; pointer-events:auto; }
+  .result-card{
+    background:var(--surface);
+    border-radius:22px;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,0.5);
+    padding:34px 34px 28px;
+    max-width:420px;
+    width:100%;
+    text-align:center;
+    transform:scale(0.92);
+    transition:transform 0.25s ease;
+  }
+  .overlay.show .result-card{ transform:scale(1); }
+  .result-card .eyebrow{
+    font-family:"IBM Plex Mono", ui-monospace, monospace;
+    font-size:0.72rem;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  .result-card .winner{
+    font-family:"Caveat", cursive;
+    font-weight:700;
+    font-size:clamp(2rem, 6vw, 2.7rem);
+    color:var(--ink);
+    margin:8px 0 4px;
+    text-wrap:balance;
+    line-height:1.1;
+  }
+  .result-card .underline{
+    width:70px;
+    height:4px;
+    background:var(--accent);
+    border-radius:2px;
+    margin:6px auto 22px;
+  }
+  .result-actions{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .btn-remove{
+    background:var(--danger);
+    color:var(--danger-ink);
+  }
+  .btn-keep{
+    background:transparent;
+    border-color:var(--rule);
+    color:var(--ink);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    canvas#wheel{ transition:none !important; }
+    .overlay, .result-card{ transition:none !important; }
+  }
+</style>
+
+<div class="page">
+  <header>
+    <h1>Class Roulette</h1>
+    <span class="tag">Group 26-27 / A</span>
+  </header>
+
+  <main>
+    <section class="wheel-card">
+      <div class="wheel-wrap">
+        <div class="wheel-pointer" aria-hidden="true">
+          <svg width="34" height="40" viewBox="0 0 34 40">
+            <polygon points="17,38 2,4 32,4" fill="var(--pointer)" stroke="var(--surface)" stroke-width="2"/>
+          </svg>
+        </div>
+        <canvas id="wheel" width="800" height="800"></canvas>
+        <div class="wheel-hub-ring"></div>
+        <div class="wheel-hub"></div>
+      </div>
+
+      <div class="controls">
+        <button class="btn-spin" id="spinBtn">Spin the wheel</button>
+        <button class="btn-reset" id="resetBtn">Reset list</button>
+      </div>
+      <p class="status" id="statusLine"><strong id="countLine">15</strong> of 15 names left</p>
+    </section>
+
+    <section class="list-card">
+      <h2>Class roster <span id="rosterCount">15 / 15</span></h2>
+      <ul class="roster" id="roster"></ul>
+    </section>
+  </main>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="result-card">
+    <div class="eyebrow">The wheel picked</div>
+    <div class="winner" id="winnerName">—</div>
+    <div class="underline"></div>
+    <div class="result-actions">
+      <button class="btn-remove" id="removeBtn">Remove from wheel</button>
+      <button class="btn-keep" id="keepBtn">Keep spinning</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var ALL_NAMES = [
+    "María Elena Chiriboga Gaibor",
+    "Nebret Fernández Vergara",
+    "Guillermo Fuster Ortuzar",
+    "Álvaro García Jordán",
+    "Rubén Gordillo Molina",
+    "Aaron Juan Gandía",
+    "Jorge López Menéndez",
+    "Rubén Martínez Sanz",
+    "Lorena Mora Arques",
+    "Arturo Muñoz Ayllón",
+    "Sergio Andrés Olmos Paredes",
+    "Vitalii Popov",
+    "Candela Portillo Infante",
+    "Diego Puig Ferri",
+    "Marcos Tent Moreno"
+  ];
+
+  var PALETTE = [
+    "#e8c46a", "#e28f7a", "#8fb8a8", "#c9a0d8",
+    "#7fb0c9", "#e8a3bb", "#b7c98a", "#d9b48f"
+  ];
+
+  var STORAGE_KEY = "roulette-26-27a-remaining-v1";
+
+  var canvas = document.getElementById("wheel");
+  var ctx = canvas.getContext("2d");
+  var spinBtn = document.getElementById("spinBtn");
+  var resetBtn = document.getElementById("resetBtn");
+  var rosterEl = document.getElementById("roster");
+  var rosterCount = document.getElementById("rosterCount");
+  var countLine = document.getElementById("countLine");
+  var statusLine = document.getElementById("statusLine");
+  var overlay = document.getElementById("overlay");
+  var winnerName = document.getElementById("winnerName");
+  var removeBtn = document.getElementById("removeBtn");
+  var keepBtn = document.getElementById("keepBtn");
+
+  var remaining = loadRemaining();
+  var rotation = 0;
+  var spinning = false;
+  var pendingIndex = -1;
+
+  function loadRemaining(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        var parsed = JSON.parse(raw);
+        if(Array.isArray(parsed) && parsed.length){
+          return parsed.filter(function(n){ return ALL_NAMES.indexOf(n) !== -1; });
+        }
+      }
+    }catch(e){}
+    return ALL_NAMES.slice();
+  }
+
+  function saveRemaining(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(remaining)); }catch(e){}
+  }
+
+  function colorFor(i){ return PALETTE[i % PALETTE.length]; }
+
+  function luminance(hex){
+    var r = parseInt(hex.substr(1,2),16)/255;
+    var g = parseInt(hex.substr(3,2),16)/255;
+    var b = parseInt(hex.substr(5,2),16)/255;
+    return 0.299*r + 0.587*g + 0.114*b;
+  }
+
+  function fitFontSize(text, maxWidth, maxSize, minSize){
+    var size = maxSize;
+    while(size > minSize){
+      ctx.font = "600 " + size + "px Literata, Georgia, serif";
+      if(ctx.measureText(text).width <= maxWidth) return size;
+      size -= 1;
+    }
+    return minSize;
+  }
+
+  function truncateToWidth(text, maxWidth, size){
+    ctx.font = "600 " + size + "px Literata, Georgia, serif";
+    if(ctx.measureText(text).width <= maxWidth) return text;
+    var t = text;
+    while(t.length > 1 && ctx.measureText(t + "…").width > maxWidth){
+      t = t.slice(0, -1);
+    }
+    return t + "…";
+  }
+
+  function drawWheel(){
+    var size = canvas.width;
+    var cx = size/2, cy = size/2, r = size/2 - 6;
+    ctx.clearRect(0,0,size,size);
+
+    var n = remaining.length;
+    if(n === 0){
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.fillStyle = "#d8ddd0";
+      ctx.fill();
+      return;
+    }
+
+    var slice = (Math.PI*2) / n;
+    var start = -Math.PI/2;
+
+    for(var i=0; i<n; i++){
+      var a0 = start + i*slice;
+      var a1 = start + (i+1)*slice;
+      var fill = colorFor(i);
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, a0, a1);
+      ctx.closePath();
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.lineWidth = size*0.004;
+      ctx.strokeStyle = "#ffffff";
+      ctx.stroke();
+
+      var mid = a0 + slice/2;
+      var textColor = luminance(fill) > 0.62 ? "#241a06" : "#fffaf0";
+      var maxTextWidth = r - size*0.16;
+      var fontSize = fitFontSize(remaining[i], maxTextWidth, size*0.028, size*0.015);
+      var label = truncateToWidth(remaining[i], maxTextWidth, fontSize);
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(mid);
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = textColor;
+      ctx.font = "600 " + fontSize + "px Literata, Georgia, serif";
+      ctx.fillText(label, r - size*0.05, 0);
+      ctx.restore();
+    }
+  }
+
+  function renderRoster(){
+    rosterEl.innerHTML = "";
+    if(remaining.length === 0){
+      var li = document.createElement("li");
+      li.className = "empty-note";
+      li.style.justifyContent = "center";
+      li.textContent = "No names left. Press \"Reset list\".";
+      rosterEl.appendChild(li);
+    } else {
+      remaining.forEach(function(name, i){
+        var li = document.createElement("li");
+
+        var left = document.createElement("div");
+        left.style.display = "flex";
+        left.style.alignItems = "center";
+        left.style.gap = "10px";
+        left.style.flex = "1";
+        left.style.minWidth = "0";
+
+        var dot = document.createElement("span");
+        dot.className = "swatch";
+        dot.style.background = colorFor(i);
+
+        var nameSpan = document.createElement("span");
+        nameSpan.className = "name";
+        nameSpan.textContent = name;
+
+        left.appendChild(dot);
+        left.appendChild(nameSpan);
+
+        var btn = document.createElement("button");
+        btn.className = "remove";
+        btn.type = "button";
+        btn.textContent = "Remove";
+        btn.setAttribute("aria-label", "Remove " + name + " from the wheel");
+        btn.addEventListener("click", function(){
+          if(spinning) return;
+          removeName(name);
+        });
+
+        li.appendChild(left);
+        li.appendChild(btn);
+        rosterEl.appendChild(li);
+      });
+    }
+    rosterCount.textContent = remaining.length + " / " + ALL_NAMES.length;
+    countLine.textContent = remaining.length;
+    spinBtn.disabled = remaining.length === 0;
+    statusLine.style.display = "block";
+  }
+
+  function removeName(name){
+    var idx = remaining.indexOf(name);
+    if(idx !== -1){
+      remaining.splice(idx, 1);
+      saveRemaining();
+      drawWheel();
+      renderRoster();
+    }
+  }
+
+  function mod(n, m){ return ((n % m) + m) % m; }
+
+  function spin(){
+    if(spinning || remaining.length === 0) return;
+    spinning = true;
+    spinBtn.disabled = true;
+    resetBtn.disabled = true;
+
+    var n = remaining.length;
+    var target = Math.floor(Math.random() * n);
+    pendingIndex = target;
+
+    var sliceDeg = 360 / n;
+    var centerDeg = -90 + (target + 0.5) * sliceDeg;
+    var baseR = mod(-90 - centerDeg, 360);
+    var extraSpins = 6;
+    var currentMod = mod(rotation, 360);
+    var delta = mod(baseR - currentMod, 360);
+    var finalRotation = rotation + extraSpins*360 + delta;
+
+    rotation = finalRotation;
+    canvas.style.transition = "transform 4.2s cubic-bezier(0.14, 0.85, 0.16, 1)";
+    canvas.style.transform = "rotate(" + rotation + "deg)";
+
+    var handled = false;
+    function onEnd(){
+      if(handled) return;
+      handled = true;
+      canvas.removeEventListener("transitionend", onEnd);
+      showResult(remaining[pendingIndex]);
+    }
+    canvas.addEventListener("transitionend", onEnd);
+    setTimeout(onEnd, 4500);
+  }
+
+  function showResult(name){
+    winnerName.textContent = name;
+    overlay.classList.add("show");
+    spinning = false;
+  }
+
+  function closeOverlay(){
+    overlay.classList.remove("show");
+    spinBtn.disabled = remaining.length === 0;
+    resetBtn.disabled = false;
+  }
+
+  removeBtn.addEventListener("click", function(){
+    var name = winnerName.textContent;
+    removeName(name);
+    closeOverlay();
+  });
+
+  keepBtn.addEventListener("click", function(){
+    closeOverlay();
+  });
+
+  spinBtn.addEventListener("click", spin);
+
+  resetBtn.addEventListener("click", function(){
+    if(spinning) return;
+    remaining = ALL_NAMES.slice();
+    rotation = 0;
+    canvas.style.transition = "none";
+    canvas.style.transform = "rotate(0deg)";
+    saveRemaining();
+    drawWheel();
+    renderRoster();
+  });
+
+  drawWheel();
+  renderRoster();
+})();
+</script>

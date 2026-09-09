@@ -83,6 +83,10 @@ app.delete('/api/shared/:key', (req, res) => {
 app.get('/api/health', (req, res) => res.json({ ok: true, ts: Date.now() }));
 
 // ---------- Static frontend ----------
+app.get('/ruleta', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'ruleta.html'));
+});
+
 app.use(express.static(path.join(__dirname, '..', 'public')));
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
