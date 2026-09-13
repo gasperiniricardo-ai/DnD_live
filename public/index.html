@@ -911,7 +911,7 @@ const I18N = {
     gm_no_players:'Esperando a que se unan jugadores…', gm_prepared_label:'Hechizos preparados', gm_no_prepared:'Ninguno preparado', gm_passives_label:'Pasivas (Percepción / Investigación / Perspicacia)',
     gm_slots_label:'Huecos de Conjuro', gm_slots_row_label:'Nivel {n}: {used}/{total} usados',
     gm_levelcheck_btn:'Revisar subida de nivel', lu_subtitle:'Rasgos y recursos esperados para el nivel actual',
-    lu_close:'Cerrar', lu_group_features:'Rasgos de clase', lu_group_resources:'Hechizos y recursos',
+    lu_close:'Cerrar', lu_group_features:'Rasgos de clase', lu_group_resources:'Hechizos y recursos', lu_group_freespells:'Hechizos gratuitos de subclase',
     lu_status_ok:'Listo', lu_status_missing:'Falta añadir', lu_status_choice:'Falta elegir', lu_status_over:'Por encima del límite',
     lu_empty:'No hay nada que revisar para esta clase todavía.',
     gm_initiative_title:'Iniciativa', gm_initiative_empty:'Nadie en la iniciativa todavía.',
@@ -998,7 +998,7 @@ const I18N = {
     gm_no_players:'Waiting for players to join…', gm_prepared_label:'Prepared spells', gm_no_prepared:'None prepared', gm_passives_label:'Passives (Perception / Investigation / Insight)',
     gm_slots_label:'Spell Slots', gm_slots_row_label:'Level {n}: {used}/{total} used',
     gm_levelcheck_btn:'Check level-up', lu_subtitle:'Features and resources expected for the current level',
-    lu_close:'Close', lu_group_features:'Class features', lu_group_resources:'Spells and resources',
+    lu_close:'Close', lu_group_features:'Class features', lu_group_resources:'Spells and resources', lu_group_freespells:'Subclass free spells',
     lu_status_ok:'Done', lu_status_missing:'Needs adding', lu_status_choice:'Needs a choice', lu_status_over:'Over the limit',
     lu_empty:'Nothing to check for this class yet.',
     gm_initiative_title:'Initiative', gm_initiative_empty:'No one on the initiative order yet.',
@@ -1718,10 +1718,12 @@ const CHAR_SUBCLASS = {
   char_walter: 'great_old_one',
 };
 // {level, keyword, es, en} — keyword is matched against trait[lang].name, accent/case-insensitive.
+// Verified against aidedd.org + roll20.net (2024 PHB); scoped to level <=5 (this campaign's current level) —
+// extend with higher levels (verifying exact Spanish feature names first) when the party levels up again.
 const LEVEL_FEATURES_BASE = {
   cleric: [
     {level:2, keyword:'conjurar la divinidad', es:'Conjurar la Divinidad (2 usos)', en:'Channel Divinity (2 uses)'},
-    {level:5, keyword:'aniquilar', es:'Aniquilar No-muertos', en:'Destroy Undead'},
+    {level:5, keyword:'aniquilar', es:'Aniquilar No-muertos (Sear Undead)', en:'Sear Undead'},
   ],
   paladin: [
     {level:3, keyword:'conjurar la divinidad', es:'Conjurar la Divinidad', en:'Channel Divinity'},
@@ -1729,24 +1731,52 @@ const LEVEL_FEATURES_BASE = {
     {level:5, keyword:'montura fiel', es:'Montura Fiel (Buscar Corcel gratis)', en:'Faithful Steed (free Find Steed)'},
   ],
   sorcerer: [
+    // 2024 PHB: Sorcerer subclass (incl. Draconic Sorcery) is chosen at level 3, not level 1.
     {level:1, keyword:'hechiceria innata', es:'Hechicería Innata', en:'Innate Sorcery'},
     {level:3, keyword:'metamagia', es:'Metamagia', en:'Metamagic'},
   ],
   warlock: [],
 };
-// Filled in once each subclass's feature-by-level list is verified against a primary source.
+// Filled in as each subclass's feature-by-level list gets verified against a primary source.
 const LEVEL_FEATURES_SUBCLASS = {
-  oath_of_vengeance: [],
-  war_domain: [],
+  oath_of_vengeance: [
+    {level:3, keyword:'voto de enemistad', es:'Conjurar la Divinidad: Voto de Enemistad', en:'Channel Divinity: Vow of Enmity'},
+  ],
+  war_domain: [
+    {level:3, keyword:'sacerdote de guerra', es:'Sacerdote de Guerra (War Priest)', en:'War Priest'},
+    {level:3, keyword:'golpe certero', es:'Conjurar la Divinidad: Golpe Certero (Guided Strike)', en:'Channel Divinity: Guided Strike'},
+  ],
   draconic_sorcery: [
-    {level:1, keyword:'resiliencia draconica', es:'Resiliencia Dracónica', en:'Draconic Resilience'},
+    // 2024 PHB: Draconic Sorcery is chosen at level 3, not level 1.
+    {level:3, keyword:'resiliencia draconica', es:'Resiliencia Dracónica', en:'Draconic Resilience'},
   ],
   great_old_one: [
-    {level:1, keyword:'mente despierta', es:'Mente Despierta (Awakened Mind)', en:'Awakened Mind'},
+    // 2024 PHB: The Great Old One patron is chosen at level 3, not level 1.
+    {level:3, keyword:'mente despierta', es:'Mente Despierta (Awakened Mind)', en:'Awakened Mind'},
+    {level:3, keyword:'conjuros psiquicos', es:'Conjuros Psíquicos (Psychic Spells)', en:'Psychic Spells'},
   ],
 };
-// Warlock "Invocations Known" by level (2024 PHB) — null until verified, which skips the check.
-const INVOCATIONS_KNOWN_TABLE = null;
+// Subclass "always prepared" free spells granted at a given level — checked against domainSpellIds,
+// not preparedSpellIds, since that's how this app already tags every other free/domain spell.
+const FREE_SPELL_GRANTS = {
+  war_domain: [
+    {level:3, id:'guiding_bolt'}, {level:3, id:'magic_weapon'}, {level:3, id:'shield_of_faith'}, {level:3, id:'spiritual_weapon'},
+    {level:5, id:'crusaders_mantle'}, {level:5, id:'spirit_guardians'},
+  ],
+  oath_of_vengeance: [
+    {level:3, id:'bane'}, {level:3, id:'hunters_mark'},
+    {level:5, id:'hold_person'}, {level:5, id:'misty_step'},
+  ],
+  draconic_sorcery: [
+    {level:3, id:'alter_self'}, {level:3, id:'chromatic_orb'}, {level:3, id:'command'}, {level:3, id:'dragons_breath'},
+  ],
+  great_old_one: [
+    {level:3, id:'detect_thoughts'}, {level:3, id:'dissonant_whispers'}, {level:3, id:'phantasmal_force'}, {level:3, id:'tashas_hideous_laughter'},
+    {level:5, id:'clairvoyance'}, {level:5, id:'hunger_of_hadar'},
+  ],
+};
+// Warlock "Invocations Known" by level, 2024 PHB (verified against aidedd.org + roll20.net).
+const INVOCATIONS_KNOWN_TABLE = {1:1,2:3,3:3,4:3,5:5,6:5,7:6,8:6,9:7,10:7};
 function levelUpFeatureChecks(c){
   const klass = c.identity.klass;
   const subclass = CHAR_SUBCLASS[c.id];
@@ -1795,9 +1825,19 @@ function levelUpResourceChecks(c){
   }
   return items;
 }
+function levelUpFreeSpellChecks(c){
+  const subclass = CHAR_SUBCLASS[c.id];
+  const grants = (subclass && FREE_SPELL_GRANTS[subclass]) || [];
+  const domainIds = new Set((c.domainSpellIds||[]).map(d=>d.id));
+  return grants.filter(g=>g.level<=c.level).map(g=>{
+    const sp = spellDB.find(s=>s.id===g.id);
+    return { level:g.level, label: sp ? sp[currentLang].name : g.id, status: domainIds.has(g.id) ? 'ok' : 'missing' };
+  }).sort((a,b)=>a.level-b.level || a.label.localeCompare(b.label, currentLang));
+}
 function openLevelUpChecklist(c){
   const featureItems = levelUpFeatureChecks(c);
   const resourceItems = levelUpResourceChecks(c);
+  const freeSpellItems = levelUpFreeSpellChecks(c);
   const renderItem = (it)=> `
     <div class="lu-item">
       <span class="lu-item-label">${it.label}${it.level!==undefined ? ` <span style="opacity:.6">(${t('level_option')} ${it.level})</span>` : ''}</span>
@@ -1814,6 +1854,7 @@ function openLevelUpChecklist(c){
     ${featureItems.length ? featureItems.map(renderItem).join('') : `<p class="lu-empty">${t('lu_empty')}</p>`}
     <div class="lu-group-label">${t('lu_group_resources')}</div>
     ${resourceItems.map(renderItem).join('')}
+    ${freeSpellItems.length ? `<div class="lu-group-label">${t('lu_group_freespells')}</div>${freeSpellItems.map(renderItem).join('')}` : ''}
   `;
   document.getElementById('lu-close-btn').addEventListener('click', closeLevelUpChecklist);
   document.getElementById('lu-backdrop').style.display='flex';
