@@ -348,6 +348,27 @@ table.eqp tr:last-child td{border-bottom:none;}
 .gm-init-hp-input{ width:48px;background:var(--void);border:1px solid var(--steel);color:var(--gold-bright);font-family:'JetBrains Mono',monospace;font-size:.8rem;border-radius:6px;padding:3px 4px;text-align:center; }
 .gm-init-hp-max{ font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--parch-dim);white-space:nowrap; }
 .down-badge{ font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:50px;background:var(--void);border:1px solid var(--crimson-bright);color:var(--crimson-bright);flex:0 0 auto; }
+.lu-check-btn{ margin-top:10px;width:100%;background:var(--panel-2);border:1px solid var(--steel);color:var(--parch);font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.5px;padding:7px 10px;border-radius:7px;cursor:pointer;transition:all .15s; }
+.lu-check-btn:hover{ border-color:var(--gold);color:var(--gold-bright); }
+
+/* ---------- LEVEL-UP CHECKLIST MODAL ---------- */
+.lu-backdrop{ position:fixed;inset:0;background:rgba(8,9,14,.72);z-index:400;display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow-y:auto; }
+.lu-modal{ background:var(--panel);border:1px solid var(--gold);border-radius:12px;max-width:560px;width:100%;padding:22px 24px 20px;box-shadow:0 10px 40px rgba(0,0,0,.5); }
+.lu-modal-head{ display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:4px; }
+.lu-modal-head h3{ font-family:'Cinzel',serif;color:var(--gold-bright);margin:0;font-size:1.1rem; }
+.lu-modal-sub{ color:var(--parch-dim);font-size:.78rem;margin:0 0 14px; }
+.lu-close-btn{ background:none;border:none;color:var(--parch-dim);font-size:1.3rem;cursor:pointer;line-height:1;padding:0 4px; }
+.lu-close-btn:hover{ color:var(--gold-bright); }
+.lu-group-label{ font-family:'Cinzel',serif;font-size:.66rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--parch-dim);margin:14px 0 6px; }
+.lu-item{ display:flex;align-items:flex-start;gap:9px;padding:6px 0;border-bottom:1px solid var(--steel); }
+.lu-item:last-child{ border-bottom:none; }
+.lu-item-label{ color:var(--parch);font-size:.86rem;line-height:1.4;flex:1; }
+.lu-tag{ font-family:'Cinzel',serif;font-size:.6rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:2px 9px;border-radius:50px;flex:0 0 auto;white-space:nowrap; }
+.lu-tag.ok{ background:rgba(120,160,90,.15);border:1px solid #7c9a5a;color:#b7d68f; }
+.lu-tag.missing{ background:rgba(200,80,60,.15);border:1px solid var(--crimson-bright);color:var(--crimson-bright); }
+.lu-tag.choice{ background:rgba(201,163,78,.15);border:1px solid var(--gold);color:var(--gold-bright); }
+.lu-tag.over{ background:rgba(200,80,60,.15);border:1px solid var(--crimson-bright);color:var(--crimson-bright); }
+.lu-empty{ color:var(--parch-dim);font-size:.85rem;font-style:italic; }
 
 /* ---------- ROLL TOAST ---------- */
 #toast{ position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:linear-gradient(160deg,var(--gold),#a67f34);color:#1b1400;font-family:'Cinzel',serif;font-weight:700;letter-spacing:.5px;padding:14px 26px;border-radius:10px;box-shadow:0 6px 22px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:all .35s;z-index:50;text-align:center;max-width:90vw; }
@@ -408,6 +429,11 @@ table.eqp tr:last-child td{border-bottom:none;}
       <button class="primary-btn" id="sc-enter-gm" data-i18n="btn_enter_gm">Entrar como GM →</button>
     </div>
   </div>
+</div>
+
+<!-- ================= LEVEL-UP CHECKLIST MODAL ================= -->
+<div id="lu-backdrop" class="lu-backdrop" style="display:none;">
+  <div class="lu-modal" id="lu-modal-content"></div>
 </div>
 
 <!-- ================= SESSION: JOIN (player picks/creates character) ================= -->
@@ -884,6 +910,10 @@ const I18N = {
     gm_title:'Mesa del Game Master', gm_feed_title:'Tiradas en vivo', gm_feed_empty:'Aún no se han hecho tiradas.',
     gm_no_players:'Esperando a que se unan jugadores…', gm_prepared_label:'Hechizos preparados', gm_no_prepared:'Ninguno preparado', gm_passives_label:'Pasivas (Percepción / Investigación / Perspicacia)',
     gm_slots_label:'Huecos de Conjuro', gm_slots_row_label:'Nivel {n}: {used}/{total} usados',
+    gm_levelcheck_btn:'Revisar subida de nivel', lu_subtitle:'Rasgos y recursos esperados para el nivel actual',
+    lu_close:'Cerrar', lu_group_features:'Rasgos de clase', lu_group_resources:'Hechizos y recursos',
+    lu_status_ok:'Listo', lu_status_missing:'Falta añadir', lu_status_choice:'Falta elegir', lu_status_over:'Por encima del límite',
+    lu_empty:'No hay nada que revisar para esta clase todavía.',
     gm_initiative_title:'Iniciativa', gm_initiative_empty:'Nadie en la iniciativa todavía.',
     gm_init_name_ph:'Nombre', gm_init_value_ph:'Iniciativa', gm_init_type_enemy:'Enemigo', gm_init_type_player:'Jugador',
     gm_init_ac_ph:'CA (opcional)', gm_init_hp_ph:'PG máx. (opcional)', gm_init_ac_label:'Clase de Armadura', btn_add:'Añadir',
@@ -967,6 +997,10 @@ const I18N = {
     gm_title:'Game Master Table', gm_feed_title:'Live rolls', gm_feed_empty:'No rolls yet.',
     gm_no_players:'Waiting for players to join…', gm_prepared_label:'Prepared spells', gm_no_prepared:'None prepared', gm_passives_label:'Passives (Perception / Investigation / Insight)',
     gm_slots_label:'Spell Slots', gm_slots_row_label:'Level {n}: {used}/{total} used',
+    gm_levelcheck_btn:'Check level-up', lu_subtitle:'Features and resources expected for the current level',
+    lu_close:'Close', lu_group_features:'Class features', lu_group_resources:'Spells and resources',
+    lu_status_ok:'Done', lu_status_missing:'Needs adding', lu_status_choice:'Needs a choice', lu_status_over:'Over the limit',
+    lu_empty:'Nothing to check for this class yet.',
     gm_initiative_title:'Initiative', gm_initiative_empty:'No one on the initiative order yet.',
     gm_init_name_ph:'Name', gm_init_value_ph:'Initiative', gm_init_type_enemy:'Enemy', gm_init_type_player:'Player',
     gm_init_ac_ph:'AC (optional)', gm_init_hp_ph:'Max HP (optional)', gm_init_ac_label:'Armor Class', btn_add:'Add',
@@ -1666,6 +1700,130 @@ function countsAgainstPrepLimit(spellId){
   if(isFreePreparedSpell(spellId)) return false;
   return true;
 }
+
+/* ============================================================
+   LEVEL-UP CHECKLIST (GM tool)
+   Cross-checks a character's current level against what the class
+   (and, for this campaign's 4 PCs, subclass) should already have:
+   feature traits gained by level, and cantrips/spells known or
+   prepared vs the official 2024 tables. Feature matching is a keyword
+   search over trait names (accent/case-insensitive via normalizeText)
+   since traits are freeform text, not ids.
+   ============================================================ */
+// Subclass isn't its own tracked field yet — for this campaign's 4 PCs it's inferred here.
+const CHAR_SUBCLASS = {
+  char_aster: 'oath_of_vengeance',
+  char_roderick: 'war_domain',
+  char_kael: 'draconic_sorcery',
+  char_walter: 'great_old_one',
+};
+// {level, keyword, es, en} — keyword is matched against trait[lang].name, accent/case-insensitive.
+const LEVEL_FEATURES_BASE = {
+  cleric: [
+    {level:2, keyword:'conjurar la divinidad', es:'Conjurar la Divinidad (2 usos)', en:'Channel Divinity (2 uses)'},
+    {level:5, keyword:'aniquilar', es:'Aniquilar No-muertos', en:'Destroy Undead'},
+  ],
+  paladin: [
+    {level:3, keyword:'conjurar la divinidad', es:'Conjurar la Divinidad', en:'Channel Divinity'},
+    {level:5, keyword:'ataque extra', es:'Ataque Extra', en:'Extra Attack'},
+    {level:5, keyword:'montura fiel', es:'Montura Fiel (Buscar Corcel gratis)', en:'Faithful Steed (free Find Steed)'},
+  ],
+  sorcerer: [
+    {level:1, keyword:'hechiceria innata', es:'Hechicería Innata', en:'Innate Sorcery'},
+    {level:3, keyword:'metamagia', es:'Metamagia', en:'Metamagic'},
+  ],
+  warlock: [],
+};
+// Filled in once each subclass's feature-by-level list is verified against a primary source.
+const LEVEL_FEATURES_SUBCLASS = {
+  oath_of_vengeance: [],
+  war_domain: [],
+  draconic_sorcery: [
+    {level:1, keyword:'resiliencia draconica', es:'Resiliencia Dracónica', en:'Draconic Resilience'},
+  ],
+  great_old_one: [
+    {level:1, keyword:'mente despierta', es:'Mente Despierta (Awakened Mind)', en:'Awakened Mind'},
+  ],
+};
+// Warlock "Invocations Known" by level (2024 PHB) — null until verified, which skips the check.
+const INVOCATIONS_KNOWN_TABLE = null;
+function levelUpFeatureChecks(c){
+  const klass = c.identity.klass;
+  const subclass = CHAR_SUBCLASS[c.id];
+  const list = [...(LEVEL_FEATURES_BASE[klass]||[]), ...((subclass && LEVEL_FEATURES_SUBCLASS[subclass]) || [])];
+  const traits = c.traits || [];
+  return list.filter(f=>f.level<=c.level).map(f=>{
+    const has = traits.some(tr=> normalizeText(tr.es.name).includes(normalizeText(f.keyword)));
+    return { level:f.level, label:f[currentLang], status: has?'ok':'missing' };
+  }).sort((a,b)=>a.level-b.level);
+}
+function levelUpResourceChecks(c){
+  const klass = c.identity.klass;
+  const level = c.level;
+  const items = [];
+  const cantripCap = cantripLimitForClass(level, klass);
+  if(cantripCap!==null){
+    const have = (c.preparedSpellIds||[]).filter(id=>{
+      const sp = spellDB.find(s=>s.id===id);
+      return sp && sp.level===0 && !(c.domainSpellIds||[]).some(d=>d.id===id);
+    }).length;
+    items.push({
+      label: currentLang==='es' ? `Cantrips conocidos: ${have}/${cantripCap}` : `Cantrips known: ${have}/${cantripCap}`,
+      status: have>cantripCap ? 'over' : (have<cantripCap ? 'choice' : 'ok'),
+    });
+  }
+  const prepCap = preparedLimitForLevel(level, klass) + (c.bonusPreparedSlots||0);
+  const have = (c.preparedSpellIds||[]).filter(id=>{
+    const sp = spellDB.find(s=>s.id===id);
+    if(!sp || sp.level===0) return false;
+    return !(c.domainSpellIds||[]).some(d=>d.id===id);
+  }).length;
+  const knownWordClasses = ['sorcerer','warlock','bard','ranger'];
+  const wordEs = knownWordClasses.includes(klass) ? 'Hechizos conocidos' : 'Hechizos preparados';
+  const wordEn = knownWordClasses.includes(klass) ? 'Spells known' : 'Prepared spells';
+  items.push({
+    label: currentLang==='es' ? `${wordEs}: ${have}/${prepCap}` : `${wordEn}: ${have}/${prepCap}`,
+    status: have>prepCap ? 'over' : (have<prepCap ? 'choice' : 'ok'),
+  });
+  if(klass==='warlock' && INVOCATIONS_KNOWN_TABLE){
+    const cap = INVOCATIONS_KNOWN_TABLE[Math.max(1,Math.min(10,level))];
+    const haveInv = (c.traits||[]).filter(tr=> normalizeText(tr.es.name).includes(normalizeText('invocacion eldritch'))).length;
+    items.push({
+      label: currentLang==='es' ? `Invocaciones Eldritch conocidas: ${haveInv}/${cap}` : `Eldritch Invocations known: ${haveInv}/${cap}`,
+      status: haveInv>cap ? 'over' : (haveInv<cap ? 'choice' : 'ok'),
+    });
+  }
+  return items;
+}
+function openLevelUpChecklist(c){
+  const featureItems = levelUpFeatureChecks(c);
+  const resourceItems = levelUpResourceChecks(c);
+  const renderItem = (it)=> `
+    <div class="lu-item">
+      <span class="lu-item-label">${it.label}${it.level!==undefined ? ` <span style="opacity:.6">(${t('level_option')} ${it.level})</span>` : ''}</span>
+      <span class="lu-tag ${it.status}">${t('lu_status_'+it.status)}</span>
+    </div>`;
+  const body = document.getElementById('lu-modal-content');
+  body.innerHTML = `
+    <div class="lu-modal-head">
+      <h3>${c.identity.name || t('default_char_name')} — ${t('level_option')} ${c.level}</h3>
+      <button class="lu-close-btn" id="lu-close-btn">✕</button>
+    </div>
+    <p class="lu-modal-sub">${t('lu_subtitle')}</p>
+    <div class="lu-group-label">${t('lu_group_features')}</div>
+    ${featureItems.length ? featureItems.map(renderItem).join('') : `<p class="lu-empty">${t('lu_empty')}</p>`}
+    <div class="lu-group-label">${t('lu_group_resources')}</div>
+    ${resourceItems.map(renderItem).join('')}
+  `;
+  document.getElementById('lu-close-btn').addEventListener('click', closeLevelUpChecklist);
+  document.getElementById('lu-backdrop').style.display='flex';
+}
+function closeLevelUpChecklist(){
+  document.getElementById('lu-backdrop').style.display='none';
+}
+document.getElementById('lu-backdrop').addEventListener('click', (ev)=>{
+  if(ev.target.id==='lu-backdrop') closeLevelUpChecklist();
+});
 function modOf(score){ return Math.floor((score-10)/2); }
 function isConcentration(sp){ return !!sp.concentration; }
 function fmt(n){return n>=0?`+${n}`:`${n}`;}
@@ -3285,6 +3443,7 @@ async function renderGmDashboard(code){
           ${slotsHtml ? `<div class="gm-sub-label">${t('gm_slots_label')}</div>${slotsHtml}` : ''}
           <div class="gm-sub-label">${t('gm_prepared_label')}</div>
           <div>${preparedHtml}</div>
+          <button class="lu-check-btn" data-char-id="${c.id}">📋 ${t('gm_levelcheck_btn')}</button>
         `;
         card.querySelectorAll('.gm-spell-chip[data-spell-id]').forEach(chip=>{
           chip.addEventListener('click', (ev)=>{
@@ -3306,6 +3465,11 @@ async function renderGmDashboard(code){
             ev.stopPropagation();
             gmAdjustHp(code, c.id, btn.dataset.hpAction==='inc' ? 1 : -1);
           });
+        });
+        const luBtn = card.querySelector('.lu-check-btn');
+        if(luBtn) luBtn.addEventListener('click', (ev)=>{
+          ev.stopPropagation();
+          openLevelUpChecklist(c);
         });
         const hpCurInput = card.querySelector('.gm-hp-current-input');
         if(hpCurInput) hpCurInput.addEventListener('change', (ev)=>{
